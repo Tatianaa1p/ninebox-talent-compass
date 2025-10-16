@@ -2,7 +2,7 @@ import * as XLSX from "xlsx";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 
 // Helper function to normalize performance/potential values
-// Bajo: <3, Medio: >=3 y <4, Alto: >=4
+// Bajo: <=1.5, Medio: >=1.6 y <4, Alto: >=4
 const normalizeLevel = (value: string | number | undefined): "Bajo" | "Medio" | "Alto" | null => {
   if (!value) return null;
   
@@ -19,7 +19,7 @@ const normalizeLevel = (value: string | number | undefined): "Bajo" | "Medio" | 
   
   if (!isNaN(num)) {
     if (num >= 4) return "Alto";
-    if (num >= 3) return "Medio";
+    if (num >= 1.6) return "Medio";
     return "Bajo";
   }
   
