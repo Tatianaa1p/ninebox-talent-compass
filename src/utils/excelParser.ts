@@ -2,7 +2,7 @@ import * as XLSX from "xlsx";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 
 // Helper function to normalize performance/potential values
-// Bajo: menor a 3, Medio: entre 3 y 4, Alto: mayor o igual a 4
+// Bajo: <3, Medio: >=3 y <4, Alto: >=4
 const normalizeLevel = (value: string | number | undefined): "Bajo" | "Medio" | "Alto" | null => {
   if (!value) return null;
   
@@ -13,8 +13,10 @@ const normalizeLevel = (value: string | number | undefined): "Bajo" | "Medio" | 
   if (str.includes("medio") || str.includes("media") || str.includes("cumple")) return "Medio";
   if (str.includes("bajo") || str.includes("baja") || str.includes("no cumple")) return "Bajo";
   
-  // Handle numeric values with new thresholds
-  const num = parseFloat(String(value));
+  // Handle numeric values - convert comma to dot for decimal parsing
+  const numStr = String(value).replace(",", ".");
+  const num = parseFloat(numStr);
+  
   if (!isNaN(num)) {
     if (num >= 4) return "Alto";
     if (num >= 3) return "Medio";
@@ -45,30 +47,59 @@ export const parseExcelFiles = async (
     const potData: any[] = XLSX.utils.sheet_to_json(potSheet);
     
     // Create a map for potential data
-    // Using column R or "Puntuación promedio" from potencial.xlsx
+    // Using column R ("Puntuación promedio") from potencial.xlsx
     const potentialMap = new Map();
     potData.forEach((row) => {
       const name = row["Nombre completo"];
-      // Try to get the value from different possible column names
-      const potentialScore = row["Puntuación promedio"] || row["R"] || row["Puntuacion promedio"];
-      if (name && potentialScore !== undefined) {
-        potentialMap.set(name, potentialScore);
+      if (!name) return;
+      
+      // Try to get the value from column R or "Puntuación promedio"
+      let potentialScore = row["Puntuación promedio"] || row["R"] || row["Puntuacion promedio"];
+      
+      // Skip if no score found or empty
+      if (potentialScore === undefined || potentialScore === null || potentialScore === "") return;
+      
+      // Convert comma to dot for decimal numbers
+      if (typeof potentialScore === "string") {
+        potentialScore = potentialScore.replace(",", ".");
       }
+      
+      potentialMap.set(name, potentialScore);
     });
     
     const employees: Employee[] = [];
     const unclassified: any[] = [];
     
     // Process performance data and merge with potential
-    // Using column AG or "Puntuación promedio" from perfomance.xlsx
+    // Using column AG ("Puntuación promedio") from perfomance.xlsx
     perfData.forEach((row) => {
       const name = row["Nombre completo"];
+      if (!name) return;
+      
       const manager = row["Mánager"] || row["Manager"];
-      // Try to get the value from different possible column names (AG is column 33 in Excel)
-      const performanceValue = row["Puntuación promedio"] || row["AG"] || row["Puntuacion promedio"];
+      
+      // Try to get performance value from column AG or "Puntuación promedio"
+      let performanceValue = row["Puntuación promedio"] || row["AG"] || row["Puntuacion promedio"];
+      
+      // Convert comma to dot for decimal numbers
+      if (typeof performanceValue === "string") {
+        performanceValue = performanceValue.replace(",", ".");
+      }
+      
+      // Get potential score from the map
       const potentialScore = potentialMap.get(name);
       
-      if (!name) return;
+      // Skip if either value is missing or empty
+      if (!performanceValue || performanceValue === "" || !potentialScore || potentialScore === "") {
+        unclassified.push({
+          name,
+          manager,
+          performanceRaw: performanceValue,
+          potentialRaw: potentialScore,
+          reason: !performanceValue ? "Sin puntuación de desempeño" : "Sin puntuación de potencial",
+        });
+        return;
+      }
       
       const performance = normalizeLevel(performanceValue);
       const potential = normalizeLevel(potentialScore);
