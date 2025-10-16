@@ -2,6 +2,7 @@ import * as XLSX from "xlsx";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 
 // Helper function to normalize performance/potential values
+// Bajo: menor a 3, Medio: entre 3 y 4, Alto: mayor o igual a 4
 const normalizeLevel = (value: string | number | undefined): "Bajo" | "Medio" | "Alto" | null => {
   if (!value) return null;
   
@@ -12,11 +13,11 @@ const normalizeLevel = (value: string | number | undefined): "Bajo" | "Medio" | 
   if (str.includes("medio") || str.includes("media") || str.includes("cumple")) return "Medio";
   if (str.includes("bajo") || str.includes("baja") || str.includes("no cumple")) return "Bajo";
   
-  // Handle numeric values
+  // Handle numeric values with new thresholds
   const num = parseFloat(String(value));
   if (!isNaN(num)) {
-    if (num >= 2.5) return "Alto";
-    if (num >= 1.5) return "Medio";
+    if (num >= 4) return "Alto";
+    if (num >= 3) return "Medio";
     return "Bajo";
   }
   
@@ -44,10 +45,12 @@ export const parseExcelFiles = async (
     const potData: any[] = XLSX.utils.sheet_to_json(potSheet);
     
     // Create a map for potential data
+    // Using column R or "Puntuación promedio" from potencial.xlsx
     const potentialMap = new Map();
     potData.forEach((row) => {
       const name = row["Nombre completo"];
-      const potentialScore = row["Puntuación promedio"];
+      // Try to get the value from different possible column names
+      const potentialScore = row["Puntuación promedio"] || row["R"] || row["Puntuacion promedio"];
       if (name && potentialScore !== undefined) {
         potentialMap.set(name, potentialScore);
       }
@@ -57,10 +60,12 @@ export const parseExcelFiles = async (
     const unclassified: any[] = [];
     
     // Process performance data and merge with potential
+    // Using column AG or "Puntuación promedio" from perfomance.xlsx
     perfData.forEach((row) => {
       const name = row["Nombre completo"];
-      const manager = row["Mánager"];
-      const performanceValue = row["Puntuación de desempeño"];
+      const manager = row["Mánager"] || row["Manager"];
+      // Try to get the value from different possible column names (AG is column 33 in Excel)
+      const performanceValue = row["Puntuación promedio"] || row["AG"] || row["Puntuacion promedio"];
       const potentialScore = potentialMap.get(name);
       
       if (!name) return;
