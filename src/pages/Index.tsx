@@ -18,8 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 
 const DEFAULT_THRESHOLDS: ThresholdConfig = {
   low: 1.5,
-  medium: 1.6,
-  high: 2.6,
+  medium: 1.5,
+  high: 2.5,
 };
 
 const DEFAULT_PERFORMANCE_THRESHOLDS: ThresholdConfig = {
@@ -50,8 +50,8 @@ const Index = () => {
   // Recalculate employee classifications based on current thresholds
   const employees = useMemo(() => {
     const classifyPotential = (value: number): "Bajo" | "Medio" | "Alto" => {
-      if (value >= 2.6) return "Alto";
-      if (value >= 1.6) return "Medio";
+      if (value > 2.5) return "Alto";
+      if (value > 1.5) return "Medio";
       return "Bajo";
     };
 

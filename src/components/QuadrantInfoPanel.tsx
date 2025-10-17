@@ -18,9 +18,9 @@ export const QuadrantInfoPanel = ({
     if (type === 'potential') {
       switch (level) {
         case "Alto":
-          return "≥ 2.6";
+          return "> 2.5";
         case "Medio":
-          return "≥ 1.6 hasta ≤ 2.5";
+          return "> 1.5 hasta ≤ 2.5";
         case "Bajo":
           return "≤ 1.5";
         default:
