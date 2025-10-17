@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,9 +19,24 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
+    const redirectUser = async () => {
+      if (!user) return;
+
+      // Check user role
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (data?.role === 'hrbp') {
+        navigate('/hrbp');
+      } else {
+        navigate('/dashboard');
+      }
+    };
+
+    redirectUser();
   }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -35,15 +51,14 @@ const Auth = () => {
         description: error.message,
         variant: 'destructive',
       });
+      setLoading(false);
     } else {
       toast({
         title: 'Sesión iniciada',
         description: 'Bienvenido de vuelta',
       });
-      navigate('/dashboard');
+      // Don't navigate here, let useEffect handle it based on role
     }
-
-    setLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
