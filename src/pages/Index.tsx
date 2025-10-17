@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 import { InteractiveNineBoxGrid } from "@/components/InteractiveNineBoxGrid";
 import { StatisticsPanel } from "@/components/StatisticsPanel";
@@ -13,7 +14,7 @@ import { parseExcelFiles, loadDefaultData, EmployeeRawData } from "@/utils/excel
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const DEFAULT_THRESHOLDS: ThresholdConfig = {
@@ -38,13 +39,31 @@ const Index = () => {
   const [potentialThresholds, setPotentialThresholds] = useState<ThresholdConfig>(DEFAULT_THRESHOLDS);
   const { toast } = useToast();
 
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users based on their role
   useEffect(() => {
-    if (!authLoading && user) {
-      navigate('/dashboard');
-    } else if (!authLoading && !user) {
-      // Allow staying on Index page for demo/testing
-    }
+    const redirectUser = async () => {
+      if (authLoading) return;
+      
+      if (user) {
+        // Check user role
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (data?.role === 'hrbp') {
+          navigate('/hrbp');
+        } else if (data?.role === 'manager') {
+          navigate('/dashboard');
+        } else {
+          // Default to dashboard for other roles
+          navigate('/dashboard');
+        }
+      }
+    };
+
+    redirectUser();
   }, [user, authLoading, navigate]);
 
   // Recalculate employee classifications based on current thresholds
@@ -150,7 +169,8 @@ const Index = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="default" onClick={() => navigate('/auth')}>
+            <Button variant="default" size="lg" onClick={() => navigate('/auth')}>
+              <LogIn className="w-4 h-4 mr-2" />
               Iniciar Sesión / Registrarse
             </Button>
             <ClearOverridesButton />
