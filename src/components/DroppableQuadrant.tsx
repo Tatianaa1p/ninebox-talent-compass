@@ -2,10 +2,13 @@ import { useDroppable } from "@dnd-kit/core";
 import { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 
 interface DroppableQuadrantProps {
   id: string;
   title: string;
+  description?: string;
   color: string;
   count: number;
   children: ReactNode;
@@ -14,6 +17,7 @@ interface DroppableQuadrantProps {
 export const DroppableQuadrant = ({
   id,
   title,
+  description,
   color,
   count,
   children,
@@ -31,17 +35,31 @@ export const DroppableQuadrant = ({
     >
       <div className="flex flex-col h-full">
         <div className="mb-3">
-          <h3
-            className={`font-bold text-sm mb-1 ${
-              color === "bg-high"
-                ? "text-high-foreground"
-                : color === "bg-medium"
-                ? "text-medium-foreground"
-                : "text-low-foreground"
-            }`}
-          >
-            {title}
-          </h3>
+          <div className="flex items-center gap-2 mb-1">
+            <h3
+              className={`font-bold text-sm ${
+                color === "bg-high"
+                  ? "text-high-foreground"
+                  : color === "bg-medium"
+                  ? "text-medium-foreground"
+                  : "text-low-foreground"
+              }`}
+            >
+              {title}
+            </h3>
+            {description && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="text-sm">{description}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
           <Badge variant="secondary" className="text-xs">
             {count} persona{count !== 1 ? "s" : ""}
           </Badge>

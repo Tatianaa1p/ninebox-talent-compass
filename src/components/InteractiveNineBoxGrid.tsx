@@ -6,7 +6,7 @@ import { DraggableEmployee } from "@/components/DraggableEmployee";
 import { EmployeeEditDialog } from "@/components/EmployeeEditDialog";
 import { UndoSnackbar } from "@/components/UndoSnackbar";
 import { useOverrides } from "@/contexts/OverrideContext";
-import { QUADRANT_KEYS, QUADRANT_NAMES } from "@/types/override";
+import { QUADRANT_KEYS, QUADRANT_NAMES, QUADRANT_DESCRIPTIONS } from "@/types/override";
 import {
   Tooltip,
   TooltipContent,
@@ -19,16 +19,52 @@ interface InteractiveNineBoxGridProps {
   employees: Employee[];
 }
 
-const QUADRANT_LABELS: Record<string, { title: string; color: string }> = {
-  "Alto-Alto": { title: "Key Players", color: "bg-high" },
-  "Alto-Medio": { title: "High Potential", color: "bg-high" },
-  "Alto-Bajo": { title: "Emerging Talent", color: "bg-medium" },
-  "Medio-Alto": { title: "Solid Performers", color: "bg-medium" },
-  "Medio-Medio": { title: "Core Contributors", color: "bg-medium" },
-  "Medio-Bajo": { title: "Inconsistent Performers", color: "bg-medium" },
-  "Bajo-Alto": { title: "High Potential/Low Performance", color: "bg-low" },
-  "Bajo-Medio": { title: "Underperformers", color: "bg-low" },
-  "Bajo-Bajo": { title: "Low Performers", color: "bg-low" },
+const QUADRANT_LABELS: Record<string, { title: string; description: string; color: string }> = {
+  "Alto-Alto": { 
+    title: QUADRANT_NAMES["Alto-Alto"], 
+    description: QUADRANT_DESCRIPTIONS["Alto-Alto"],
+    color: "bg-high" 
+  },
+  "Alto-Medio": { 
+    title: QUADRANT_NAMES["Alto-Medio"], 
+    description: QUADRANT_DESCRIPTIONS["Alto-Medio"],
+    color: "bg-high" 
+  },
+  "Alto-Bajo": { 
+    title: QUADRANT_NAMES["Alto-Bajo"], 
+    description: QUADRANT_DESCRIPTIONS["Alto-Bajo"],
+    color: "bg-medium" 
+  },
+  "Medio-Alto": { 
+    title: QUADRANT_NAMES["Medio-Alto"], 
+    description: QUADRANT_DESCRIPTIONS["Medio-Alto"],
+    color: "bg-medium" 
+  },
+  "Medio-Medio": { 
+    title: QUADRANT_NAMES["Medio-Medio"], 
+    description: QUADRANT_DESCRIPTIONS["Medio-Medio"],
+    color: "bg-medium" 
+  },
+  "Medio-Bajo": { 
+    title: QUADRANT_NAMES["Medio-Bajo"], 
+    description: QUADRANT_DESCRIPTIONS["Medio-Bajo"],
+    color: "bg-medium" 
+  },
+  "Bajo-Alto": { 
+    title: QUADRANT_NAMES["Bajo-Alto"], 
+    description: QUADRANT_DESCRIPTIONS["Bajo-Alto"],
+    color: "bg-low" 
+  },
+  "Bajo-Medio": { 
+    title: QUADRANT_NAMES["Bajo-Medio"], 
+    description: QUADRANT_DESCRIPTIONS["Bajo-Medio"],
+    color: "bg-low" 
+  },
+  "Bajo-Bajo": { 
+    title: QUADRANT_NAMES["Bajo-Bajo"], 
+    description: QUADRANT_DESCRIPTIONS["Bajo-Bajo"],
+    color: "bg-low" 
+  },
 };
 
 export const InteractiveNineBoxGrid = ({ employees }: InteractiveNineBoxGridProps) => {
@@ -68,12 +104,13 @@ export const InteractiveNineBoxGrid = ({ employees }: InteractiveNineBoxGridProp
 
     return potentialLevels.flatMap((potential) =>
       performanceLevels.map((performance) => {
-        const key = `${performance}-${potential}`;
+        const key = `${potential}-${performance}`;
         const config = QUADRANT_LABELS[key];
 
         return {
           id: key,
           title: config.title,
+          description: config.description,
           performance,
           potential,
           color: config.color,
@@ -213,6 +250,7 @@ export const InteractiveNineBoxGrid = ({ employees }: InteractiveNineBoxGridProp
                     key={quadrant.id}
                     id={quadrant.id}
                     title={quadrant.title}
+                    description={quadrant.description}
                     color={quadrant.color}
                     count={quadrant.employees.length}
                   >

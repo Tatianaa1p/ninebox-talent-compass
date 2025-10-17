@@ -10,6 +10,7 @@ import { ClearOverridesButton } from "@/components/ClearOverridesButton";
 import { parseExcelFiles, loadDefaultData, EmployeeRawData } from "@/utils/excelParser";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -124,6 +125,9 @@ const Index = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => window.location.href = '/auth'}>
+              Ir a Dashboard
+            </Button>
             <ClearOverridesButton />
             <ExportButton employees={employees} />
           </div>
@@ -134,15 +138,6 @@ const Index = () => {
 
         {/* View Mode Toggle */}
         <ViewModeToggle />
-
-        {/* Calibration Controls */}
-        <CalibrationControls
-          performanceThresholds={performanceThresholds}
-          potentialThresholds={potentialThresholds}
-          onPerformanceChange={setPerformanceThresholds}
-          onPotentialChange={setPotentialThresholds}
-          onReset={handleResetThresholds}
-        />
 
         {/* Statistics */}
         <StatisticsPanel employees={employees} />
