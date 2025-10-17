@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 import { InteractiveNineBoxGrid } from "@/components/InteractiveNineBoxGrid";
 import { StatisticsPanel } from "@/components/StatisticsPanel";
@@ -15,18 +17,29 @@ import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const DEFAULT_THRESHOLDS: ThresholdConfig = {
-  low: 1.5,
-  medium: 1.6,
-  high: 4,
+  low: 2.4,
+  medium: 2.5,
+  high: 4.0,
 };
 
 const Index = () => {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [rawData, setRawData] = useState<EmployeeRawData[]>([]);
   const [unclassified, setUnclassified] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [performanceThresholds, setPerformanceThresholds] = useState<ThresholdConfig>(DEFAULT_THRESHOLDS);
   const [potentialThresholds, setPotentialThresholds] = useState<ThresholdConfig>(DEFAULT_THRESHOLDS);
   const { toast } = useToast();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/dashboard');
+    } else if (!authLoading && !user) {
+      // Allow staying on Index page for demo/testing
+    }
+  }, [user, authLoading, navigate]);
 
   // Recalculate employee classifications based on current thresholds
   const employees = useMemo(() => {
@@ -125,8 +138,8 @@ const Index = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => window.location.href = '/auth'}>
-              Ir a Dashboard
+            <Button variant="default" onClick={() => navigate('/auth')}>
+              Iniciar Sesión / Registrarse
             </Button>
             <ClearOverridesButton />
             <ExportButton employees={employees} />

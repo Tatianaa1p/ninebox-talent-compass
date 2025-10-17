@@ -46,7 +46,7 @@ export const EvaluationDialog = ({
     const { error } = await supabase.from('evaluaciones').insert({
       persona_nombre: nombre,
       potencial_score: potencialScore,
-      desempeño_score: desempenoScore,
+      desempeno_score: desempenoScore,
       equipo_id: equipoId,
       tablero_id: tableroId,
     });
@@ -100,7 +100,7 @@ export const EvaluationDialog = ({
               required
             />
             <p className="text-xs text-muted-foreground">
-              Bajo ≤1.5 | Medio 1.6-3.9 | Alto ≥4
+              Bajo ≤2.4 | Medio 2.5-3.9 | Alto ≥4.0
             </p>
           </div>
           <div className="space-y-2">
@@ -116,7 +116,7 @@ export const EvaluationDialog = ({
               required
             />
             <p className="text-xs text-muted-foreground">
-              Bajo ≤1.5 | Medio 1.6-3.9 | Alto ≥4
+              Bajo ≤2.4 | Medio 2.5-3.9 | Alto ≥4.0
             </p>
           </div>
           <DialogFooter>

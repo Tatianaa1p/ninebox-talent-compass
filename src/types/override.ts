@@ -34,15 +34,15 @@ export const QUADRANT_NAMES = {
 } as const;
 
 export const QUADRANT_DESCRIPTIONS = {
-  "Alto-Alto": "Entregan resultados sobresalientes y tienen potencial de crecer o asumir mayores responsabilidades. Son futuros líderes o referentes técnicos.",
+  "Alto-Alto": "Supera consistentemente las expectativas, muestra impacto y potencial de crecimiento. Son futuros líderes o referentes técnicos.",
   "Alto-Medio": "Buen desempeño y alto potencial. Pueden asumir proyectos más desafiantes o responsabilidades transversales.",
-  "Alto-Bajo": "Tienen potencial, pero desempeño no lo demuestra. Necesitan foco, claridad y apoyo del líder.",
-  "Medio-Alto": "Cumplen objetivos confiablemente. Son la base sólida del equipo, sostienen resultados.",
-  "Medio-Medio": "Desempeño correcto, sin destacar. Requieren feedback y oportunidades de aprendizaje.",
+  "Alto-Bajo": "Tienen potencial, pero desempeño por debajo de lo esperado. Necesitan foco, claridad y apoyo del líder.",
+  "Medio-Alto": "Cumple las expectativas con resultados consistentes pero sin sobresalir. Base sólida del equipo.",
+  "Medio-Medio": "Desempeño correcto, sin destacar. Margen para desarrollo y aprendizaje.",
   "Medio-Bajo": "Desempeño y potencial intermedios. Requieren plan de mejora o redefinición del rol.",
-  "Bajo-Alto": "Buen nivel de entrega y actitud, pero sin potencial para crecer. Valiosos en su función actual.",
-  "Bajo-Medio": "Cumple lo mínimo, sin crecimiento ni iniciativa. Recomienda feedback directo o revisión.",
-  "Bajo-Bajo": "Desempeño insatisfactorio. Requiere acción inmediata o plan de salida.",
+  "Bajo-Alto": "Supera expectativas en entrega, pero sin potencial para crecer. Valiosos en su rol actual.",
+  "Bajo-Medio": "Cumple lo mínimo, sin iniciativa. Recomienda feedback directo o revisión.",
+  "Bajo-Bajo": "Desempeño por debajo de lo esperado. Requiere acción inmediata o plan de salida.",
 } as const;
 
 export const QUADRANT_KEYS = {

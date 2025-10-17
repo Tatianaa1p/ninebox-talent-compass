@@ -33,9 +33,9 @@ interface Evaluacion {
   id: string;
   persona_nombre: string;
   potencial_score: number;
-  desempeño_score: number;
+  desempeno_score: number;
   equipo_id: string;
-  tablero_id: string;
+  tablero_id: string | null;
 }
 
 const Dashboard = () => {
@@ -179,22 +179,22 @@ const Dashboard = () => {
       id: e.id,
       name: e.persona_nombre,
       manager: '',
-      performance: getPerformanceLevel(e.desempeño_score),
+      performance: getPerformanceLevel(e.desempeno_score),
       potential: getPotentialLevel(e.potencial_score),
-      performanceScore: e.desempeño_score,
+      performanceScore: e.desempeno_score,
       potentialScore: e.potencial_score,
     }));
     setEmployees(emps);
   };
 
   const getPerformanceLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score <= 1.5) return 'Bajo';
+    if (score <= 2.4) return 'Bajo';
     if (score <= 3.9) return 'Medio';
     return 'Alto';
   };
 
   const getPotentialLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score <= 1.5) return 'Bajo';
+    if (score <= 2.4) return 'Bajo';
     if (score <= 3.9) return 'Medio';
     return 'Alto';
   };
