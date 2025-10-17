@@ -100,7 +100,7 @@ export const EvaluationDialog = ({
               required
             />
             <p className="text-xs text-muted-foreground">
-              Bajo ≤1.5 | Medio 1.6-2.5 | Alto ≥2.6
+              Bajo ≤1.5 | Medio &gt;1.5 hasta ≤2.5 | Alto &gt;2.5
             </p>
           </div>
           <div className="space-y-2">
