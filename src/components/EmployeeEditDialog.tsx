@@ -68,19 +68,15 @@ export const EmployeeEditDialog = ({
                 <SelectValue placeholder="Seleccionar cuadrante" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Key Players">Key Players</SelectItem>
-                <SelectItem value="High Potential">High Potential</SelectItem>
-                <SelectItem value="High Potential/Low Performance">
-                  High Potential/Low Performance
-                </SelectItem>
-                <SelectItem value="Solid Performers">Solid Performers</SelectItem>
-                <SelectItem value="Core Contributors">Core Contributors</SelectItem>
-                <SelectItem value="Inconsistent Performers">
-                  Inconsistent Performers
-                </SelectItem>
-                <SelectItem value="Emerging Talent">Emerging Talent</SelectItem>
-                <SelectItem value="Underperformers">Underperformers</SelectItem>
-                <SelectItem value="Low Performers">Low Performers</SelectItem>
+                <SelectItem value="1. Talento Estratégico">1. Talento Estratégico</SelectItem>
+                <SelectItem value="2. Crecimiento Acelerado">2. Crecimiento Acelerado</SelectItem>
+                <SelectItem value="3. Desempeño Consistente">3. Desempeño Consistente</SelectItem>
+                <SelectItem value="4. Comprometido">4. Comprometido</SelectItem>
+                <SelectItem value="5. Potencial No Visible">5. Potencial No Visible</SelectItem>
+                <SelectItem value="6. Evolución">6. Evolución</SelectItem>
+                <SelectItem value="7. En Riesgo de Estancamiento">7. En Riesgo de Estancamiento</SelectItem>
+                <SelectItem value="8. En Revisión">8. En Revisión</SelectItem>
+                <SelectItem value="9. Desempeño Insuficiente">9. Desempeño Insuficiente</SelectItem>
               </SelectContent>
             </Select>
           </div>

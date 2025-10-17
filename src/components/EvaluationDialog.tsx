@@ -100,7 +100,7 @@ export const EvaluationDialog = ({
               required
             />
             <p className="text-xs text-muted-foreground">
-              Bajo ≤2.4 | Medio 2.5-3.9 | Alto ≥4.0
+              Bajo ≤1.5 | Medio 1.6-2.5 | Alto ≥2.6
             </p>
           </div>
           <div className="space-y-2">
@@ -116,7 +116,7 @@ export const EvaluationDialog = ({
               required
             />
             <p className="text-xs text-muted-foreground">
-              Bajo ≤2.4 | Medio 2.5-3.9 | Alto ≥4.0
+              Bajo &lt;3 | Medio 3-3.9 | Alto ≥4
             </p>
           </div>
           <DialogFooter>
