@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
-import { NineBoxGrid } from "@/components/NineBoxGrid";
+import { InteractiveNineBoxGrid } from "@/components/InteractiveNineBoxGrid";
 import { StatisticsPanel } from "@/components/StatisticsPanel";
 import { FileUploader } from "@/components/FileUploader";
 import { ExportButton } from "@/components/ExportButton";
 import { CalibrationControls, ThresholdConfig } from "@/components/CalibrationControls";
+import { ViewModeToggle } from "@/components/ViewModeToggle";
+import { ClearOverridesButton } from "@/components/ClearOverridesButton";
 import { parseExcelFiles, loadDefaultData, EmployeeRawData } from "@/utils/excelParser";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -121,11 +123,17 @@ const Index = () => {
               Matriz de evaluación de Desempeño vs Potencial
             </p>
           </div>
-          <ExportButton employees={employees} />
+          <div className="flex gap-2">
+            <ClearOverridesButton />
+            <ExportButton employees={employees} />
+          </div>
         </div>
 
         {/* File Uploader */}
         <FileUploader onFilesUploaded={handleFilesUploaded} />
+
+        {/* View Mode Toggle */}
+        <ViewModeToggle />
 
         {/* Calibration Controls */}
         <CalibrationControls
@@ -142,13 +150,13 @@ const Index = () => {
         {/* Nine Box Grid */}
         <Card>
           <CardHeader>
-            <CardTitle>Matriz Nine Box</CardTitle>
+            <CardTitle>Matriz Nine Box Interactiva</CardTitle>
             <CardDescription>
-              Visualización de empleados según desempeño y potencial
+              Arrastra empleados entre cuadrantes para reclasificar manualmente
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <NineBoxGrid employees={employees} />
+            <InteractiveNineBoxGrid employees={employees} />
           </CardContent>
         </Card>
 
