@@ -10,6 +10,8 @@ import { InteractiveNineBoxGrid } from '@/components/InteractiveNineBoxGrid';
 import { StatisticsPanel } from '@/components/StatisticsPanel';
 import { EvaluationDialog } from '@/components/EvaluationDialog';
 import { CreateBoardDialog } from '@/components/CreateBoardDialog';
+import { CreateEmpresaDialog } from '@/components/CreateEmpresaDialog';
+import { CreateEquipoDialog } from '@/components/CreateEquipoDialog';
 import { Employee } from '@/types/employee';
 
 interface Empresa {
@@ -51,19 +53,32 @@ const Dashboard = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showEvaluationDialog, setShowEvaluationDialog] = useState(false);
   const [showCreateBoardDialog, setShowCreateBoardDialog] = useState(false);
+  const [showCreateEmpresaDialog, setShowCreateEmpresaDialog] = useState(false);
+  const [showCreateEquipoDialog, setShowCreateEquipoDialog] = useState(false);
 
   // Load empresas
   useEffect(() => {
     const loadEmpresas = async () => {
       const { data, error } = await supabase.from('empresas').select('*');
       if (error) {
+        console.error('Error loading empresas:', error);
         toast({
-          title: 'Error',
-          description: 'No se pudieron cargar las empresas',
+          title: 'Error al cargar empresas',
+          description: error.message.includes('policy') 
+            ? 'No tienes permisos para ver las empresas. Contacta al administrador.'
+            : `Error: ${error.message}. Si hay empresas duplicadas, limpia la tabla.`,
           variant: 'destructive',
         });
       } else {
-        setEmpresas(data || []);
+        // Remove duplicates by nombre, keeping first occurrence
+        const uniqueEmpresas = data?.reduce((acc: Empresa[], current) => {
+          const exists = acc.find(item => item.nombre === current.nombre);
+          if (!exists) {
+            acc.push(current);
+          }
+          return acc;
+        }, []) || [];
+        setEmpresas(uniqueEmpresas);
       }
     };
     loadEmpresas();
@@ -83,9 +98,12 @@ const Dashboard = () => {
         .eq('empresa_id', selectedEmpresa);
       
       if (error) {
+        console.error('Error loading equipos:', error);
         toast({
-          title: 'Error',
-          description: 'No se pudieron cargar los equipos',
+          title: 'Error al cargar equipos',
+          description: error.message.includes('policy')
+            ? 'No tienes permisos para ver los equipos.'
+            : `Error: ${error.message}`,
           variant: 'destructive',
         });
       } else {
@@ -109,9 +127,12 @@ const Dashboard = () => {
         .eq('equipo_id', selectedEquipo);
       
       if (error) {
+        console.error('Error loading tableros:', error);
         toast({
-          title: 'Error',
-          description: 'No se pudieron cargar los tableros',
+          title: 'Error al cargar tableros',
+          description: error.message.includes('policy')
+            ? 'No tienes permisos para ver los tableros.'
+            : `Error: ${error.message}`,
           variant: 'destructive',
         });
       } else {
@@ -223,10 +244,22 @@ const Dashboard = () => {
         <Card className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Empresa</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">Empresa</label>
+                {empresas.length === 0 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowCreateEmpresaDialog(true)}
+                    className="h-6 text-xs"
+                  >
+                    + Crear
+                  </Button>
+                )}
+              </div>
               <Select value={selectedEmpresa} onValueChange={setSelectedEmpresa}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar empresa" />
+                  <SelectValue placeholder={empresas.length === 0 ? "Sin empresas" : "Seleccionar empresa"} />
                 </SelectTrigger>
                 <SelectContent>
                   {empresas.map((e) => (
@@ -239,10 +272,22 @@ const Dashboard = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Equipo</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">Equipo</label>
+                {selectedEmpresa && equipos.length === 0 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowCreateEquipoDialog(true)}
+                    className="h-6 text-xs"
+                  >
+                    + Crear
+                  </Button>
+                )}
+              </div>
               <Select value={selectedEquipo} onValueChange={setSelectedEquipo} disabled={!selectedEmpresa}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar equipo" />
+                  <SelectValue placeholder={!selectedEmpresa ? "Selecciona empresa primero" : equipos.length === 0 ? "Sin equipos" : "Seleccionar equipo"} />
                 </SelectTrigger>
                 <SelectContent>
                   {equipos.map((e) => (
@@ -319,9 +364,50 @@ const Dashboard = () => {
         onOpenChange={setShowCreateBoardDialog}
         equipoId={selectedEquipo}
         empresaId={selectedEmpresa}
-        onCreated={(tableroId) => {
+        onCreated={async (tableroId) => {
+          // Reload tableros
+          const { data } = await supabase
+            .from('tableros')
+            .select('*')
+            .eq('equipo_id', selectedEquipo);
+          setTableros(data || []);
           setSelectedTablero(tableroId);
           setShowCreateBoardDialog(false);
+        }}
+      />
+
+      <CreateEmpresaDialog
+        open={showCreateEmpresaDialog}
+        onOpenChange={setShowCreateEmpresaDialog}
+        onCreated={async () => {
+          // Reload empresas
+          const { data } = await supabase.from('empresas').select('*');
+          if (data) {
+            const uniqueEmpresas = data.reduce((acc: Empresa[], current) => {
+              const exists = acc.find(item => item.nombre === current.nombre);
+              if (!exists) {
+                acc.push(current);
+              }
+              return acc;
+            }, []);
+            setEmpresas(uniqueEmpresas);
+          }
+          setShowCreateEmpresaDialog(false);
+        }}
+      />
+
+      <CreateEquipoDialog
+        open={showCreateEquipoDialog}
+        onOpenChange={setShowCreateEquipoDialog}
+        empresaId={selectedEmpresa}
+        onCreated={async () => {
+          // Reload equipos
+          const { data } = await supabase
+            .from('equipos')
+            .select('*')
+            .eq('empresa_id', selectedEmpresa);
+          setEquipos(data || []);
+          setShowCreateEquipoDialog(false);
         }}
       />
     </div>

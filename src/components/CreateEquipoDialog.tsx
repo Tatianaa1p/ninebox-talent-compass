@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 interface CreateEquipoDialogProps {
@@ -14,9 +15,17 @@ interface CreateEquipoDialogProps {
 }
 
 export function CreateEquipoDialog({ open, onOpenChange, empresaId, onCreated }: CreateEquipoDialogProps) {
+  const { user } = useAuth();
   const [nombre, setNombre] = useState("");
   const [managerId, setManagerId] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Set current user as default manager
+  useEffect(() => {
+    if (user && !managerId) {
+      setManagerId(user.id);
+    }
+  }, [user, managerId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +43,7 @@ export function CreateEquipoDialog({ open, onOpenChange, empresaId, onCreated }:
         .insert({ 
           nombre: nombre.trim(),
           empresa_id: empresaId,
-          manager_id: managerId || null
+          manager_id: managerId || user?.id || null
         })
         .select()
         .single();
@@ -73,7 +82,7 @@ export function CreateEquipoDialog({ open, onOpenChange, empresaId, onCreated }:
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="manager">Manager ID (opcional)</Label>
+              <Label htmlFor="manager">Manager ID</Label>
               <Input
                 id="manager"
                 value={managerId}
@@ -82,7 +91,7 @@ export function CreateEquipoDialog({ open, onOpenChange, empresaId, onCreated }:
                 disabled={loading}
               />
               <p className="text-xs text-muted-foreground">
-                Ingresa el UUID del manager si deseas asignarlo ahora
+                Por defecto se asignará el usuario actual como manager
               </p>
             </div>
           </div>
