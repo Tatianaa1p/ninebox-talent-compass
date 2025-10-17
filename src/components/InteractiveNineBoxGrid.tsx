@@ -144,9 +144,9 @@ export const InteractiveNineBoxGrid = ({ employees }: InteractiveNineBoxGridProp
     const targetQuadrantKey = over.id as string;
     const targetQuadrantName = QUADRANT_NAMES[targetQuadrantKey as keyof typeof QUADRANT_NAMES];
 
-    const [targetPerformance, targetPotential] = targetQuadrantKey.split("-") as [
-      PerformanceLevel,
-      PotentialLevel
+    const [targetPotential, targetPerformance] = targetQuadrantKey.split("-") as [
+      PotentialLevel,
+      PerformanceLevel
     ];
 
     const currentQuadrantKey = `${employee.performance}-${employee.potential}`;
@@ -183,9 +183,9 @@ export const InteractiveNineBoxGrid = ({ employees }: InteractiveNineBoxGridProp
     if (!editingEmployee) return;
 
     const quadrantKey = QUADRANT_KEYS[quadrantName as keyof typeof QUADRANT_KEYS];
-    const [targetPerformance, targetPotential] = quadrantKey.split("-") as [
-      PerformanceLevel,
-      PotentialLevel
+    const [targetPotential, targetPerformance] = quadrantKey.split("-") as [
+      PotentialLevel,
+      PerformanceLevel
     ];
 
     const override = {
