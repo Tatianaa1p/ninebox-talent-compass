@@ -50,8 +50,8 @@ const Index = () => {
   // Recalculate employee classifications based on current thresholds
   const employees = useMemo(() => {
     const classifyPotential = (value: number): "Bajo" | "Medio" | "Alto" => {
-      if (value > 2.5) return "Alto";
-      if (value > 1.5) return "Medio";
+      if (value >= 2.6) return "Alto";
+      if (value >= 1.6) return "Medio";
       return "Bajo";
     };
 

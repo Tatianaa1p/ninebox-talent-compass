@@ -194,8 +194,8 @@ const Dashboard = () => {
   };
 
   const getPotentialLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score > 2.5) return 'Alto';
-    if (score > 1.5) return 'Medio';
+    if (score >= 2.6) return 'Alto';
+    if (score >= 1.6) return 'Medio';
     return 'Bajo';
   };
 
