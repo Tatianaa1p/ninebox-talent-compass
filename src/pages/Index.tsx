@@ -1,30 +1,58 @@
-import { useState, useEffect } from "react";
-import { Employee } from "@/types/employee";
+import { useState, useEffect, useMemo } from "react";
+import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 import { NineBoxGrid } from "@/components/NineBoxGrid";
 import { StatisticsPanel } from "@/components/StatisticsPanel";
 import { FileUploader } from "@/components/FileUploader";
 import { ExportButton } from "@/components/ExportButton";
-import { parseExcelFiles, loadDefaultData } from "@/utils/excelParser";
+import { CalibrationControls, ThresholdConfig } from "@/components/CalibrationControls";
+import { parseExcelFiles, loadDefaultData, EmployeeRawData } from "@/utils/excelParser";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+const DEFAULT_THRESHOLDS: ThresholdConfig = {
+  low: 1.5,
+  medium: 1.6,
+  high: 4,
+};
+
 const Index = () => {
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [rawData, setRawData] = useState<EmployeeRawData[]>([]);
   const [unclassified, setUnclassified] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [performanceThresholds, setPerformanceThresholds] = useState<ThresholdConfig>(DEFAULT_THRESHOLDS);
+  const [potentialThresholds, setPotentialThresholds] = useState<ThresholdConfig>(DEFAULT_THRESHOLDS);
   const { toast } = useToast();
+
+  // Recalculate employee classifications based on current thresholds
+  const employees = useMemo(() => {
+    const classifyLevel = (value: number, thresholds: ThresholdConfig): "Bajo" | "Medio" | "Alto" => {
+      if (value >= thresholds.high) return "Alto";
+      if (value >= thresholds.medium) return "Medio";
+      return "Bajo";
+    };
+
+    return rawData.map((data) => ({
+      id: `${data.name}-${Date.now()}-${Math.random()}`,
+      name: data.name,
+      manager: data.manager,
+      performanceScore: data.performanceScore,
+      potentialScore: data.potentialScore,
+      performance: classifyLevel(data.performanceScore, performanceThresholds) as PerformanceLevel,
+      potential: classifyLevel(data.potentialScore, potentialThresholds) as PotentialLevel,
+    }));
+  }, [rawData, performanceThresholds, potentialThresholds]);
 
   useEffect(() => {
     // Load default data on mount
     loadDefaultData()
-      .then(({ employees, unclassified }) => {
-        setEmployees(employees);
+      .then(({ rawData, unclassified }) => {
+        setRawData(rawData);
         setUnclassified(unclassified);
         toast({
           title: "Datos cargados",
-          description: `Se cargaron ${employees.length} empleados exitosamente`,
+          description: `Se cargaron ${rawData.length} empleados exitosamente`,
         });
       })
       .catch((error) => {
@@ -41,9 +69,13 @@ const Index = () => {
   const handleFilesUploaded = async (performanceFile: File, potentialFile: File) => {
     setLoading(true);
     try {
-      const { employees, unclassified } = await parseExcelFiles(performanceFile, potentialFile);
-      setEmployees(employees);
+      const { rawData, unclassified } = await parseExcelFiles(performanceFile, potentialFile);
+      setRawData(rawData);
       setUnclassified(unclassified);
+      toast({
+        title: "Archivos cargados",
+        description: `Se cargaron ${rawData.length} empleados exitosamente`,
+      });
     } catch (error) {
       console.error("Error processing files:", error);
       toast({
@@ -54,6 +86,15 @@ const Index = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResetThresholds = () => {
+    setPerformanceThresholds(DEFAULT_THRESHOLDS);
+    setPotentialThresholds(DEFAULT_THRESHOLDS);
+    toast({
+      title: "Umbrales restaurados",
+      description: "Se han restaurado los valores por defecto",
+    });
   };
 
   if (loading) {
@@ -85,6 +126,15 @@ const Index = () => {
 
         {/* File Uploader */}
         <FileUploader onFilesUploaded={handleFilesUploaded} />
+
+        {/* Calibration Controls */}
+        <CalibrationControls
+          performanceThresholds={performanceThresholds}
+          potentialThresholds={potentialThresholds}
+          onPerformanceChange={setPerformanceThresholds}
+          onPotentialChange={setPotentialThresholds}
+          onReset={handleResetThresholds}
+        />
 
         {/* Statistics */}
         <StatisticsPanel employees={employees} />

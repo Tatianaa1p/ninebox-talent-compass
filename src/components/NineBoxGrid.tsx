@@ -77,7 +77,7 @@ export const NineBoxGrid = ({ employees }: NineBoxGridProps) => {
               >
                 <div className="flex flex-col h-full">
                   <div className="mb-3">
-                    <h3 className="font-bold text-sm mb-1 text-foreground">
+                    <h3 className={`font-bold text-sm mb-1 ${quadrant.color === "bg-high" ? "text-high-foreground" : quadrant.color === "bg-medium" ? "text-medium-foreground" : "text-low-foreground"}`}>
                       {quadrant.title}
                     </h3>
                     <Badge variant="secondary" className="text-xs">
@@ -101,8 +101,12 @@ export const NineBoxGrid = ({ employees }: NineBoxGridProps) => {
                             <div className="space-y-1">
                               <p className="font-semibold">{employee.name}</p>
                               <p className="text-xs">Manager: {employee.manager}</p>
-                              <p className="text-xs">Desempeño: {employee.performance}</p>
-                              <p className="text-xs">Potencial: {employee.potential}</p>
+                              <p className="text-xs">
+                                Desempeño: {employee.performance} ({employee.performanceScore.toFixed(2)})
+                              </p>
+                              <p className="text-xs">
+                                Potencial: {employee.potential} ({employee.potentialScore.toFixed(2)})
+                              </p>
                             </div>
                           </TooltipContent>
                         </Tooltip>

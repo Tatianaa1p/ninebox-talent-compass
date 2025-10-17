@@ -45,9 +45,12 @@ All colors MUST be HSL.
     --danger: 0 84% 60%;
     --danger-foreground: 0 0% 100%;
 
-    --high: 142 76% 36%;
-    --medium: 38 92% 50%;
-    --low: 0 84% 60%;
+    --high: 142 71% 85%;
+    --high-foreground: 142 76% 20%;
+    --medium: 48 96% 85%;
+    --medium-foreground: 38 92% 30%;
+    --low: 0 84% 88%;
+    --low-foreground: 0 84% 35%;
 
     --radius: 0.5rem;
 
@@ -96,6 +99,23 @@ All colors MUST be HSL.
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    
+    --danger: 0 84% 60%;
+    --danger-foreground: 0 0% 100%;
+
+    --high: 142 71% 25%;
+    --high-foreground: 142 71% 85%;
+    --medium: 48 96% 35%;
+    --medium-foreground: 48 96% 85%;
+    --low: 0 84% 40%;
+    --low-foreground: 0 84% 88%;
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

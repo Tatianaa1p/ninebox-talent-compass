@@ -20,8 +20,10 @@ export const ExportButton = ({ employees }: ExportButtonProps) => {
       const exportData = employees.map((emp) => ({
         Nombre: emp.name,
         Manager: emp.manager,
-        Desempeño: emp.performance,
-        Potencial: emp.potential,
+        "Desempeño (Clasificación)": emp.performance,
+        "Desempeño (Puntuación)": emp.performanceScore.toFixed(2),
+        "Potencial (Clasificación)": emp.potential,
+        "Potencial (Puntuación)": emp.potentialScore.toFixed(2),
         Cuadrante: `${emp.performance} Desempeño / ${emp.potential} Potencial`,
       }));
 

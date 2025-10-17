@@ -7,6 +7,8 @@ export interface Employee {
   manager: string;
   performance: PerformanceLevel;
   potential: PotentialLevel;
+  performanceScore: number;
+  potentialScore: number;
 }
 
 export interface NineBoxQuadrant {

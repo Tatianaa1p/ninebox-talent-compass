@@ -1,35 +1,38 @@
 import * as XLSX from "xlsx";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 
-// Helper function to normalize performance/potential values
-// Bajo: <=1.5, Medio: >=1.6 y <4, Alto: >=4
-const normalizeLevel = (value: string | number | undefined): "Bajo" | "Medio" | "Alto" | null => {
-  if (!value) return null;
-  
-  const str = String(value).toLowerCase().trim();
-  
-  // Handle Spanish variations
-  if (str.includes("alto") || str.includes("alta") || str.includes("excede")) return "Alto";
-  if (str.includes("medio") || str.includes("media") || str.includes("cumple")) return "Medio";
-  if (str.includes("bajo") || str.includes("baja") || str.includes("no cumple")) return "Bajo";
+// Helper function to normalize performance/potential values based on thresholds
+const normalizeLevel = (
+  value: number,
+  thresholds: { low: number; medium: number; high: number }
+): "Bajo" | "Medio" | "Alto" => {
+  if (value >= thresholds.high) return "Alto";
+  if (value >= thresholds.medium) return "Medio";
+  return "Bajo";
+};
+
+// Helper function to parse numeric value from string or number
+const parseNumericValue = (value: string | number | undefined): number | null => {
+  if (value === undefined || value === null || value === "") return null;
   
   // Handle numeric values - convert comma to dot for decimal parsing
   const numStr = String(value).replace(",", ".");
   const num = parseFloat(numStr);
   
-  if (!isNaN(num)) {
-    if (num >= 4) return "Alto";
-    if (num >= 1.6) return "Medio";
-    return "Bajo";
-  }
-  
-  return null;
+  return isNaN(num) ? null : num;
 };
+
+export interface EmployeeRawData {
+  name: string;
+  manager: string;
+  performanceScore: number;
+  potentialScore: number;
+}
 
 export const parseExcelFiles = async (
   performanceFile: File,
   potentialFile: File
-): Promise<{ employees: Employee[]; unclassified: any[] }> => {
+): Promise<{ employees: Employee[]; unclassified: any[]; rawData: EmployeeRawData[] }> => {
   try {
     // Read both files
     const perfBuffer = await performanceFile.arrayBuffer();
@@ -67,8 +70,15 @@ export const parseExcelFiles = async (
       potentialMap.set(name, potentialScore);
     });
     
-    const employees: Employee[] = [];
+    const rawData: EmployeeRawData[] = [];
     const unclassified: any[] = [];
+    
+    // Default thresholds
+    const defaultThresholds = {
+      low: 1.5,
+      medium: 1.6,
+      high: 4,
+    };
     
     // Process performance data and merge with potential
     // Using column AG ("Puntuación promedio") from perfomance.xlsx
@@ -80,50 +90,44 @@ export const parseExcelFiles = async (
       
       // Try to get performance value from column AG or "Puntuación promedio"
       let performanceValue = row["Puntuación promedio"] || row["AG"] || row["Puntuacion promedio"];
-      
-      // Convert comma to dot for decimal numbers
-      if (typeof performanceValue === "string") {
-        performanceValue = performanceValue.replace(",", ".");
-      }
+      const performanceScore = parseNumericValue(performanceValue);
       
       // Get potential score from the map
-      const potentialScore = potentialMap.get(name);
+      const potentialValue = potentialMap.get(name);
+      const potentialScore = parseNumericValue(potentialValue);
       
       // Skip if either value is missing or empty
-      if (!performanceValue || performanceValue === "" || !potentialScore || potentialScore === "") {
+      if (performanceScore === null || potentialScore === null) {
         unclassified.push({
           name,
           manager,
           performanceRaw: performanceValue,
-          potentialRaw: potentialScore,
-          reason: !performanceValue ? "Sin puntuación de desempeño" : "Sin puntuación de potencial",
+          potentialRaw: potentialValue,
+          reason: performanceScore === null ? "Sin puntuación de desempeño" : "Sin puntuación de potencial",
         });
         return;
       }
       
-      const performance = normalizeLevel(performanceValue);
-      const potential = normalizeLevel(potentialScore);
-      
-      if (performance && potential) {
-        employees.push({
-          id: `${name}-${Date.now()}-${Math.random()}`,
-          name,
-          manager: manager || "Sin asignar",
-          performance,
-          potential,
-        });
-      } else {
-        unclassified.push({
-          name,
-          manager,
-          performanceRaw: performanceValue,
-          potentialRaw: potentialScore,
-          reason: !performance ? "Performance no válido" : "Potencial no válido",
-        });
-      }
+      rawData.push({
+        name,
+        manager: manager || "Sin asignar",
+        performanceScore,
+        potentialScore,
+      });
     });
     
-    return { employees, unclassified };
+    // Convert raw data to employees with default thresholds
+    const employees: Employee[] = rawData.map((data) => ({
+      id: `${data.name}-${Date.now()}-${Math.random()}`,
+      name: data.name,
+      manager: data.manager,
+      performanceScore: data.performanceScore,
+      potentialScore: data.potentialScore,
+      performance: normalizeLevel(data.performanceScore, defaultThresholds),
+      potential: normalizeLevel(data.potentialScore, defaultThresholds),
+    }));
+    
+    return { employees, unclassified, rawData };
   } catch (error) {
     console.error("Error parsing Excel files:", error);
     throw new Error("Error al procesar los archivos Excel");
@@ -133,6 +137,7 @@ export const parseExcelFiles = async (
 export const loadDefaultData = async (): Promise<{
   employees: Employee[];
   unclassified: any[];
+  rawData: EmployeeRawData[];
 }> => {
   try {
     const [perfResponse, potResponse] = await Promise.all([
@@ -153,6 +158,6 @@ export const loadDefaultData = async (): Promise<{
     return parseExcelFiles(perfFile, potFile);
   } catch (error) {
     console.error("Error loading default data:", error);
-    return { employees: [], unclassified: [] };
+    return { employees: [], unclassified: [], rawData: [] };
   }
 };

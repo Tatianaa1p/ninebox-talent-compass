@@ -69,9 +69,18 @@ export default {
           DEFAULT: "hsl(var(--danger))",
           foreground: "hsl(var(--danger-foreground))",
         },
-        high: "hsl(var(--high))",
-        medium: "hsl(var(--medium))",
-        low: "hsl(var(--low))",
+        high: {
+          DEFAULT: "hsl(var(--high))",
+          foreground: "hsl(var(--high-foreground))",
+        },
+        medium: {
+          DEFAULT: "hsl(var(--medium))",
+          foreground: "hsl(var(--medium-foreground))",
+        },
+        low: {
+          DEFAULT: "hsl(var(--low))",
+          foreground: "hsl(var(--low-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
