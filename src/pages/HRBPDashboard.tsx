@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Plus, Building2, Users } from "lucide-react";
 import { InteractiveNineBoxGrid } from "@/components/InteractiveNineBoxGrid";
 import { EvaluationDialog } from "@/components/EvaluationDialog";
+import { CreateEmpresaDialog } from "@/components/CreateEmpresaDialog";
+import { CreateEquipoDialog } from "@/components/CreateEquipoDialog";
 import { Employee } from "@/types/employee";
 import { OverrideProvider } from "@/contexts/OverrideContext";
 
@@ -50,6 +52,8 @@ const HRBPDashboard = () => {
   const [tablero, setTablero] = useState<Tablero | null>(null);
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
   const [isEvaluationDialogOpen, setIsEvaluationDialogOpen] = useState(false);
+  const [isCreateEmpresaDialogOpen, setIsCreateEmpresaDialogOpen] = useState(false);
+  const [isCreateEquipoDialogOpen, setIsCreateEquipoDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Verificar rol HRBP
@@ -265,10 +269,20 @@ const HRBPDashboard = () => {
             <h1 className="text-3xl font-bold">Dashboard HRBP</h1>
             <p className="text-muted-foreground">{user?.email}</p>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Cerrar Sesión
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsCreateEmpresaDialogOpen(true)}>
+              <Building2 className="w-4 h-4 mr-2" />
+              Nueva Empresa
+            </Button>
+            <Button variant="outline" onClick={() => setIsCreateEquipoDialogOpen(true)} disabled={!selectedEmpresa}>
+              <Users className="w-4 h-4 mr-2" />
+              Nuevo Equipo
+            </Button>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Cerrar Sesión
+            </Button>
+          </div>
         </div>
 
         {/* Filtros */}
@@ -352,6 +366,35 @@ const HRBPDashboard = () => {
             tableroId={tablero.id}
           />
         )}
+
+        {/* Dialog para crear empresa */}
+        <CreateEmpresaDialog
+          open={isCreateEmpresaDialogOpen}
+          onOpenChange={setIsCreateEmpresaDialogOpen}
+          onCreated={(empresaId) => {
+            setSelectedEmpresa(empresaId);
+            setIsCreateEmpresaDialogOpen(false);
+            // Recargar empresas
+            supabase.from("empresas").select("*").order("nombre").then(({ data }) => {
+              if (data) setEmpresas(data);
+            });
+          }}
+        />
+
+        {/* Dialog para crear equipo */}
+        <CreateEquipoDialog
+          open={isCreateEquipoDialogOpen}
+          onOpenChange={setIsCreateEquipoDialogOpen}
+          empresaId={selectedEmpresa}
+          onCreated={(equipoId) => {
+            setSelectedEquipo(equipoId);
+            setIsCreateEquipoDialogOpen(false);
+            // Recargar equipos
+            supabase.from("equipos").select("*").eq("empresa_id", selectedEmpresa).order("nombre").then(({ data }) => {
+              if (data) setEquipos(data);
+            });
+          }}
+        />
         </div>
       </div>
     </OverrideProvider>
