@@ -5,6 +5,7 @@ import { DroppableQuadrant } from "@/components/DroppableQuadrant";
 import { DraggableEmployee } from "@/components/DraggableEmployee";
 import { EmployeeEditDialog } from "@/components/EmployeeEditDialog";
 import { UndoSnackbar } from "@/components/UndoSnackbar";
+import { QuadrantInfoPanel } from "@/components/QuadrantInfoPanel";
 import { useOverrides } from "@/contexts/OverrideContext";
 import { QUADRANT_KEYS, QUADRANT_NAMES, QUADRANT_DESCRIPTIONS } from "@/types/override";
 import {
@@ -76,6 +77,12 @@ export const InteractiveNineBoxGrid = ({ employees }: InteractiveNineBoxGridProp
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [showUndo, setShowUndo] = useState(false);
   const [undoMessage, setUndoMessage] = useState("");
+  const [hoveredQuadrant, setHoveredQuadrant] = useState<{
+    title: string;
+    description: string;
+    potential: string;
+    performance: string;
+  } | null>(null);
 
   // Get employees with overrides applied in calibrated mode
   const displayEmployees = useMemo(() => {
@@ -246,14 +253,25 @@ export const InteractiveNineBoxGrid = ({ employees }: InteractiveNineBoxGridProp
             <div className="flex-1">
               <div className="grid grid-cols-3 gap-3">
                 {quadrants.map((quadrant) => (
-                  <DroppableQuadrant
+                  <div
                     key={quadrant.id}
-                    id={quadrant.id}
-                    title={quadrant.title}
-                    description={quadrant.description}
-                    color={quadrant.color}
-                    count={quadrant.employees.length}
+                    onMouseEnter={() =>
+                      setHoveredQuadrant({
+                        title: quadrant.title,
+                        description: quadrant.description,
+                        potential: quadrant.potential,
+                        performance: quadrant.performance,
+                      })
+                    }
+                    onMouseLeave={() => setHoveredQuadrant(null)}
                   >
+                    <DroppableQuadrant
+                      id={quadrant.id}
+                      title={quadrant.title}
+                      description={quadrant.description}
+                      color={quadrant.color}
+                      count={quadrant.employees.length}
+                    >
                     {quadrant.employees.map((employee) => (
                       <TooltipProvider key={employee.id}>
                         <Tooltip>
@@ -289,11 +307,24 @@ export const InteractiveNineBoxGrid = ({ employees }: InteractiveNineBoxGridProp
                         </Tooltip>
                       </TooltipProvider>
                     ))}
-                  </DroppableQuadrant>
+                    </DroppableQuadrant>
+                  </div>
                 ))}
               </div>
             </div>
           </div>
+
+          {/* Quadrant Info Panel */}
+          {hoveredQuadrant && (
+            <div className="mt-6">
+              <QuadrantInfoPanel
+                title={hoveredQuadrant.title}
+                description={hoveredQuadrant.description}
+                potential={hoveredQuadrant.potential}
+                performance={hoveredQuadrant.performance}
+              />
+            </div>
+          )}
 
           {/* Performance Level Labels */}
           <div className="flex gap-2 mt-2 ml-10">

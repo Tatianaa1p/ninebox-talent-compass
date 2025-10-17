@@ -34,21 +34,16 @@ export const StatisticsPanel = ({ employees }: StatisticsPanelProps) => {
     });
   }, [employees, viewMode, getOverride]);
 
-  const keyPlayers = displayEmployees.filter(
-    (e) => e.performance === "Alto" && e.potential === "Alto"
-  ).length;
-  
-  const highPotential = displayEmployees.filter(
-    (e) => e.performance === "Medio" && e.potential === "Alto"
-  ).length;
-
-  const highPotentialTotal = displayEmployees.filter(
-    (e) => e.potential === "Alto"
-  ).length;
-  
-  const lowPerformers = displayEmployees.filter(
-    (e) => e.performance === "Bajo"
-  ).length;
+  const countByQuadrant = useMemo(() => {
+    const counts: Record<string, number> = {};
+    
+    displayEmployees.forEach((emp) => {
+      const key = `${emp.potential}-${emp.performance}`;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    
+    return counts;
+  }, [displayEmployees]);
 
   const stats = [
     {
@@ -58,39 +53,69 @@ export const StatisticsPanel = ({ employees }: StatisticsPanelProps) => {
       color: "text-primary",
     },
     {
-      title: "Key Players",
-      value: keyPlayers,
+      title: "1. Talento Estratégico",
+      value: countByQuadrant["Alto-Alto"] || 0,
       icon: Award,
       color: "text-success",
     },
     {
-      title: "High Potential",
-      value: highPotential,
+      title: "2. Crecimiento Acelerado",
+      value: countByQuadrant["Alto-Medio"] || 0,
       icon: TrendingUp,
       color: "text-success",
     },
     {
-      title: "Talento Alto Total",
-      value: highPotentialTotal,
+      title: "3. Desempeño Consistente",
+      value: countByQuadrant["Medio-Alto"] || 0,
       icon: Target,
       color: "text-success",
     },
     {
-      title: "Bajo Desempeño",
-      value: lowPerformers,
+      title: "4. Comprometido",
+      value: countByQuadrant["Bajo-Alto"] || 0,
+      icon: Award,
+      color: "text-primary",
+    },
+    {
+      title: "5. Potencial No Visible",
+      value: countByQuadrant["Alto-Bajo"] || 0,
+      icon: AlertTriangle,
+      color: "text-warning",
+    },
+    {
+      title: "6. Evolución",
+      value: countByQuadrant["Medio-Medio"] || 0,
+      icon: Users,
+      color: "text-primary",
+    },
+    {
+      title: "7. En Riesgo de Estancamiento",
+      value: countByQuadrant["Bajo-Medio"] || 0,
+      icon: AlertTriangle,
+      color: "text-warning",
+    },
+    {
+      title: "8. En Revisión",
+      value: countByQuadrant["Medio-Bajo"] || 0,
+      icon: AlertTriangle,
+      color: "text-danger",
+    },
+    {
+      title: "9. Desempeño Insuficiente",
+      value: countByQuadrant["Bajo-Bajo"] || 0,
       icon: AlertTriangle,
       color: "text-danger",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-xs font-medium">
                 {stat.title}
               </CardTitle>
               <Icon className={`h-4 w-4 ${stat.color}`} />

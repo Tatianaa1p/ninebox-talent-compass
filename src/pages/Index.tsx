@@ -155,6 +155,15 @@ const Index = () => {
         {/* Statistics */}
         <StatisticsPanel employees={employees} />
 
+        {/* Calibration Controls */}
+        <CalibrationControls
+          performanceThresholds={performanceThresholds}
+          potentialThresholds={potentialThresholds}
+          onPerformanceChange={setPerformanceThresholds}
+          onPotentialChange={setPotentialThresholds}
+          onReset={handleResetThresholds}
+        />
+
         {/* Nine Box Grid */}
         <Card>
           <CardHeader>
