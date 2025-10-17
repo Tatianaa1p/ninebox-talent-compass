@@ -14,16 +14,176 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      empresas: {
+        Row: {
+          created_at: string | null
+          id: string
+          nombre: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nombre: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
+      equipos: {
+        Row: {
+          created_at: string | null
+          empresa_id: string
+          id: string
+          manager_id: string | null
+          nombre: string
+        }
+        Insert: {
+          created_at?: string | null
+          empresa_id: string
+          id?: string
+          manager_id?: string | null
+          nombre: string
+        }
+        Update: {
+          created_at?: string | null
+          empresa_id?: string
+          id?: string
+          manager_id?: string | null
+          nombre?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluaciones: {
+        Row: {
+          created_at: string | null
+          desempeno_score: number
+          equipo_id: string
+          id: string
+          persona_nombre: string
+          potencial_score: number
+          tablero_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          desempeno_score: number
+          equipo_id: string
+          id?: string
+          persona_nombre: string
+          potencial_score: number
+          tablero_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          desempeno_score?: number
+          equipo_id?: string
+          id?: string
+          persona_nombre?: string
+          potencial_score?: number
+          tablero_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluaciones_equipo_id_fkey"
+            columns: ["equipo_id"]
+            isOneToOne: false
+            referencedRelation: "equipos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluaciones_tablero_id_fkey"
+            columns: ["tablero_id"]
+            isOneToOne: false
+            referencedRelation: "tableros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tableros: {
+        Row: {
+          created_at: string | null
+          empresa_id: string
+          equipo_id: string
+          id: string
+          nombre: string
+        }
+        Insert: {
+          created_at?: string | null
+          empresa_id: string
+          equipo_id: string
+          id?: string
+          nombre: string
+        }
+        Update: {
+          created_at?: string | null
+          empresa_id?: string
+          equipo_id?: string
+          id?: string
+          nombre?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tableros_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tableros_equipo_id_fkey"
+            columns: ["equipo_id"]
+            isOneToOne: false
+            referencedRelation: "equipos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "manager" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +310,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "manager", "user"],
+    },
   },
 } as const
