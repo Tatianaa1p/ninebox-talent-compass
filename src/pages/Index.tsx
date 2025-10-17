@@ -17,8 +17,14 @@ import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const DEFAULT_THRESHOLDS: ThresholdConfig = {
-  low: 2.4,
-  medium: 2.5,
+  low: 1.5,
+  medium: 1.6,
+  high: 2.6,
+};
+
+const DEFAULT_PERFORMANCE_THRESHOLDS: ThresholdConfig = {
+  low: 2.9,
+  medium: 3.0,
   high: 4.0,
 };
 
@@ -28,7 +34,7 @@ const Index = () => {
   const [rawData, setRawData] = useState<EmployeeRawData[]>([]);
   const [unclassified, setUnclassified] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [performanceThresholds, setPerformanceThresholds] = useState<ThresholdConfig>(DEFAULT_THRESHOLDS);
+  const [performanceThresholds, setPerformanceThresholds] = useState<ThresholdConfig>(DEFAULT_PERFORMANCE_THRESHOLDS);
   const [potentialThresholds, setPotentialThresholds] = useState<ThresholdConfig>(DEFAULT_THRESHOLDS);
   const { toast } = useToast();
 
@@ -43,9 +49,15 @@ const Index = () => {
 
   // Recalculate employee classifications based on current thresholds
   const employees = useMemo(() => {
-    const classifyLevel = (value: number, thresholds: ThresholdConfig): "Bajo" | "Medio" | "Alto" => {
-      if (value >= thresholds.high) return "Alto";
-      if (value >= thresholds.medium) return "Medio";
+    const classifyPotential = (value: number): "Bajo" | "Medio" | "Alto" => {
+      if (value > 2.5) return "Alto";
+      if (value > 1.5) return "Medio";
+      return "Bajo";
+    };
+
+    const classifyPerformance = (value: number): "Bajo" | "Medio" | "Alto" => {
+      if (value >= 4) return "Alto";
+      if (value >= 3) return "Medio";
       return "Bajo";
     };
 
@@ -55,10 +67,10 @@ const Index = () => {
       manager: data.manager,
       performanceScore: data.performanceScore,
       potentialScore: data.potentialScore,
-      performance: classifyLevel(data.performanceScore, performanceThresholds) as PerformanceLevel,
-      potential: classifyLevel(data.potentialScore, potentialThresholds) as PotentialLevel,
+      performance: classifyPerformance(data.performanceScore) as PerformanceLevel,
+      potential: classifyPotential(data.potentialScore) as PotentialLevel,
     }));
-  }, [rawData, performanceThresholds, potentialThresholds]);
+  }, [rawData]);
 
   useEffect(() => {
     // Load default data on mount
@@ -105,7 +117,7 @@ const Index = () => {
   };
 
   const handleResetThresholds = () => {
-    setPerformanceThresholds(DEFAULT_THRESHOLDS);
+    setPerformanceThresholds(DEFAULT_PERFORMANCE_THRESHOLDS);
     setPotentialThresholds(DEFAULT_THRESHOLDS);
     toast({
       title: "Umbrales restaurados",

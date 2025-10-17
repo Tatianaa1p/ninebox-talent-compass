@@ -14,16 +14,29 @@ export const QuadrantInfoPanel = ({
   potential,
   performance,
 }: QuadrantInfoPanelProps) => {
-  const getThresholdText = (level: string) => {
-    switch (level) {
-      case "Alto":
-        return "≥ 4.0";
-      case "Medio":
-        return "2.5 - 3.9";
-      case "Bajo":
-        return "≤ 2.4";
-      default:
-        return "";
+  const getThresholdText = (level: string, type: 'potential' | 'performance') => {
+    if (type === 'potential') {
+      switch (level) {
+        case "Alto":
+          return "> 2.5";
+        case "Medio":
+          return "> 1.5 hasta ≤ 2.5";
+        case "Bajo":
+          return "≤ 1.5";
+        default:
+          return "";
+      }
+    } else {
+      switch (level) {
+        case "Alto":
+          return "≥ 4";
+        case "Medio":
+          return "≥ 3 hasta < 4";
+        case "Bajo":
+          return "< 3";
+        default:
+          return "";
+      }
     }
   };
 
@@ -37,10 +50,10 @@ export const QuadrantInfoPanel = ({
             <CardDescription className="mt-2">
               <div className="space-y-1 text-sm">
                 <div>
-                  <span className="font-semibold">Potencial:</span> {potential} ({getThresholdText(potential)})
+                  <span className="font-semibold">Potencial:</span> {potential} ({getThresholdText(potential, 'potential')})
                 </div>
                 <div>
-                  <span className="font-semibold">Desempeño:</span> {performance} ({getThresholdText(performance)})
+                  <span className="font-semibold">Desempeño:</span> {performance} ({getThresholdText(performance, 'performance')})
                 </div>
               </div>
             </CardDescription>
