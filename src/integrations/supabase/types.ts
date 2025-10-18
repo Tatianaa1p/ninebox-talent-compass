@@ -32,6 +32,35 @@ export type Database = {
         }
         Relationships: []
       }
+      empresas_usuarios: {
+        Row: {
+          created_at: string | null
+          empresa_id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          empresa_id: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          empresa_id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresas_usuarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipos: {
         Row: {
           created_at: string | null
