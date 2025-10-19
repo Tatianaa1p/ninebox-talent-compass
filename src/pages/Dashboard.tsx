@@ -61,7 +61,9 @@ const Dashboard = () => {
     const loadEmpresas = async () => {
       const { data, error } = await supabase.from('empresas').select('*');
       if (error) {
-        console.error('Error loading empresas:', error);
+        console.error('Empresas error:', error); // ver code/message
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
         toast({
           title: 'Error al cargar empresas',
           description: error.message.includes('policy') 
@@ -70,6 +72,7 @@ const Dashboard = () => {
           variant: 'destructive',
         });
       } else {
+        console.log('Empresas cargadas:', data?.length || 0);
         // Remove duplicates by nombre, keeping first occurrence
         const uniqueEmpresas = data?.reduce((acc: Empresa[], current) => {
           const exists = acc.find(item => item.nombre === current.nombre);
