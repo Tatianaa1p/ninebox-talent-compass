@@ -209,14 +209,14 @@ const Dashboard = () => {
   };
 
   const getPerformanceLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score >= 4) return 'Alto';
-    if (score >= 1.6) return 'Medio';
+    if (score >= 4.0) return 'Alto';
+    if (score >= 2.5) return 'Medio';
     return 'Bajo';
   };
 
   const getPotentialLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score >= 4) return 'Alto';
-    if (score >= 3) return 'Medio';
+    if (score >= 4.0) return 'Alto';
+    if (score >= 2.5) return 'Medio';
     return 'Bajo';
   };
 
