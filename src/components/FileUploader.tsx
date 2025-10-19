@@ -52,18 +52,23 @@ export const FileUploader = ({ onFilesUploaded, onClose }: FileUploaderProps) =>
     const results: Array<any> = [];
     
     for (const row of data) {
-      // Map column names from Excel files
+      // Map column names from Excel files - prioritize exact match for 'Nombre completo'
       const nombreCompleto = row['Nombre completo'] || row.nombre || row.Nombre || row.name || row.Name;
       const puntuacionPromedio = row['Puntuación promedio'] || row.performance || row.Performance || row.desempeño || row.Desempeño || row.potencial || row.Potencial || row.potential || row.Potential;
       
-      if (!nombreCompleto || puntuacionPromedio === undefined || puntuacionPromedio === '') continue;
+      // Skip empty or invalid rows
+      if (!nombreCompleto || puntuacionPromedio === undefined || puntuacionPromedio === '' || puntuacionPromedio === null) continue;
       
+      // Convert to number and validate as decimal
       const numScore = Number(puntuacionPromedio);
+      
+      // Ignore non-numeric or out-of-range values
       if (isNaN(numScore) || numScore < 1 || numScore > 5) {
         console.warn(`Score inválido para ${nombreCompleto}: ${puntuacionPromedio}`);
         continue;
       }
       
+      // Store as decimal NUMERIC value
       results.push({
         nombre: String(nombreCompleto).trim(),
         [type]: numScore
