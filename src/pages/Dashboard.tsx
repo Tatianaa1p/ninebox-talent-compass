@@ -8,8 +8,9 @@ import { useToast } from '@/hooks/use-toast';
 import { LogIn, Plus } from 'lucide-react';
 import { InteractiveNineBoxGrid } from '@/components/InteractiveNineBoxGrid';
 import { StatisticsPanel } from '@/components/StatisticsPanel';
-import { EvaluationDialog } from '@/components/EvaluationDialog';
 import { CreateBoardDialog } from '@/components/CreateBoardDialog';
+import { FileUploader } from '@/components/FileUploader';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CreateEmpresaDialog } from '@/components/CreateEmpresaDialog';
 import { CreateEquipoDialog } from '@/components/CreateEquipoDialog';
 import { Employee } from '@/types/employee';
@@ -31,13 +32,12 @@ interface Tablero {
   equipo_id: string;
 }
 
-interface Evaluacion {
+interface Empleado {
   id: string;
-  persona_nombre: string;
-  potencial_score: number;
-  desempeno_score: number;
-  equipo_id: string;
-  tablero_id: string | null;
+  nombre: string;
+  performance: number;
+  potencial: number;
+  tablero_id: string;
 }
 
 const Dashboard = () => {
@@ -46,12 +46,12 @@ const Dashboard = () => {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [tableros, setTableros] = useState<Tablero[]>([]);
-  const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
+  const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [selectedEmpresa, setSelectedEmpresa] = useState<string>('');
   const [selectedEquipo, setSelectedEquipo] = useState<string>('');
   const [selectedTablero, setSelectedTablero] = useState<string>('');
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [showEvaluationDialog, setShowEvaluationDialog] = useState(false);
+  const [showFileUploadDialog, setShowFileUploadDialog] = useState(false);
   const [showCreateBoardDialog, setShowCreateBoardDialog] = useState(false);
   const [showCreateEmpresaDialog, setShowCreateEmpresaDialog] = useState(false);
   const [showCreateEquipoDialog, setShowCreateEquipoDialog] = useState(false);
@@ -145,47 +145,47 @@ const Dashboard = () => {
     loadTableros();
   }, [selectedEquipo, toast]);
 
-  // Load evaluaciones and subscribe to changes
+  // Load empleados and subscribe to changes
   useEffect(() => {
     if (!selectedTablero) {
-      setEvaluaciones([]);
+      setEmpleados([]);
       setEmployees([]);
       return;
     }
 
-    const loadEvaluaciones = async () => {
+    const loadEmpleados = async () => {
       const { data, error } = await supabase
-        .from('evaluaciones')
+        .from('empleados' as any)
         .select('*')
         .eq('tablero_id', selectedTablero);
       
       if (error) {
         toast({
           title: 'Error',
-          description: 'No se pudieron cargar las evaluaciones',
+          description: 'No se pudieron cargar los empleados',
           variant: 'destructive',
         });
       } else {
-        setEvaluaciones(data || []);
-        convertToEmployees(data || []);
+        setEmpleados((data as any) || []);
+        convertToEmployees((data as any) || []);
       }
     };
 
-    loadEvaluaciones();
+    loadEmpleados();
 
     // Subscribe to real-time changes
     const channel = supabase
-      .channel('evaluaciones-changes')
+      .channel('empleados-changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'evaluaciones',
+          table: 'empleados',
           filter: `tablero_id=eq.${selectedTablero}`,
         },
         () => {
-          loadEvaluaciones();
+          loadEmpleados();
         }
       )
       .subscribe();
@@ -195,29 +195,93 @@ const Dashboard = () => {
     };
   }, [selectedTablero, toast]);
 
-  const convertToEmployees = (evals: Evaluacion[]) => {
-    const emps: Employee[] = evals.map((e) => ({
+  const convertToEmployees = (emps: Empleado[]) => {
+    const employees: Employee[] = emps.map((e) => ({
       id: e.id,
-      name: e.persona_nombre,
+      name: e.nombre,
       manager: '',
-      performance: getPerformanceLevel(e.desempeno_score),
-      potential: getPotentialLevel(e.potencial_score),
-      performanceScore: e.desempeno_score,
-      potentialScore: e.potencial_score,
+      performance: getPerformanceLevel(e.performance),
+      potential: getPotentialLevel(e.potencial),
+      performanceScore: e.performance,
+      potentialScore: e.potencial,
     }));
-    setEmployees(emps);
+    setEmployees(employees);
   };
 
   const getPerformanceLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score >= 4.0) return 'Alto';
-    if (score >= 2.5) return 'Medio';
+    if (score >= 4) return 'Alto';
+    if (score >= 3) return 'Medio';
     return 'Bajo';
   };
 
   const getPotentialLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score >= 4.0) return 'Alto';
-    if (score >= 2.5) return 'Medio';
+    if (score >= 4) return 'Alto';
+    if (score >= 3) return 'Medio';
     return 'Bajo';
+  };
+
+  const handleFilesUploaded = async (
+    performanceData: Array<{nombre: string, performance: number}>,
+    potentialData: Array<{nombre: string, potencial: number}>
+  ) => {
+    // Combine data by nombre
+    const combined = new Map<string, {performance?: number, potencial?: number}>();
+    
+    performanceData.forEach(p => {
+      combined.set(p.nombre, { ...combined.get(p.nombre), performance: p.performance });
+    });
+    
+    potentialData.forEach(p => {
+      const existing = combined.get(p.nombre) || {};
+      combined.set(p.nombre, { ...existing, potencial: p.potencial });
+    });
+
+    // Prepare records for insertion
+    const records = Array.from(combined.entries())
+      .filter(([_, data]) => data.performance !== undefined && data.potencial !== undefined)
+      .map(([nombre, data]) => ({
+        nombre,
+        performance: Math.round(data.performance!),
+        potencial: Math.round(data.potencial!),
+        tablero_id: selectedTablero
+      }));
+
+    if (records.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'No se encontraron empleados con ambos valores (performance y potencial)',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Insert/update in Supabase
+    const { error } = await supabase
+      .from('empleados' as any)
+      .upsert(records, { 
+        onConflict: 'nombre,tablero_id',
+        ignoreDuplicates: false 
+      });
+
+    if (error) {
+      toast({
+        title: 'Error al guardar',
+        description: error.message,
+        variant: 'destructive',
+      });
+      throw error;
+    }
+
+    // Reload data
+    const { data: updatedData } = await supabase
+      .from('empleados' as any)
+      .select('*')
+      .eq('tablero_id', selectedTablero);
+    
+    if (updatedData) {
+      setEmpleados(updatedData as any);
+      convertToEmployees(updatedData as any);
+    }
   };
 
   const handleGoToAuth = () => {
@@ -330,7 +394,7 @@ const Dashboard = () => {
                 Crear Tablero
               </Button>
               <Button
-                onClick={() => setShowEvaluationDialog(true)}
+                onClick={() => setShowFileUploadDialog(true)}
                 disabled={!selectedTablero}
                 variant="secondary"
               >
@@ -357,12 +421,20 @@ const Dashboard = () => {
         )}
       </div>
 
-      <EvaluationDialog
-        open={showEvaluationDialog}
-        onOpenChange={setShowEvaluationDialog}
-        equipoId={selectedEquipo}
-        tableroId={selectedTablero}
-      />
+      <Dialog open={showFileUploadDialog} onOpenChange={setShowFileUploadDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Cargar Evaluaciones Masivas</DialogTitle>
+            <DialogDescription>
+              Sube archivos CSV o Excel con las evaluaciones de performance y potencial (valores 1-5)
+            </DialogDescription>
+          </DialogHeader>
+          <FileUploader 
+            onFilesUploaded={handleFilesUploaded}
+            onClose={() => setShowFileUploadDialog(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       <CreateBoardDialog
         open={showCreateBoardDialog}

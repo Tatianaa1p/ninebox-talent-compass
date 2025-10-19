@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 import { InteractiveNineBoxGrid } from "@/components/InteractiveNineBoxGrid";
 import { StatisticsPanel } from "@/components/StatisticsPanel";
-import { FileUploader } from "@/components/FileUploader";
 import { ExportButton } from "@/components/ExportButton";
 import { CalibrationControls, ThresholdConfig } from "@/components/CalibrationControls";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
@@ -117,28 +116,6 @@ const Index = () => {
       .finally(() => setLoading(false));
   }, [toast]);
 
-  const handleFilesUploaded = async (performanceFile: File, potentialFile: File) => {
-    setLoading(true);
-    try {
-      const { rawData, unclassified } = await parseExcelFiles(performanceFile, potentialFile);
-      setRawData(rawData);
-      setUnclassified(unclassified);
-      toast({
-        title: "Archivos cargados",
-        description: `Se cargaron ${rawData.length} empleados exitosamente`,
-      });
-    } catch (error) {
-      console.error("Error processing files:", error);
-      toast({
-        title: "Error",
-        description: "Error al procesar los archivos",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleResetThresholds = () => {
     setPerformanceThresholds(DEFAULT_PERFORMANCE_THRESHOLDS);
     setPotentialThresholds(DEFAULT_THRESHOLDS);
@@ -207,9 +184,6 @@ const Index = () => {
             <ExportButton employees={employees} />
           </div>
         </div>
-
-        {/* File Uploader */}
-        <FileUploader onFilesUploaded={handleFilesUploaded} />
 
         {/* View Mode Toggle */}
         <ViewModeToggle />
