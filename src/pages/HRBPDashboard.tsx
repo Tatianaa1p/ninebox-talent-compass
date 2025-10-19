@@ -1,181 +1,101 @@
  (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/src/pages/HRBPDashboard.tsx b/src/pages/HRBPDashboard.tsx
-index aac07ff92b074d74fc2a16bd6f8a9a272ae751e7..da00879a8d355c050261535cd75013b4d1490896 100644
---- a/src/pages/HRBPDashboard.tsx
-+++ b/src/pages/HRBPDashboard.tsx
-@@ -20,104 +20,94 @@ interface Empresa {
- }
+diff --git a/src/pages/Auth.tsx b/src/pages/Auth.tsx
+index 5b4b4acfeeb20e8cd3f3999023263f5007994150..f2175d116ad4025aefa818cc2a25d969bf2e88ae 100644
+--- a/src/pages/Auth.tsx
++++ b/src/pages/Auth.tsx
+@@ -1,88 +1,69 @@
+ import { useState, useEffect } from 'react';
+ import { useNavigate } from 'react-router-dom';
+ import { useAuth } from '@/contexts/AuthContext';
+-import { supabase } from '@/integrations/supabase/client';
+ import { Button } from '@/components/ui/button';
+ import { Input } from '@/components/ui/input';
+ import { Label } from '@/components/ui/label';
+ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+ import { useToast } from '@/hooks/use-toast';
+ import { Loader2 } from 'lucide-react';
  
- interface Equipo {
-   id: string;
-   nombre: string;
-   empresa_id: string;
- }
- 
- interface Tablero {
-   id: string;
-   nombre: string;
-   equipo_id: string;
-   empresa_id: string;
- }
- 
- interface Evaluacion {
-   id: string;
-   persona_nombre: string;
-   potencial_score: number;
-   desempeno_score: number;
-   equipo_id: string;
-   tablero_id: string;
- }
- 
- const HRBPDashboard = () => {
--  const { user, signOut } = useAuth();
-+  const { user, signOut, loading: authLoading } = useAuth();
+ const Auth = () => {
+   const [email, setEmail] = useState('');
+   const [password, setPassword] = useState('');
+   const [loading, setLoading] = useState(false);
+   const { signIn, signUp, user } = useAuth();
    const navigate = useNavigate();
-   
-   const [empresas, setEmpresas] = useState<Empresa[]>([]);
-   const [equipos, setEquipos] = useState<Equipo[]>([]);
-   const [selectedEmpresa, setSelectedEmpresa] = useState<string>("");
-   const [selectedEquipo, setSelectedEquipo] = useState<string>("");
-   const [tablero, setTablero] = useState<Tablero | null>(null);
-   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
-   const [isEvaluationDialogOpen, setIsEvaluationDialogOpen] = useState(false);
-   const [isCreateEmpresaDialogOpen, setIsCreateEmpresaDialogOpen] = useState(false);
-   const [isCreateEquipoDialogOpen, setIsCreateEquipoDialogOpen] = useState(false);
--  const [loading, setLoading] = useState(true);
-+  const [isDataLoading, setIsDataLoading] = useState(true);
+   const { toast } = useToast();
  
--  // Verificar rol HRBP
--  useEffect(() => {
--    const checkRole = async () => {
+   useEffect(() => {
+-    const redirectUser = async () => {
 -      if (!user) return;
--      
--      const { data, error } = await supabase
+-
+-      // Check user role
+-      const { data } = await supabase
 -        .from("user_roles")
 -        .select("role")
 -        .eq("user_id", user.id)
--        .eq("role", "hrbp")
 -        .maybeSingle();
 -
--      if (error || !data) {
--        toast.error("No tienes permisos de HRBP");
--        navigate("/");
+-      // Si no hay data?.role, no navegues (mostrá aviso o espera asignación)
+-      if (data?.role === 'hrbp') {
+-        navigate('/hrbp');
+-      } else if (data?.role === 'manager') {
+-        navigate('/dashboard');
+-      } else {
+-        return; // o navigate('/sin-acceso')
 -      }
 -    };
 -
--    checkRole();
--  }, [user, navigate]);
-+  // No role validation to allow unrestricted access during testing
- 
-   // Cargar empresas
-   useEffect(() => {
-+    if (authLoading) return;
-+
-     const fetchEmpresas = async () => {
-+      setIsDataLoading(true);
-       const { data, error } = await supabase
-         .from("empresas")
-         .select("*")
-         .order("nombre");
- 
-       if (error) {
-         toast.error("Error al cargar empresas");
-+        setIsDataLoading(false);
-         return;
-       }
- 
-       setEmpresas(data || []);
--      setLoading(false);
-+      setIsDataLoading(false);
-     };
- 
--    fetchEmpresas();
--  }, []);
+-    redirectUser();
 +    if (user) {
-+      fetchEmpresas();
-+    } else {
-+      setEmpresas([]);
-+      setIsDataLoading(false);
++      navigate('/hrbp');
 +    }
-+  }, [user, authLoading]);
+   }, [user, navigate]);
  
-   // Cargar equipos cuando cambia la empresa
-   useEffect(() => {
-     if (!selectedEmpresa) {
-       setEquipos([]);
-       return;
+   const handleSignIn = async (e: React.FormEvent) => {
+     e.preventDefault();
+     setLoading(true);
+ 
+     const { error } = await signIn(email, password);
+ 
+     if (error) {
+       toast({
+         title: 'Error al iniciar sesión',
+         description: error.message,
+         variant: 'destructive',
+       });
+       setLoading(false);
+     } else {
+       toast({
+         title: 'Sesión iniciada',
+         description: 'Bienvenido de vuelta',
+       });
+-      // Don't navigate here, let useEffect handle it based on role
++      // Don't navigate here, let useEffect handle the post-login redirect
+     }
+   };
+ 
+   const handleSignUp = async (e: React.FormEvent) => {
+     e.preventDefault();
+     setLoading(true);
+ 
+     const { error } = await signUp(email, password);
+ 
+     if (error) {
+       toast({
+         title: 'Error al registrarse',
+         description: error.message,
+         variant: 'destructive',
+       });
+     } else {
+       toast({
+         title: 'Cuenta creada',
+         description: 'Revisa tu correo para confirmar tu cuenta',
+       });
      }
  
-     const fetchEquipos = async () => {
-       const { data, error } = await supabase
-         .from("equipos")
-         .select("*")
-         .eq("empresa_id", selectedEmpresa)
-         .order("nombre");
- 
-       if (error) {
-         toast.error("Error al cargar equipos");
-         return;
-       }
- 
-       setEquipos(data || []);
-     };
- 
-     fetchEquipos();
-   }, [selectedEmpresa]);
-@@ -229,51 +219,51 @@ const HRBPDashboard = () => {
+     setLoading(false);
    };
  
-   const getPerformanceLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-     if (score >= 4.0) return 'Alto';
-     if (score >= 2.5) return 'Medio';
-     return 'Bajo';
-   };
- 
-   const employees: Employee[] = useMemo(() => {
-     return evaluaciones.map(ev => ({
-       id: ev.id,
-       name: ev.persona_nombre,
-       manager: "HRBP",
-       potential: getPotentialLevel(ev.potencial_score),
-       performance: getPerformanceLevel(ev.desempeno_score),
-       potentialScore: ev.potencial_score,
-       performanceScore: ev.desempeno_score,
-     }));
-   }, [evaluaciones]);
- 
-   const handleLogout = async () => {
-     await signOut();
-     navigate("/auth");
-   };
- 
--  if (loading) {
-+  if (isDataLoading) {
-     return (
-       <div className="flex items-center justify-center min-h-screen">
-         <p>Cargando...</p>
-       </div>
-     );
-   }
- 
-   return (
-     <OverrideProvider>
-       <div className="min-h-screen bg-background p-6">
-         <div className="max-w-7xl mx-auto space-y-6">
-         {/* Header */}
-         <div className="flex justify-between items-center">
-           <div>
-             <h1 className="text-3xl font-bold">Dashboard HRBP</h1>
-             <p className="text-muted-foreground">{user?.email}</p>
-           </div>
-           <div className="flex gap-2">
-             <Button variant="outline" onClick={() => setIsCreateEmpresaDialogOpen(true)}>
-               <Building2 className="w-4 h-4 mr-2" />
-               Nueva Empresa
-             </Button>
-             <Button variant="outline" onClick={() => setIsCreateEquipoDialogOpen(true)} disabled={!selectedEmpresa}>
-               <Users className="w-4 h-4 mr-2" />
-               Nuevo Equipo
  
 EOF
 )
