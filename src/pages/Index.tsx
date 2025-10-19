@@ -1,263 +1,198 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
-import { InteractiveNineBoxGrid } from "@/components/InteractiveNineBoxGrid";
-import { StatisticsPanel } from "@/components/StatisticsPanel";
-import { FileUploader } from "@/components/FileUploader";
-import { ExportButton } from "@/components/ExportButton";
-import { CalibrationControls, ThresholdConfig } from "@/components/CalibrationControls";
-import { ViewModeToggle } from "@/components/ViewModeToggle";
-import { ClearOverridesButton } from "@/components/ClearOverridesButton";
-import { parseExcelFiles, loadDefaultData, EmployeeRawData } from "@/utils/excelParser";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { AlertCircle, LogIn } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-const DEFAULT_THRESHOLDS: ThresholdConfig = {
-  low: 1.5,
-  medium: 1.5,
-  high: 2.5,
-};
-
-const DEFAULT_PERFORMANCE_THRESHOLDS: ThresholdConfig = {
-  low: 2.9,
-  medium: 3.0,
-  high: 4.0,
-};
-
-const Index = () => {
-  const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
-  const [rawData, setRawData] = useState<EmployeeRawData[]>([]);
-  const [unclassified, setUnclassified] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [checkingRole, setCheckingRole] = useState(false);
-  const [performanceThresholds, setPerformanceThresholds] = useState<ThresholdConfig>(DEFAULT_PERFORMANCE_THRESHOLDS);
-  const [potentialThresholds, setPotentialThresholds] = useState<ThresholdConfig>(DEFAULT_THRESHOLDS);
-  const { toast } = useToast();
-
-  // Redirect authenticated users based on their role
-  useEffect(() => {
-    const redirectUser = async () => {
-      if (authLoading) return;
-      
-      if (user) {
-        setCheckingRole(true);
-        // Check user role
-        const { data } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        setCheckingRole(false);
-
-        // Si no hay data?.role, no navegues (mostrá aviso o espera asignación)
-        if (data?.role === 'hrbp') {
-          navigate('/hrbp');
-        } else if (data?.role === 'manager') {
-          navigate('/dashboard');
-        } else {
-          return; // o navigate('/sin-acceso')
-        }
-      }
-    };
-
-    redirectUser();
-  }, [user, authLoading, navigate]);
-
-  // Recalculate employee classifications based on current thresholds
-  const employees = useMemo(() => {
-    const classifyPotential = (value: number): "Bajo" | "Medio" | "Alto" => {
-      if (value > 2.5) return "Alto";
-      if (value > 1.5) return "Medio";
-      return "Bajo";
-    };
-
-    const classifyPerformance = (value: number): "Bajo" | "Medio" | "Alto" => {
-      if (value >= 4) return "Alto";
-      if (value >= 3) return "Medio";
-      return "Bajo";
-    };
-
-    return rawData.map((data) => ({
-      id: `${data.name}-${Date.now()}-${Math.random()}`,
-      name: data.name,
-      manager: data.manager,
-      performanceScore: data.performanceScore,
-      potentialScore: data.potentialScore,
-      performance: classifyPerformance(data.performanceScore) as PerformanceLevel,
-      potential: classifyPotential(data.potentialScore) as PotentialLevel,
-    }));
-  }, [rawData]);
-
-  useEffect(() => {
-    // Load default data on mount
-    loadDefaultData()
-      .then(({ rawData, unclassified }) => {
-        setRawData(rawData);
-        setUnclassified(unclassified);
-        toast({
-          title: "Datos cargados",
-          description: `Se cargaron ${rawData.length} empleados exitosamente`,
-        });
-      })
-      .catch((error) => {
-        console.error("Error loading default data:", error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar los datos por defecto",
-          variant: "destructive",
-        });
-      })
-      .finally(() => setLoading(false));
-  }, [toast]);
-
-  const handleFilesUploaded = async (performanceFile: File, potentialFile: File) => {
-    setLoading(true);
-    try {
-      const { rawData, unclassified } = await parseExcelFiles(performanceFile, potentialFile);
-      setRawData(rawData);
-      setUnclassified(unclassified);
-      toast({
-        title: "Archivos cargados",
-        description: `Se cargaron ${rawData.length} empleados exitosamente`,
-      });
-    } catch (error) {
-      console.error("Error processing files:", error);
-      toast({
-        title: "Error",
-        description: "Error al procesar los archivos",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetThresholds = () => {
-    setPerformanceThresholds(DEFAULT_PERFORMANCE_THRESHOLDS);
-    setPotentialThresholds(DEFAULT_THRESHOLDS);
-    toast({
-      title: "Umbrales restaurados",
-      description: "Se han restaurado los valores por defecto",
-    });
-  };
-
-  if (loading || checkingRole) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">
-            {checkingRole ? 'Verificando permisos...' : 'Cargando datos...'}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Si el usuario está autenticado pero no tiene rol asignado
-  if (user && !checkingRole && !authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>Acceso Pendiente</CardTitle>
-            <CardDescription>
-              Tu cuenta está registrada pero aún no tiene un rol asignado.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Por favor, contacta al administrador para que te asigne un rol (HRBP o Manager).
-            </p>
-            <Button variant="outline" className="w-full" onClick={() => navigate('/auth')}>
-              Cerrar Sesión
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Nine Box Grid - Evaluación de Talento
-            </h1>
-            <p className="text-muted-foreground">
-              Matriz de evaluación de Desempeño vs Potencial
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="default" size="lg" onClick={() => navigate('/auth')}>
-              <LogIn className="w-4 h-4 mr-2" />
-              Iniciar Sesión / Registrarse
-            </Button>
-            <ClearOverridesButton />
-            <ExportButton employees={employees} />
-          </div>
-        </div>
-
-        {/* File Uploader */}
-        <FileUploader onFilesUploaded={handleFilesUploaded} />
-
-        {/* View Mode Toggle */}
-        <ViewModeToggle />
-
-        {/* Statistics */}
-        <StatisticsPanel employees={employees} />
-
-        {/* Calibration Controls */}
-        <CalibrationControls
-          performanceThresholds={performanceThresholds}
-          potentialThresholds={potentialThresholds}
-          onPerformanceChange={setPerformanceThresholds}
-          onPotentialChange={setPotentialThresholds}
-          onReset={handleResetThresholds}
-        />
-
-        {/* Nine Box Grid */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Matriz Nine Box Interactiva</CardTitle>
-            <CardDescription>
-              Arrastra empleados entre cuadrantes para reclasificar manualmente
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <InteractiveNineBoxGrid employees={employees} />
-          </CardContent>
-        </Card>
-
-        {/* Unclassified Cases */}
-        {unclassified.length > 0 && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Casos sin clasificar ({unclassified.length})</AlertTitle>
-            <AlertDescription>
-              <div className="mt-2 space-y-1">
-                {unclassified.map((item, index) => (
-                  <div key={index} className="text-sm">
-                    • {item.name} - {item.reason}
-                  </div>
-                ))}
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default Index;
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/src/pages/Index.tsx b/src/pages/Index.tsx
+index d8cc1da3289f52658f50d87d4b74b92624046c67..fecfcaa727401fea7b872947c6d51ea35807ea2f 100644
+--- a/src/pages/Index.tsx
++++ b/src/pages/Index.tsx
+@@ -1,95 +1,72 @@
+ import { useState, useEffect, useMemo } from "react";
+ import { useNavigate } from "react-router-dom";
+ import { useAuth } from "@/contexts/AuthContext";
+-import { supabase } from "@/integrations/supabase/client";
+ import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
+ import { InteractiveNineBoxGrid } from "@/components/InteractiveNineBoxGrid";
+ import { StatisticsPanel } from "@/components/StatisticsPanel";
+ import { FileUploader } from "@/components/FileUploader";
+ import { ExportButton } from "@/components/ExportButton";
+ import { CalibrationControls, ThresholdConfig } from "@/components/CalibrationControls";
+ import { ViewModeToggle } from "@/components/ViewModeToggle";
+ import { ClearOverridesButton } from "@/components/ClearOverridesButton";
+ import { parseExcelFiles, loadDefaultData, EmployeeRawData } from "@/utils/excelParser";
+ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+ import { Button } from "@/components/ui/button";
+ import { AlertCircle, LogIn } from "lucide-react";
+ import { useToast } from "@/hooks/use-toast";
+ 
+ const DEFAULT_THRESHOLDS: ThresholdConfig = {
+   low: 1.5,
+   medium: 1.5,
+   high: 2.5,
+ };
+ 
+ const DEFAULT_PERFORMANCE_THRESHOLDS: ThresholdConfig = {
+   low: 2.9,
+   medium: 3.0,
+   high: 4.0,
+ };
+ 
+ const Index = () => {
+   const { user, loading: authLoading } = useAuth();
+   const navigate = useNavigate();
+   const [rawData, setRawData] = useState<EmployeeRawData[]>([]);
+   const [unclassified, setUnclassified] = useState<any[]>([]);
+   const [loading, setLoading] = useState(true);
+-  const [checkingRole, setCheckingRole] = useState(false);
+   const [performanceThresholds, setPerformanceThresholds] = useState<ThresholdConfig>(DEFAULT_PERFORMANCE_THRESHOLDS);
+   const [potentialThresholds, setPotentialThresholds] = useState<ThresholdConfig>(DEFAULT_THRESHOLDS);
+   const { toast } = useToast();
+ 
+-  // Redirect authenticated users based on their role
++  // Redirect authenticated users to the HRBP dashboard without role validation
+   useEffect(() => {
+-    const redirectUser = async () => {
+-      if (authLoading) return;
+-      
+-      if (user) {
+-        setCheckingRole(true);
+-        // Check user role
+-        const { data } = await supabase
+-          .from("user_roles")
+-          .select("role")
+-          .eq("user_id", user.id)
+-          .maybeSingle();
++    if (authLoading) return;
+ 
+-        setCheckingRole(false);
+-
+-        // Si no hay data?.role, no navegues (mostrá aviso o espera asignación)
+-        if (data?.role === 'hrbp') {
+-          navigate('/hrbp');
+-        } else if (data?.role === 'manager') {
+-          navigate('/dashboard');
+-        } else {
+-          return; // o navigate('/sin-acceso')
+-        }
+-      }
+-    };
+-
+-    redirectUser();
++    if (user) {
++      navigate("/hrbp");
++    }
+   }, [user, authLoading, navigate]);
+ 
+   // Recalculate employee classifications based on current thresholds
+   const employees = useMemo(() => {
+     const classifyPotential = (value: number): "Bajo" | "Medio" | "Alto" => {
+       if (value > 2.5) return "Alto";
+       if (value > 1.5) return "Medio";
+       return "Bajo";
+     };
+ 
+     const classifyPerformance = (value: number): "Bajo" | "Medio" | "Alto" => {
+       if (value >= 4) return "Alto";
+       if (value >= 3) return "Medio";
+       return "Bajo";
+     };
+ 
+     return rawData.map((data) => ({
+       id: `${data.name}-${Date.now()}-${Math.random()}`,
+       name: data.name,
+       manager: data.manager,
+       performanceScore: data.performanceScore,
+       potentialScore: data.potentialScore,
+       performance: classifyPerformance(data.performanceScore) as PerformanceLevel,
+       potential: classifyPotential(data.potentialScore) as PotentialLevel,
+     }));
+@@ -126,87 +103,61 @@ const Index = () => {
+       toast({
+         title: "Archivos cargados",
+         description: `Se cargaron ${rawData.length} empleados exitosamente`,
+       });
+     } catch (error) {
+       console.error("Error processing files:", error);
+       toast({
+         title: "Error",
+         description: "Error al procesar los archivos",
+         variant: "destructive",
+       });
+     } finally {
+       setLoading(false);
+     }
+   };
+ 
+   const handleResetThresholds = () => {
+     setPerformanceThresholds(DEFAULT_PERFORMANCE_THRESHOLDS);
+     setPotentialThresholds(DEFAULT_THRESHOLDS);
+     toast({
+       title: "Umbrales restaurados",
+       description: "Se han restaurado los valores por defecto",
+     });
+   };
+ 
+-  if (loading || checkingRole) {
++  if (loading) {
+     return (
+       <div className="min-h-screen flex items-center justify-center bg-background">
+         <div className="text-center">
+           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+-          <p className="text-muted-foreground">
+-            {checkingRole ? 'Verificando permisos...' : 'Cargando datos...'}
+-          </p>
++          <p className="text-muted-foreground">Cargando datos...</p>
+         </div>
+       </div>
+     );
+   }
+ 
+-  // Si el usuario está autenticado pero no tiene rol asignado
+-  if (user && !checkingRole && !authLoading) {
+-    return (
+-      <div className="min-h-screen flex items-center justify-center bg-background">
+-        <Card className="max-w-md">
+-          <CardHeader>
+-            <CardTitle>Acceso Pendiente</CardTitle>
+-            <CardDescription>
+-              Tu cuenta está registrada pero aún no tiene un rol asignado.
+-            </CardDescription>
+-          </CardHeader>
+-          <CardContent className="space-y-4">
+-            <p className="text-sm text-muted-foreground">
+-              Por favor, contacta al administrador para que te asigne un rol (HRBP o Manager).
+-            </p>
+-            <Button variant="outline" className="w-full" onClick={() => navigate('/auth')}>
+-              Cerrar Sesión
+-            </Button>
+-          </CardContent>
+-        </Card>
+-      </div>
+-    );
+-  }
+-
+   return (
+     <div className="min-h-screen bg-background p-6">
+       <div className="max-w-7xl mx-auto space-y-6">
+         {/* Header */}
+         <div className="flex justify-between items-center">
+           <div>
+             <h1 className="text-3xl font-bold text-foreground mb-2">
+               Nine Box Grid - Evaluación de Talento
+             </h1>
+             <p className="text-muted-foreground">
+               Matriz de evaluación de Desempeño vs Potencial
+             </p>
+           </div>
+           <div className="flex gap-2">
+             <Button variant="default" size="lg" onClick={() => navigate('/auth')}>
+               <LogIn className="w-4 h-4 mr-2" />
+               Iniciar Sesión / Registrarse
+             </Button>
+             <ClearOverridesButton />
+             <ExportButton employees={employees} />
+           </div>
+         </div>
+ 
+         {/* File Uploader */}
+         <FileUploader onFilesUploaded={handleFilesUploaded} /> 
+EOF
+)
