@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Plus } from 'lucide-react';
+import { LogIn, Plus } from 'lucide-react';
 import { InteractiveNineBoxGrid } from '@/components/InteractiveNineBoxGrid';
 import { StatisticsPanel } from '@/components/StatisticsPanel';
 import { EvaluationDialog } from '@/components/EvaluationDialog';
@@ -41,8 +41,8 @@ interface Evaluacion {
 }
 
 const Dashboard = () => {
-  const { signOut, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [tableros, setTableros] = useState<Tablero[]>([]);
@@ -220,23 +220,28 @@ const Dashboard = () => {
     return 'Bajo';
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    toast({
-      title: 'Sesión cerrada',
-      description: 'Has cerrado sesión exitosamente',
-    });
+  const handleGoToAuth = () => {
+    navigate('/auth');
   };
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Nine Box Grid - Dashboard</h1>
-          <Button variant="outline" onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Cerrar Sesión
-          </Button>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">Nine Box Grid - Dashboard</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                <span className="inline-flex items-center gap-2 px-2 py-1 bg-primary/10 text-primary rounded-md">
+                  🎯 Modo Demo Activo - Sin Autenticación
+                </span>
+              </p>
+            </div>
+            <Button variant="outline" onClick={handleGoToAuth}>
+              <LogIn className="mr-2 h-4 w-4" />
+              Ver Login
+            </Button>
+          </div>
         </div>
       </header>
 
