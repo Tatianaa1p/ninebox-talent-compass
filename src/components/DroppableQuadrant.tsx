@@ -65,8 +65,10 @@ export const DroppableQuadrant = ({
           </Badge>
         </div>
 
-        <div className="flex-1 space-y-1 overflow-y-auto max-h-60">
-          {children}
+        <div className="flex-1 overflow-y-auto max-h-60">
+          <div className="space-y-1 mb-2">
+            {children}
+          </div>
         </div>
       </div>
     </Card>

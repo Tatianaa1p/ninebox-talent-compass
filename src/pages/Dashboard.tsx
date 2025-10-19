@@ -209,14 +209,14 @@ const Dashboard = () => {
   };
 
   const getPerformanceLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score >= 4.0) return 'Alto';
-    if (score >= 2.5) return 'Medio';
+    if (score >= 4) return 'Alto';
+    if (score >= 3) return 'Medio';
     return 'Bajo';
   };
 
   const getPotentialLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score >= 4.0) return 'Alto';
-    if (score >= 2.5) return 'Medio';
+    if (score >= 4) return 'Alto';
+    if (score >= 3) return 'Medio';
     return 'Bajo';
   };
 
@@ -370,18 +370,74 @@ const Dashboard = () => {
 
             <div>
               <label className="text-sm font-medium mb-2 block">Tablero</label>
-              <Select value={selectedTablero} onValueChange={setSelectedTablero} disabled={!selectedEquipo}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar tablero" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tableros.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={selectedTablero} onValueChange={setSelectedTablero} disabled={!selectedEquipo}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar tablero" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tableros.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedTablero && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={async () => {
+                      if (confirm('¿Estás seguro de que deseas eliminar este tablero y todos sus empleados?')) {
+                        const { error: empleadosError } = await supabase
+                          .from('empleados' as any)
+                          .delete()
+                          .eq('tablero_id', selectedTablero);
+
+                        if (empleadosError) {
+                          toast({
+                            title: 'Error',
+                            description: 'No se pudieron eliminar los empleados',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
+
+                        const { error: tableroError } = await supabase
+                          .from('tableros')
+                          .delete()
+                          .eq('id', selectedTablero);
+
+                        if (tableroError) {
+                          toast({
+                            title: 'Error',
+                            description: 'No se pudo eliminar el tablero',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
+
+                        const { data } = await supabase
+                          .from('tableros')
+                          .select('*')
+                          .eq('equipo_id', selectedEquipo);
+                        
+                        setTableros(data || []);
+                        setSelectedTablero('');
+                        setEmpleados([]);
+                        setEmployees([]);
+
+                        toast({
+                          title: 'Tablero eliminado',
+                          description: 'El tablero y sus empleados han sido eliminados',
+                        });
+                      }
+                    }}
+                  >
+                    🗑️
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="flex items-end gap-2">

@@ -48,25 +48,29 @@ export const FileUploader = ({ onFilesUploaded, onClose }: FileUploaderProps) =>
     });
   };
 
-  const validateAndTransform = (data: Array<any>, type: 'performance' | 'potencial') => {
-    const scoreKey = type === 'performance' ? 'performance' : 'potencial';
-    const validated = [];
+  const validateAndTransform = (data: Array<any>, type: 'performance' | 'potencial'): Array<{nombre: string, performance: number}> | Array<{nombre: string, potencial: number}> => {
+    const results: Array<any> = [];
     
     for (const row of data) {
-      if (!row.nombre || row.nombre.trim() === '') continue;
+      // Map column names from Excel files
+      const nombreCompleto = row['Nombre completo'] || row.nombre || row.Nombre || row.name || row.Name;
+      const puntuacionPromedio = row['Puntuación promedio'] || row.performance || row.Performance || row.desempeño || row.Desempeño || row.potencial || row.Potencial || row.potential || row.Potential;
       
-      const score = parseFloat(row[scoreKey]);
-      if (isNaN(score) || score < 1 || score > 5) {
-        throw new Error(`Valor inválido para ${row.nombre}: ${scoreKey} debe estar entre 1 y 5`);
+      if (!nombreCompleto || puntuacionPromedio === undefined || puntuacionPromedio === '') continue;
+      
+      const numScore = Number(puntuacionPromedio);
+      if (isNaN(numScore) || numScore < 1 || numScore > 5) {
+        console.warn(`Score inválido para ${nombreCompleto}: ${puntuacionPromedio}`);
+        continue;
       }
       
-      validated.push({
-        nombre: row.nombre.trim(),
-        [scoreKey]: score
+      results.push({
+        nombre: String(nombreCompleto).trim(),
+        [type]: numScore
       });
     }
     
-    return validated;
+    return results;
   };
 
   const handleSubmit = async () => {
@@ -85,8 +89,8 @@ export const FileUploader = ({ onFilesUploaded, onClose }: FileUploaderProps) =>
       const performanceRaw = await parseFile(performanceFile, 'performance');
       const potentialRaw = await parseFile(potentialFile, 'potencial');
       
-      const performanceData = validateAndTransform(performanceRaw, 'performance');
-      const potentialData = validateAndTransform(potentialRaw, 'potencial');
+      const performanceData = validateAndTransform(performanceRaw, 'performance') as Array<{nombre: string, performance: number}>;
+      const potentialData = validateAndTransform(potentialRaw, 'potencial') as Array<{nombre: string, potencial: number}>;
       
       await onFilesUploaded(performanceData, potentialData);
       
@@ -115,7 +119,7 @@ export const FileUploader = ({ onFilesUploaded, onClose }: FileUploaderProps) =>
             Archivo de Desempeño (Performance)
           </label>
           <p className="text-xs text-muted-foreground mb-2">
-            CSV o Excel con columnas: nombre, performance (1-5)
+            Excel con columnas: Nombre completo, Puntuación promedio (1-5)
           </p>
           <input
             type="file"
@@ -135,7 +139,7 @@ export const FileUploader = ({ onFilesUploaded, onClose }: FileUploaderProps) =>
             Archivo de Potencial (Potential)
           </label>
           <p className="text-xs text-muted-foreground mb-2">
-            CSV o Excel con columnas: nombre, potencial (1-5)
+            Excel con columnas: Nombre completo, Puntuación promedio (1-5)
           </p>
           <input
             type="file"
