@@ -42,7 +42,7 @@ interface Evaluacion {
 }
 
 const HRBPDashboard = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -54,32 +54,16 @@ const HRBPDashboard = () => {
   const [isEvaluationDialogOpen, setIsEvaluationDialogOpen] = useState(false);
   const [isCreateEmpresaDialogOpen, setIsCreateEmpresaDialogOpen] = useState(false);
   const [isCreateEquipoDialogOpen, setIsCreateEquipoDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isDataLoading, setIsDataLoading] = useState(true);
 
-  // Verificar rol HRBP
-  useEffect(() => {
-    const checkRole = async () => {
-      if (!user) return;
-      
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "hrbp")
-        .maybeSingle();
-
-      if (error || !data) {
-        toast.error("No tienes permisos de HRBP");
-        navigate("/");
-      }
-    };
-
-    checkRole();
-  }, [user, navigate]);
+  // No role validation to allow unrestricted access during testing
 
   // Cargar empresas
   useEffect(() => {
+    if (authLoading) return;
+
     const fetchEmpresas = async () => {
+      setIsDataLoading(true);
       const { data, error } = await supabase
         .from("empresas")
         .select("*")
@@ -87,15 +71,21 @@ const HRBPDashboard = () => {
 
       if (error) {
         toast.error("Error al cargar empresas");
+        setIsDataLoading(false);
         return;
       }
 
       setEmpresas(data || []);
-      setLoading(false);
+      setIsDataLoading(false);
     };
 
-    fetchEmpresas();
-  }, []);
+    if (user) {
+      fetchEmpresas();
+    } else {
+      setEmpresas([]);
+      setIsDataLoading(false);
+    }
+  }, [user, authLoading]);
 
   // Cargar equipos cuando cambia la empresa
   useEffect(() => {
@@ -251,7 +241,7 @@ const HRBPDashboard = () => {
     navigate("/auth");
   };
 
-  if (loading) {
+  if (isDataLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>Cargando...</p>
