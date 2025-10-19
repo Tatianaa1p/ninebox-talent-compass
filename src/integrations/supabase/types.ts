@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      empleados: {
+        Row: {
+          created_at: string | null
+          id: string
+          nombre: string
+          performance: number | null
+          potencial: number | null
+          tablero_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nombre: string
+          performance?: number | null
+          potencial?: number | null
+          tablero_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nombre?: string
+          performance?: number | null
+          potencial?: number | null
+          tablero_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empleados_tablero_id_fkey"
+            columns: ["tablero_id"]
+            isOneToOne: false
+            referencedRelation: "tableros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           created_at: string | null

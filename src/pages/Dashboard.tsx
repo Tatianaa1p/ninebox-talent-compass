@@ -210,7 +210,7 @@ const Dashboard = () => {
 
   const getPerformanceLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
     if (score >= 4) return 'Alto';
-    if (score >= 3) return 'Medio';
+    if (score >= 1.6) return 'Medio';
     return 'Bajo';
   };
 
