@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { LogOut, Plus, Building2, Users, UserX } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { LogOut, Plus, Building2, Users } from "lucide-react";
 import { InteractiveNineBoxGrid } from "@/components/InteractiveNineBoxGrid";
 import { EvaluationDialog } from "@/components/EvaluationDialog";
 import { CreateEmpresaDialog } from "@/components/CreateEmpresaDialog";
@@ -56,7 +55,6 @@ const HRBPDashboard = () => {
   const [isCreateEmpresaDialogOpen, setIsCreateEmpresaDialogOpen] = useState(false);
   const [isCreateEquipoDialogOpen, setIsCreateEquipoDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [isRevokingSessions, setIsRevokingSessions] = useState(false);
 
   // Verificar rol HRBP
   useEffect(() => {
@@ -253,44 +251,6 @@ const HRBPDashboard = () => {
     navigate("/auth");
   };
 
-  const handleRevokeAllSessions = async () => {
-    setIsRevokingSessions(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('revoke-all-sessions', {
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
-      });
-
-      if (error) {
-        console.error('Error revoking sessions:', error);
-        toast.error(error.message || 'Error al revocar sesiones');
-        setIsRevokingSessions(false);
-        return;
-      }
-
-      if (data?.error) {
-        toast.error(data.error);
-        setIsRevokingSessions(false);
-        return;
-      }
-
-      toast.success(`Sesiones revocadas exitosamente. ${data?.revokedCount || 0} usuarios afectados.`);
-      
-      // Sign out current user and redirect to login
-      setTimeout(async () => {
-        await signOut();
-        navigate("/auth");
-      }, 1500);
-
-    } catch (err) {
-      console.error('Unexpected error:', err);
-      toast.error('Error inesperado al revocar sesiones');
-      setIsRevokingSessions(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -318,30 +278,6 @@ const HRBPDashboard = () => {
               <Users className="w-4 h-4 mr-2" />
               Nuevo Equipo
             </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={isRevokingSessions}>
-                  <UserX className="w-4 h-4 mr-2" />
-                  Revocar Todas las Sesiones
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción cerrará todas las sesiones activas de todos los usuarios. 
-                    Todos tendrán que volver a autenticarse, incluyéndote a ti.
-                    Esta acción no se puede deshacer.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleRevokeAllSessions} disabled={isRevokingSessions}>
-                    {isRevokingSessions ? 'Revocando...' : 'Sí, revocar todas las sesiones'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
             <Button variant="outline" onClick={handleLogout}>
               <LogOut className="w-4 h-4 mr-2" />
               Cerrar Sesión

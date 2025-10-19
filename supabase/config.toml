@@ -1,4 +1,1 @@
 project_id = "feljnpkciqvrnvtwqkkk"
-
-[functions.revoke-all-sessions]
-verify_jwt = true
