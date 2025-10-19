@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,9 +19,27 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
-      navigate('/hrbp');
-    }
+    const redirectUser = async () => {
+      if (!user) return;
+
+      // Check user role
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      // Si no hay data?.role, no navegues (mostrá aviso o espera asignación)
+      if (data?.role === 'hrbp') {
+        navigate('/hrbp');
+      } else if (data?.role === 'manager') {
+        navigate('/dashboard');
+      } else {
+        return; // o navigate('/sin-acceso')
+      }
+    };
+
+    redirectUser();
   }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -41,7 +60,7 @@ const Auth = () => {
         title: 'Sesión iniciada',
         description: 'Bienvenido de vuelta',
       });
-      // Don't navigate here, let useEffect handle the post-login redirect
+      // Don't navigate here, let useEffect handle it based on role
     }
   };
 

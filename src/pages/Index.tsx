@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 import { InteractiveNineBoxGrid } from "@/components/InteractiveNineBoxGrid";
 import { StatisticsPanel } from "@/components/StatisticsPanel";
@@ -34,17 +35,39 @@ const Index = () => {
   const [rawData, setRawData] = useState<EmployeeRawData[]>([]);
   const [unclassified, setUnclassified] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkingRole, setCheckingRole] = useState(false);
   const [performanceThresholds, setPerformanceThresholds] = useState<ThresholdConfig>(DEFAULT_PERFORMANCE_THRESHOLDS);
   const [potentialThresholds, setPotentialThresholds] = useState<ThresholdConfig>(DEFAULT_THRESHOLDS);
   const { toast } = useToast();
 
-  // Redirect authenticated users to the HRBP dashboard without role validation
+  // Redirect authenticated users based on their role
   useEffect(() => {
-    if (authLoading) return;
+    const redirectUser = async () => {
+      if (authLoading) return;
+      
+      if (user) {
+        setCheckingRole(true);
+        // Check user role
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-    if (user) {
-      navigate("/hrbp");
-    }
+        setCheckingRole(false);
+
+        // Si no hay data?.role, no navegues (mostrá aviso o espera asignación)
+        if (data?.role === 'hrbp') {
+          navigate('/hrbp');
+        } else if (data?.role === 'manager') {
+          navigate('/dashboard');
+        } else {
+          return; // o navigate('/sin-acceso')
+        }
+      }
+    };
+
+    redirectUser();
   }, [user, authLoading, navigate]);
 
   // Recalculate employee classifications based on current thresholds
@@ -125,13 +148,39 @@ const Index = () => {
     });
   };
 
-  if (loading) {
+  if (loading || checkingRole) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando datos...</p>
+          <p className="text-muted-foreground">
+            {checkingRole ? 'Verificando permisos...' : 'Cargando datos...'}
+          </p>
         </div>
+      </div>
+    );
+  }
+
+  // Si el usuario está autenticado pero no tiene rol asignado
+  if (user && !checkingRole && !authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Acceso Pendiente</CardTitle>
+            <CardDescription>
+              Tu cuenta está registrada pero aún no tiene un rol asignado.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Por favor, contacta al administrador para que te asigne un rol (HRBP o Manager).
+            </p>
+            <Button variant="outline" className="w-full" onClick={() => navigate('/auth')}>
+              Cerrar Sesión
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
