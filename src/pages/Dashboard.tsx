@@ -44,6 +44,7 @@ const Dashboard = () => {
   const { signOut, user } = useAuth();
   const { toast } = useToast();
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [isLoadingEmpresas, setIsLoadingEmpresas] = useState(true);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [tableros, setTableros] = useState<Tablero[]>([]);
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
@@ -56,21 +57,27 @@ const Dashboard = () => {
   const [showCreateEmpresaDialog, setShowCreateEmpresaDialog] = useState(false);
   const [showCreateEquipoDialog, setShowCreateEquipoDialog] = useState(false);
 
+  // Lógica de habilitación del botón Crear Tablero
+  const canCreateBoard = !!selectedEmpresa && (empresas?.length ?? 0) > 0;
+
   // Load empresas
   useEffect(() => {
     const loadEmpresas = async () => {
+      setIsLoadingEmpresas(true);
       const { data, error } = await supabase.from('empresas').select('*');
+      
       if (error) {
-        console.error('Empresas error:', error); // ver code/message
+        console.error('Empresas error:', error);
         console.error('Error code:', error.code);
         console.error('Error message:', error.message);
         toast({
           title: 'Error al cargar empresas',
           description: error.message.includes('policy') 
             ? 'No tienes permisos para ver las empresas. Contacta al administrador.'
-            : `Error: ${error.message}. Si hay empresas duplicadas, limpia la tabla.`,
+            : `Error: ${error.message}`,
           variant: 'destructive',
         });
+        setEmpresas([]);
       } else {
         console.log('Empresas cargadas:', data?.length || 0);
         // Remove duplicates by nombre, keeping first occurrence
@@ -83,6 +90,8 @@ const Dashboard = () => {
         }, []) || [];
         setEmpresas(uniqueEmpresas);
       }
+      
+      setIsLoadingEmpresas(false);
     };
     loadEmpresas();
   }, [toast]);
@@ -244,35 +253,48 @@ const Dashboard = () => {
       </header>
 
       <div className="container mx-auto px-4 py-6 space-y-6">
-        <Card className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium">Empresa</label>
-                {empresas.length === 0 && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setShowCreateEmpresaDialog(true)}
-                    className="h-6 text-xs"
-                  >
-                    + Crear
-                  </Button>
-                )}
-              </div>
-              <Select value={selectedEmpresa} onValueChange={setSelectedEmpresa}>
-                <SelectTrigger>
-                  <SelectValue placeholder={empresas.length === 0 ? "Sin empresas" : "Seleccionar empresa"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {empresas.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Empty state cuando no hay empresas asignadas */}
+        {!isLoadingEmpresas && empresas.length === 0 && (
+          <Card className="p-12 text-center">
+            <p className="text-muted-foreground text-lg mb-2">
+              No tenés empresas asignadas
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Pedí acceso a CH
+            </p>
+          </Card>
+        )}
+
+        {/* Loading state */}
+        {isLoadingEmpresas && (
+          <Card className="p-12 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Cargando empresas...</p>
+          </Card>
+        )}
+
+        {/* Main content cuando hay empresas */}
+        {!isLoadingEmpresas && empresas.length > 0 && (
+          <>
+            <Card className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium">Empresa</label>
+                  </div>
+                  <Select value={selectedEmpresa} onValueChange={setSelectedEmpresa}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar empresa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {empresas.map((e) => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -318,40 +340,42 @@ const Dashboard = () => {
               </Select>
             </div>
 
-            <div className="flex items-end gap-2">
-              <Button
-                onClick={() => setShowCreateBoardDialog(true)}
-                disabled={!selectedEquipo}
-                className="flex-1"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Crear Tablero
-              </Button>
-              <Button
-                onClick={() => setShowEvaluationDialog(true)}
-                disabled={!selectedTablero}
-                variant="secondary"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Evaluación
-              </Button>
-            </div>
-          </div>
-        </Card>
+                <div className="flex items-end gap-2">
+                  <Button
+                    onClick={() => setShowCreateBoardDialog(true)}
+                    disabled={!canCreateBoard}
+                    className="flex-1"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Crear Tablero
+                  </Button>
+                  <Button
+                    onClick={() => setShowEvaluationDialog(true)}
+                    disabled={!selectedTablero}
+                    variant="secondary"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Evaluación
+                  </Button>
+                </div>
+              </div>
+            </Card>
 
-        {selectedTablero && (
-          <>
-            <StatisticsPanel employees={employees} />
-            <InteractiveNineBoxGrid employees={employees} />
+            {selectedTablero && (
+              <>
+                <StatisticsPanel employees={employees} />
+                <InteractiveNineBoxGrid employees={employees} />
+              </>
+            )}
+
+            {!selectedTablero && selectedEmpresa && (
+              <Card className="p-12 text-center">
+                <p className="text-muted-foreground">
+                  Selecciona una empresa, equipo y tablero para ver las evaluaciones
+                </p>
+              </Card>
+            )}
           </>
-        )}
-
-        {!selectedTablero && (
-          <Card className="p-12 text-center">
-            <p className="text-muted-foreground">
-              Selecciona una empresa, equipo y tablero para ver las evaluaciones
-            </p>
-          </Card>
         )}
       </div>
 
