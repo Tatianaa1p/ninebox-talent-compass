@@ -54,18 +54,15 @@ const Index = () => {
           .eq("user_id", user.id)
           .maybeSingle();
 
-        // Si no hay data de rol, NO navegues por defecto
-        if (!data?.role) {
-          setCheckingRole(false);
-          return; // mostrar spinner o pedir acceso
-        }
+        setCheckingRole(false);
 
-        if (data.role === 'hrbp') {
+        // Si no hay data?.role, no navegues (mostrá aviso o espera asignación)
+        if (data?.role === 'hrbp') {
           navigate('/hrbp');
-        } else if (data.role === 'manager') {
+        } else if (data?.role === 'manager') {
           navigate('/dashboard');
         } else {
-          navigate('/dashboard');
+          return; // o navigate('/sin-acceso')
         }
       }
     };
