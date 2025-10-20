@@ -1,0 +1,6 @@
+-- Enable RLS on calibraciones and check other tables
+ALTER TABLE calibraciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tableros ENABLE ROW LEVEL SECURITY;
+ALTER TABLE evaluaciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE empresas_usuarios ENABLE ROW LEVEL SECURITY;
