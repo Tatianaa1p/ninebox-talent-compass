@@ -236,13 +236,13 @@ const Dashboard = () => {
       combined.set(p.nombre, { ...existing, potencial: p.potencial });
     });
 
-    // Prepare records for insertion
+    // Prepare records for insertion (preserve exact decimal values)
     const records = Array.from(combined.entries())
       .filter(([_, data]) => data.performance !== undefined && data.potencial !== undefined)
       .map(([nombre, data]) => ({
         nombre,
-        performance: Math.round(data.performance!),
-        potencial: Math.round(data.potencial!),
+        performance: data.performance!,
+        potencial: data.potencial!,
         tablero_id: selectedTablero
       }));
 

@@ -31,10 +31,17 @@ export const FileUploader = ({ onFilesUploaded, onClose }: FileUploaderProps) =>
         reader.onload = (e) => {
           try {
             const data = e.target?.result;
-            const workbook = XLSX.read(data, { type: 'binary' });
+            const workbook = XLSX.read(data, { 
+              type: 'binary',
+              cellNF: false,  // Don't apply number formats
+              raw: false       // Parse numbers as numbers (preserves decimals)
+            });
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+              raw: false,      // Parse numbers as numbers (preserves decimals)
+              defval: null     // Use null for empty cells
+            });
             resolve(jsonData);
           } catch (error) {
             reject(error);
