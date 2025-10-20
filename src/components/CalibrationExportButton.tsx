@@ -38,6 +38,11 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
       
       if (calibError) throw calibError;
 
+      // Fetch user profiles for manager names
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select('user_id');
+
       // Build export data
       const exportData = evaluaciones?.map(evaluacion => {
         // Find latest calibration for this evaluacion
@@ -58,14 +63,15 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
         const calibratedQuadrant = calibration?.cuadrante_calibrado || originalQuadrant;
 
         return {
-          "Nombre": evaluacion.persona_nombre,
-          "Cuadrante Original": originalQuadrant,
-          "Desempeño Original": calibration?.score_original_desempeno || evaluacion.desempeno_score,
-          "Potencial Original": calibration?.score_original_potencial || evaluacion.potencial_score,
-          "Cuadrante Calibrado": calibratedQuadrant,
-          "Desempeño Calibrado": calibration?.score_calibrado_desempeno || evaluacion.desempeno_score,
-          "Potencial Calibrado": calibration?.score_calibrado_potencial || evaluacion.potencial_score,
-          "Fecha Calibración": calibration?.created_at 
+          "nombre": evaluacion.persona_nombre,
+          "cuadrante_original": originalQuadrant,
+          "score_original_potencial": calibration?.score_original_potencial || evaluacion.potencial_score,
+          "score_original_desempeno": calibration?.score_original_desempeno || evaluacion.desempeno_score,
+          "cuadrante_calibrado": calibratedQuadrant,
+          "score_calibrado_potencial": calibration?.score_calibrado_potencial || evaluacion.potencial_score,
+          "score_calibrado_desempeno": calibration?.score_calibrado_desempeno || evaluacion.desempeno_score,
+          "manager": calibration?.manager_id || "N/A",
+          "fecha": calibration?.created_at 
             ? new Date(calibration.created_at).toLocaleDateString('es-ES')
             : "Sin calibrar",
         };

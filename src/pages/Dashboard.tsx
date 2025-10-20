@@ -174,8 +174,8 @@ const Dashboard = () => {
 
     loadEmpleados();
 
-    // Subscribe to real-time changes
-    const channel = supabase
+    // Subscribe to real-time changes on empleados table
+    const empleadosChannel = supabase
       .channel('empleados-changes')
       .on(
         'postgres_changes',
@@ -191,8 +191,23 @@ const Dashboard = () => {
       )
       .subscribe();
 
+    // Subscribe to grid_update broadcast channel for calibration notifications
+    const gridUpdateChannel = supabase
+      .channel('grid_update')
+      .on(
+        'broadcast',
+        { event: 'calibration_saved' },
+        (payload) => {
+          if (payload.payload.tablero_id === selectedTablero) {
+            loadEmpleados();
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(empleadosChannel);
+      supabase.removeChannel(gridUpdateChannel);
     };
   }, [selectedTablero, toast]);
 
