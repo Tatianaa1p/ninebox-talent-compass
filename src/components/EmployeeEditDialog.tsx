@@ -85,27 +85,30 @@ export const EmployeeEditDialog = ({
 
       if (evalError) throw evalError;
 
+      if (!evaluacion) {
+        throw new Error("No se encontró la evaluación");
+      }
+
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
 
       // Save to calibraciones table (history)
-      if (evaluacion) {
-        const { error: calibError } = await supabase
-          .from('calibraciones')
-          .insert({
-            evaluacion_id: evaluacion.id,
-            cuadrante_original: `${employee!.performance}-${employee!.potential}`,
-            cuadrante_calibrado: selectedQuadrant,
-            score_original_potencial: employee!.potentialScore,
-            score_calibrado_potencial: quadrantData.potential,
-            score_original_desempeno: employee!.performanceScore,
-            score_calibrado_desempeno: quadrantData.performance,
-            manager_id: user?.id || null,
-          });
+      const { error: calibError } = await supabase
+        .from('calibraciones')
+        .insert({
+          evaluacion_id: evaluacion.id,
+          cuadrante_original: `${employee!.performance}-${employee!.potential}`,
+          cuadrante_calibrado: selectedQuadrant,
+          score_original_potencial: employee!.potentialScore,
+          score_calibrado_potencial: quadrantData.potential,
+          score_original_desempeno: employee!.performanceScore,
+          score_calibrado_desempeno: quadrantData.performance,
+          manager_id: user?.id || null,
+        });
 
-        if (calibError) {
-          console.warn("Error saving calibration history:", calibError);
-        }
+      if (calibError) {
+        console.error("Error saving calibration history:", calibError);
+        throw new Error("Error al guardar historial de calibración");
       }
 
       // Update evaluaciones table
@@ -118,19 +121,23 @@ export const EmployeeEditDialog = ({
         .eq('persona_nombre', employee!.name)
         .eq('tablero_id', tableroId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Error updating evaluaciones:", updateError);
+        throw new Error("Error al actualizar evaluación");
+      }
 
       toast({
         title: "Calibración guardada",
         description: `${employee!.name} movido a ${quadrantData.label}`,
       });
 
-      // Reload page to refresh grid
-      window.location.reload();
+      onSave(selectedQuadrant);
+      onClose();
     } catch (error: any) {
+      console.error("Calibration error:", error);
       toast({
-        title: "Error al guardar",
-        description: error.message,
+        title: "Error al calibrar",
+        description: error.message || "Error al calibrar, intenta de nuevo",
         variant: "destructive",
       });
     } finally {

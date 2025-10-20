@@ -458,7 +458,6 @@ const Dashboard = () => {
                 <Plus className="mr-2 h-4 w-4" />
                 Evaluación
               </Button>
-              <CalibrationExportButton tableroId={selectedTablero} />
             </div>
           </div>
         </Card>
@@ -466,7 +465,18 @@ const Dashboard = () => {
         {selectedTablero && (
           <>
             <StatisticsPanel employees={employees} />
-            <InteractiveNineBoxGrid employees={employees} tableroId={selectedTablero} />
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold">Nine Box Grid</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Calibra y visualiza el talento de tu equipo
+                  </p>
+                </div>
+                <CalibrationExportButton tableroId={selectedTablero} />
+              </div>
+              <InteractiveNineBoxGrid employees={employees} tableroId={selectedTablero} />
+            </Card>
           </>
         )}
 

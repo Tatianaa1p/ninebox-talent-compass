@@ -183,31 +183,12 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId }: InteractiveNine
   const handleSaveEdit = (quadrantName: string, motivo?: string) => {
     if (!editingEmployee) return;
 
-    const quadrantKey = QUADRANT_KEYS[quadrantName as keyof typeof QUADRANT_KEYS];
-    const [targetPotential, targetPerformance] = quadrantKey.split("-") as [
-      PotentialLevel,
-      PerformanceLevel
-    ];
-
-    const override = {
-      employeeName: editingEmployee.name,
-      override_potencial_categoria: targetPotential,
-      override_desempeno_categoria: targetPerformance,
-      override_cuadrante: quadrantName,
-      override_motivo: motivo,
-      override_fecha: new Date().toISOString(),
-      override_usuario: "Usuario actual",
-    };
-
-    addOverride(override);
-
-    setUndoMessage(`${editingEmployee.name} movido a ${quadrantName}`);
-    setShowUndo(true);
-
-    toast({
-      title: "Cambio guardado",
-      description: `${editingEmployee.name} → ${quadrantName}`,
-    });
+    // After saving in the dialog, reload to show updated grid
+    setEditDialogOpen(false);
+    setEditingEmployee(null);
+    
+    // Reload page to refresh grid with calibrated data
+    window.location.reload();
   };
 
   const handleRevertEmployee = (employee: Employee) => {
