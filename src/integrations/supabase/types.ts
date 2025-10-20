@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      calibraciones: {
+        Row: {
+          created_at: string | null
+          cuadrante_calibrado: string
+          cuadrante_original: string
+          evaluacion_id: string | null
+          id: string
+          manager_id: string | null
+          score_calibrado_desempeno: number
+          score_calibrado_potencial: number
+          score_original_desempeno: number
+          score_original_potencial: number
+        }
+        Insert: {
+          created_at?: string | null
+          cuadrante_calibrado: string
+          cuadrante_original: string
+          evaluacion_id?: string | null
+          id?: string
+          manager_id?: string | null
+          score_calibrado_desempeno: number
+          score_calibrado_potencial: number
+          score_original_desempeno: number
+          score_original_potencial: number
+        }
+        Update: {
+          created_at?: string | null
+          cuadrante_calibrado?: string
+          cuadrante_original?: string
+          evaluacion_id?: string | null
+          id?: string
+          manager_id?: string | null
+          score_calibrado_desempeno?: number
+          score_calibrado_potencial?: number
+          score_original_desempeno?: number
+          score_original_potencial?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calibraciones_evaluacion_id_fkey"
+            columns: ["evaluacion_id"]
+            isOneToOne: false
+            referencedRelation: "evaluaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empleados: {
         Row: {
           created_at: string | null
@@ -42,6 +89,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "empleados_tablero_id_fkey"
+            columns: ["tablero_id"]
+            isOneToOne: false
+            referencedRelation: "tableros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tablero"
             columns: ["tablero_id"]
             isOneToOne: false
             referencedRelation: "tableros"

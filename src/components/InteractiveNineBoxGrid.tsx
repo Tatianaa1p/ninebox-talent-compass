@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface InteractiveNineBoxGridProps {
   employees: Employee[];
+  tableroId?: string;
 }
 
 const QUADRANT_LABELS: Record<string, { title: string; description: string; color: string }> = {
@@ -68,7 +69,7 @@ const QUADRANT_LABELS: Record<string, { title: string; description: string; colo
   },
 };
 
-export const InteractiveNineBoxGrid = ({ employees }: InteractiveNineBoxGridProps) => {
+export const InteractiveNineBoxGrid = ({ employees, tableroId }: InteractiveNineBoxGridProps) => {
   const { addOverride, removeOverride, getOverride, viewMode, undoLastAction, canUndo } =
     useOverrides();
   const { toast } = useToast();
@@ -360,6 +361,7 @@ export const InteractiveNineBoxGrid = ({ employees }: InteractiveNineBoxGridProp
         currentOverrideMotivo={
           editingEmployee ? getOverride(editingEmployee.name)?.override_motivo : undefined
         }
+        tableroId={tableroId}
       />
 
       <UndoSnackbar

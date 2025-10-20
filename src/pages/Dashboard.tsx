@@ -13,6 +13,7 @@ import { FileUploader } from '@/components/FileUploader';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CreateEmpresaDialog } from '@/components/CreateEmpresaDialog';
 import { CreateEquipoDialog } from '@/components/CreateEquipoDialog';
+import { CalibrationExportButton } from '@/components/CalibrationExportButton';
 import { Employee } from '@/types/employee';
 
 interface Empresa {
@@ -209,14 +210,14 @@ const Dashboard = () => {
   };
 
   const getPerformanceLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score >= 4) return 'Alto';
-    if (score >= 3 && score < 4) return 'Medio';
+    if (score >= 4.0) return 'Alto';
+    if (score >= 2.5) return 'Medio';
     return 'Bajo';
   };
 
   const getPotentialLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score > 2.5) return 'Alto';
-    if (score > 1.5 && score <= 2.5) return 'Medio';
+    if (score >= 4.0) return 'Alto';
+    if (score >= 2.5) return 'Medio';
     return 'Bajo';
   };
 
@@ -457,6 +458,7 @@ const Dashboard = () => {
                 <Plus className="mr-2 h-4 w-4" />
                 Evaluación
               </Button>
+              <CalibrationExportButton tableroId={selectedTablero} />
             </div>
           </div>
         </Card>
@@ -464,7 +466,7 @@ const Dashboard = () => {
         {selectedTablero && (
           <>
             <StatisticsPanel employees={employees} />
-            <InteractiveNineBoxGrid employees={employees} />
+            <InteractiveNineBoxGrid employees={employees} tableroId={selectedTablero} />
           </>
         )}
 

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Employee } from "@/types/employee";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,66 +20,107 @@ interface EmployeeEditDialogProps {
   onClose: () => void;
   onSave: (quadrant: string, motivo?: string) => void;
   currentOverrideMotivo?: string;
+  tableroId?: string;
 }
+
+const QUADRANTS = [
+  { value: "Alto-Alto", label: "1. Talento Estratégico", performance: 4.5, potential: 4.5 },
+  { value: "Alto-Medio", label: "2. Crecimiento Acelerado", performance: 4.5, potential: 3.0 },
+  { value: "Alto-Bajo", label: "3. Desempeño Consistente", performance: 4.5, potential: 2.0 },
+  { value: "Medio-Alto", label: "4. Comprometido", performance: 3.0, potential: 4.5 },
+  { value: "Medio-Medio", label: "5. Potencial No Visible", performance: 3.0, potential: 3.0 },
+  { value: "Medio-Bajo", label: "6. Evolución", performance: 3.0, potential: 2.0 },
+  { value: "Bajo-Alto", label: "7. En Riesgo de Estancamiento", performance: 2.0, potential: 4.5 },
+  { value: "Bajo-Medio", label: "8. En Revisión", performance: 2.0, potential: 3.0 },
+  { value: "Bajo-Bajo", label: "9. Desempeño Insuficiente", performance: 2.0, potential: 2.0 },
+];
 
 export const EmployeeEditDialog = ({
   employee,
   open,
   onClose,
   onSave,
+  tableroId,
 }: EmployeeEditDialogProps) => {
   const { toast } = useToast();
-  const [performance, setPerformance] = useState<string>("");
-  const [potencial, setPotencial] = useState<string>("");
+  const [selectedQuadrant, setSelectedQuadrant] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (employee) {
-      setPerformance(employee.performanceScore.toString());
-      setPotencial(employee.potentialScore.toString());
+      // Determine current quadrant based on performance and potential (Bajo ≤2.4, Medio 2.5–3.9, Alto ≥4.0)
+      const perfLevel = employee.performanceScore >= 4.0 ? "Alto" : employee.performanceScore >= 2.5 ? "Medio" : "Bajo";
+      const potLevel = employee.potentialScore >= 4.0 ? "Alto" : employee.potentialScore >= 2.5 ? "Medio" : "Bajo";
+      setSelectedQuadrant(`${perfLevel}-${potLevel}`);
     }
   }, [employee]);
 
   if (!employee) return null;
 
   const handleSave = async () => {
-    const perfNum = parseFloat(performance);
-    const potNum = parseFloat(potencial);
-
-    if (isNaN(perfNum) || perfNum < 1 || perfNum > 5) {
+    if (!selectedQuadrant) {
       toast({
         title: "Error",
-        description: "El desempeño debe estar entre 1 y 5",
+        description: "Selecciona un cuadrante",
         variant: "destructive",
       });
       return;
     }
 
-    if (isNaN(potNum) || potNum < 1 || potNum > 5) {
-      toast({
-        title: "Error",
-        description: "El potencial debe estar entre 1 y 5",
-        variant: "destructive",
-      });
-      return;
-    }
+    const quadrantData = QUADRANTS.find(q => q.value === selectedQuadrant);
+    if (!quadrantData) return;
 
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('empleados' as any)
-        .update({
-          performance: perfNum,
-          potencial: potNum,
-        })
-        .eq('nombre', employee.name);
+      // Get current evaluation data
+      const { data: evaluacion, error: evalError } = await supabase
+        .from('evaluaciones')
+        .select('*')
+        .eq('persona_nombre', employee!.name)
+        .eq('tablero_id', tableroId)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (evalError) throw evalError;
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Save to calibraciones table (history)
+      if (evaluacion) {
+        const { error: calibError } = await supabase
+          .from('calibraciones')
+          .insert({
+            evaluacion_id: evaluacion.id,
+            cuadrante_original: `${employee!.performance}-${employee!.potential}`,
+            cuadrante_calibrado: selectedQuadrant,
+            score_original_potencial: employee!.potentialScore,
+            score_calibrado_potencial: quadrantData.potential,
+            score_original_desempeno: employee!.performanceScore,
+            score_calibrado_desempeno: quadrantData.performance,
+            manager_id: user?.id || null,
+          });
+
+        if (calibError) {
+          console.warn("Error saving calibration history:", calibError);
+        }
+      }
+
+      // Update evaluaciones table
+      const { error: updateError } = await supabase
+        .from('evaluaciones')
+        .update({
+          potencial_score: quadrantData.potential,
+          desempeno_score: quadrantData.performance,
+        })
+        .eq('persona_nombre', employee!.name)
+        .eq('tablero_id', tableroId);
+
+      if (updateError) throw updateError;
 
       toast({
-        title: "Cambios guardados",
-        description: `Se actualizó la evaluación de ${employee.name}`,
+        title: "Calibración guardada",
+        description: `${employee!.name} movido a ${quadrantData.label}`,
       });
 
       // Reload page to refresh grid
@@ -99,53 +140,38 @@ export const EmployeeEditDialog = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Editar Ubicación - {employee.name}</DialogTitle>
+          <DialogTitle>Calibrar Ubicación - {employee.name}</DialogTitle>
           <DialogDescription>
-            Ajusta manualmente las puntuaciones de desempeño y potencial (rango: 1-5)
+            Selecciona el cuadrante destino para calibrar al empleado
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="performance">Desempeño (Performance)</Label>
-            <Input
-              id="performance"
-              type="number"
-              min="1"
-              max="5"
-              step="0.1"
-              value={performance}
-              onChange={(e) => setPerformance(e.target.value)}
-              placeholder="1.0 - 5.0"
-            />
+            <Label htmlFor="quadrant">Cuadrante de Calibración</Label>
+            <Select value={selectedQuadrant} onValueChange={setSelectedQuadrant}>
+              <SelectTrigger id="quadrant">
+                <SelectValue placeholder="Selecciona un cuadrante" />
+              </SelectTrigger>
+              <SelectContent>
+                {QUADRANTS.map((quadrant) => (
+                  <SelectItem key={quadrant.value} value={quadrant.value}>
+                    {quadrant.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <p className="text-xs text-muted-foreground">
-              Bajo: &lt;3, Medio: 3-3.9, Alto: ≥4
-            </p>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="potencial">Potencial</Label>
-            <Input
-              id="potencial"
-              type="number"
-              min="1"
-              max="5"
-              step="0.1"
-              value={potencial}
-              onChange={(e) => setPotencial(e.target.value)}
-              placeholder="1.0 - 5.0"
-            />
-            <p className="text-xs text-muted-foreground">
-              Bajo: ≤1.5, Medio: 1.6-2.5, Alto: &gt;2.5
+              Umbrales: Bajo ≤2.4, Medio 2.5-3.9, Alto ≥4.0
             </p>
           </div>
 
           <div className="text-xs text-muted-foreground space-y-1 bg-muted p-3 rounded">
             <p>
-              <strong>Desempeño actual:</strong> {employee.performanceScore.toFixed(2)} ({employee.performance})
+              <strong>Ubicación actual:</strong> {employee.performance} Desempeño, {employee.potential} Potencial
             </p>
             <p>
-              <strong>Potencial actual:</strong> {employee.potentialScore.toFixed(2)} ({employee.potential})
+              <strong>Scores actuales:</strong> Desempeño {employee.performanceScore.toFixed(2)}, Potencial {employee.potentialScore.toFixed(2)}
             </p>
             <p>
               <strong>Manager:</strong> {employee.manager}
@@ -158,7 +184,7 @@ export const EmployeeEditDialog = ({
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={loading}>
-            {loading ? "Guardando..." : "Guardar Cambios"}
+            {loading ? "Guardando calibración..." : "Guardar Calibración"}
           </Button>
         </DialogFooter>
       </DialogContent>
