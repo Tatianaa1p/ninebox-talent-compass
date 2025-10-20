@@ -180,18 +180,29 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId }: InteractiveNine
     setEditDialogOpen(true);
   };
 
-  const handleSaveEdit = async (quadrantName: string, motivo?: string) => {
+  const handleSaveEdit = async (quadrantName: string, success: boolean) => {
     if (!editingEmployee) return;
 
-    // Close dialog first
+    // Close dialog
     setEditDialogOpen(false);
-    setEditingEmployee(null);
     
-    // Trigger refresh via toast notification
-    toast({
-      title: "Calibración guardada",
-      description: "El grid se actualizará automáticamente",
-    });
+    // Wait a moment for database updates to propagate
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (success) {
+      toast({
+        title: "Calibración guardada",
+        description: `${editingEmployee.name} actualizado correctamente en el grid`,
+      });
+    } else {
+      toast({
+        title: "Actualización fallida",
+        description: "Recarga la página para ver los cambios",
+        variant: "destructive",
+      });
+    }
+    
+    setEditingEmployee(null);
   };
 
   const handleRevertEmployee = (employee: Employee) => {
