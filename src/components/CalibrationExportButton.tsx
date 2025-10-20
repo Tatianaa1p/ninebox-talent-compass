@@ -58,8 +58,8 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
         const baseData: any = {
           "nombre": evaluacion.persona_nombre,
           "cuadrante_original": originalQuadrant,
-          "score_original_potencial": evaluacion.potencial_score,
-          "score_original_desempeno": evaluacion.desempeno_score,
+          "performance": evaluacion.desempeno_score,
+          "potencial": evaluacion.potencial_score,
         };
 
         // If calibrated, add calibration data
@@ -68,9 +68,8 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
           return {
             ...baseData,
             "cuadrante_calibrado": calibratedQuadrant,
-            "score_calibrado_potencial": calibration.score_calibrado_potencial,
-            "score_calibrado_desempeno": calibration.score_calibrado_desempeno,
             "modificado": "Sí",
+            "manager": calibration.manager_id || "",
             "fecha": new Date(calibration.created_at).toLocaleDateString('es-ES'),
           };
         }
@@ -79,9 +78,8 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
         return {
           ...baseData,
           "cuadrante_calibrado": "",
-          "score_calibrado_potencial": "",
-          "score_calibrado_desempeno": "",
           "modificado": "No",
+          "manager": "",
           "fecha": "",
         };
       }) || [];
