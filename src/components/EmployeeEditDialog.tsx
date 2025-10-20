@@ -24,15 +24,15 @@ interface EmployeeEditDialogProps {
 }
 
 const QUADRANTS = [
-  { value: "Alto-Alto", label: "1. Talento Estratégico", performance: 4.5, potential: 4.5 },
-  { value: "Alto-Medio", label: "2. Crecimiento Acelerado", performance: 4.5, potential: 3.0 },
-  { value: "Alto-Bajo", label: "3. Desempeño Consistente", performance: 4.5, potential: 2.0 },
-  { value: "Medio-Alto", label: "4. Comprometido", performance: 3.0, potential: 4.5 },
-  { value: "Medio-Medio", label: "5. Potencial No Visible", performance: 3.0, potential: 3.0 },
-  { value: "Medio-Bajo", label: "6. Evolución", performance: 3.0, potential: 2.0 },
-  { value: "Bajo-Alto", label: "7. En Riesgo de Estancamiento", performance: 2.0, potential: 4.5 },
-  { value: "Bajo-Medio", label: "8. En Revisión", performance: 2.0, potential: 3.0 },
-  { value: "Bajo-Bajo", label: "9. Desempeño Insuficiente", performance: 2.0, potential: 2.0 },
+  { value: "Alto-Alto", label: "Talento Estratégico", performance: 4.5, potential: 3.0 },
+  { value: "Alto-Medio", label: "Desarrollar", performance: 3.5, potential: 3.0 },
+  { value: "Alto-Bajo", label: "Consistente", performance: 2.0, potential: 3.0 },
+  { value: "Medio-Alto", label: "Clave", performance: 4.5, potential: 2.0 },
+  { value: "Medio-Medio", label: "Dilema", performance: 3.5, potential: 2.0 },
+  { value: "Medio-Bajo", label: "Enigma", performance: 2.0, potential: 2.0 },
+  { value: "Bajo-Alto", label: "Confiable", performance: 4.5, potential: 1.0 },
+  { value: "Bajo-Medio", label: "Estancamiento", performance: 3.5, potential: 1.0 },
+  { value: "Bajo-Bajo", label: "Riesgo", performance: 2.0, potential: 1.0 },
 ];
 
 export const EmployeeEditDialog = ({
@@ -48,9 +48,11 @@ export const EmployeeEditDialog = ({
 
   useEffect(() => {
     if (employee) {
-      // Determine current quadrant based on performance and potential (Bajo ≤2.4, Medio 2.5–3.9, Alto ≥4.0)
-      const perfLevel = employee.performanceScore >= 4.0 ? "Alto" : employee.performanceScore >= 2.5 ? "Medio" : "Bajo";
-      const potLevel = employee.potentialScore >= 4.0 ? "Alto" : employee.potentialScore >= 2.5 ? "Medio" : "Bajo";
+      // Determine current quadrant based on performance and potential
+      // Potencial: Bajo ≤1.5, Medio >1.5 hasta ≤2.5, Alto >2.5
+      // Desempeño: Bajo <3, Medio ≥3 hasta <4, Alto ≥4
+      const perfLevel = employee.performanceScore >= 4 ? "Alto" : employee.performanceScore >= 3 ? "Medio" : "Bajo";
+      const potLevel = employee.potentialScore > 2.5 ? "Alto" : employee.potentialScore > 1.5 ? "Medio" : "Bajo";
       setSelectedQuadrant(`${perfLevel}-${potLevel}`);
     }
   }, [employee]);
@@ -162,7 +164,7 @@ export const EmployeeEditDialog = ({
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Umbrales: Bajo ≤2.4, Medio 2.5-3.9, Alto ≥4.0
+              Umbrales - Potencial: Bajo ≤1.5, Medio &gt;1.5-≤2.5, Alto &gt;2.5 | Desempeño: Bajo &lt;3, Medio ≥3-&lt;4, Alto ≥4
             </p>
           </div>
 

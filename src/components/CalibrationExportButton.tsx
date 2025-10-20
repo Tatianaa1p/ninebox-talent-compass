@@ -44,9 +44,11 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
         const calibration = calibraciones?.find(c => c.evaluacion_id === evaluacion.id);
 
         // Determine original quadrant
+        // Potencial: Bajo ≤1.5, Medio >1.5 hasta ≤2.5, Alto >2.5
+        // Desempeño: Bajo <3, Medio ≥3 hasta <4, Alto ≥4
         const getQuadrant = (perf: number, pot: number) => {
-          const perfLevel = perf >= 4 ? "Alto" : perf >= 2.5 ? "Medio" : "Bajo";
-          const potLevel = pot > 2.5 ? "Alto" : pot >= 1.6 ? "Medio" : "Bajo";
+          const perfLevel = perf >= 4 ? "Alto" : perf >= 3 ? "Medio" : "Bajo";
+          const potLevel = pot > 2.5 ? "Alto" : pot > 1.5 ? "Medio" : "Bajo";
           return `${perfLevel}-${potLevel}`;
         };
 
