@@ -76,7 +76,7 @@ export const EmployeeEditDialog = ({
 
     try {
       // Get current evaluation data
-      const { data: evaluacion, error: evalError } = await supabase
+      let { data: evaluacion, error: evalError } = await supabase
         .from('evaluaciones')
         .select('*')
         .eq('persona_nombre', employee!.name)
@@ -85,8 +85,40 @@ export const EmployeeEditDialog = ({
 
       if (evalError) throw evalError;
 
+      // If no evaluation exists, create one first
       if (!evaluacion) {
-        throw new Error("No se encontró la evaluación");
+        console.log("No evaluation found, creating new one for:", employee!.name);
+        
+        // Get equipo_id from tablero
+        const { data: tablero } = await supabase
+          .from('tableros')
+          .select('equipo_id')
+          .eq('id', tableroId)
+          .single();
+
+        if (!tablero) {
+          throw new Error("No se encontró el tablero");
+        }
+
+        // Create new evaluation with current scores
+        const { data: newEval, error: insertError } = await supabase
+          .from('evaluaciones')
+          .insert({
+            persona_nombre: employee!.name,
+            tablero_id: tableroId,
+            equipo_id: tablero.equipo_id,
+            potencial_score: employee!.potentialScore,
+            desempeno_score: employee!.performanceScore,
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error("Error creating evaluation:", insertError);
+          throw new Error("Error al crear evaluación: " + insertError.message);
+        }
+
+        evaluacion = newEval;
       }
 
       // Get current user
@@ -118,8 +150,7 @@ export const EmployeeEditDialog = ({
           potencial_score: quadrantData.potential,
           desempeno_score: quadrantData.performance,
         })
-        .eq('persona_nombre', employee!.name)
-        .eq('tablero_id', tableroId);
+        .eq('id', evaluacion.id);
 
       if (updateError) {
         console.error("Error updating evaluaciones:", updateError);
