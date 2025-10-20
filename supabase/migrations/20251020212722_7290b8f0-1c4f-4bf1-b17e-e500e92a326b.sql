@@ -1,0 +1,4 @@
+-- Enable RLS on tables that are missing it
+ALTER TABLE empleados ENABLE ROW LEVEL SECURITY;
+ALTER TABLE empresas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipos ENABLE ROW LEVEL SECURITY;
