@@ -151,7 +151,7 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
       PerformanceLevel
     ];
 
-    const currentQuadrantKey = `${employee.performance}-${employee.potential}`;
+    const currentQuadrantKey = `${employee.potential}-${employee.performance}`;
     if (currentQuadrantKey === targetQuadrantKey) {
       return; // No change
     }

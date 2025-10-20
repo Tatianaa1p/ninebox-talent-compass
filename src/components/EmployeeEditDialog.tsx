@@ -25,13 +25,13 @@ interface EmployeeEditDialogProps {
 
 const QUADRANTS = [
   { value: "Alto-Alto", label: "Talento Estratégico", performance: 4.5, potential: 3.0 },
-  { value: "Medio-Alto", label: "Desarrollar", performance: 3.5, potential: 3.0 },
-  { value: "Alto-Medio", label: "Consistente", performance: 4.5, potential: 2.0 },
+  { value: "Alto-Medio", label: "Desarrollar", performance: 3.5, potential: 3.0 },
+  { value: "Medio-Alto", label: "Consistente", performance: 4.5, potential: 2.0 },
   { value: "Medio-Medio", label: "Clave", performance: 3.5, potential: 2.0 },
-  { value: "Bajo-Alto", label: "Dilema", performance: 2.0, potential: 3.0 },
-  { value: "Medio-Bajo", label: "Enigma", performance: 3.5, potential: 1.0 },
-  { value: "Alto-Bajo", label: "Confiable", performance: 4.5, potential: 1.0 },
-  { value: "Bajo-Medio", label: "Estancamiento", performance: 2.0, potential: 2.0 },
+  { value: "Alto-Bajo", label: "Dilema", performance: 2.0, potential: 3.0 },
+  { value: "Bajo-Medio", label: "Enigma", performance: 3.5, potential: 1.0 },
+  { value: "Medio-Bajo", label: "Confiable", performance: 4.5, potential: 1.0 },
+  { value: "Bajo-Alto", label: "Estancamiento", performance: 2.0, potential: 2.0 },
   { value: "Bajo-Bajo", label: "Riesgo", performance: 2.0, potential: 1.0 },
 ];
 
@@ -53,7 +53,7 @@ export const EmployeeEditDialog = ({
       // Desempeño: Bajo <3, Medio ≥3 hasta <4, Alto ≥4
       const perfLevel = employee.performanceScore >= 4 ? "Alto" : employee.performanceScore >= 3 ? "Medio" : "Bajo";
       const potLevel = employee.potentialScore > 2.5 ? "Alto" : employee.potentialScore > 1.5 ? "Medio" : "Bajo";
-      setSelectedQuadrant(`${perfLevel}-${potLevel}`);
+      setSelectedQuadrant(`${potLevel}-${perfLevel}`);
     }
   }, [employee]);
 
@@ -129,7 +129,7 @@ export const EmployeeEditDialog = ({
         .from('calibraciones')
         .insert({
           evaluacion_id: evaluacion.id,
-          cuadrante_original: `${employee!.performance}-${employee!.potential}`,
+          cuadrante_original: `${employee!.potential}-${employee!.performance}`,
           cuadrante_calibrado: selectedQuadrant,
           score_original_potencial: employee!.potentialScore,
           score_calibrado_potencial: quadrantData.potential,

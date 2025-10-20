@@ -2,12 +2,15 @@ import * as XLSX from "xlsx";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 
 // Helper function to normalize performance/potential values based on thresholds
-const normalizeLevel = (
-  value: number,
-  thresholds: { low: number; medium: number; high: number }
-): "Bajo" | "Medio" | "Alto" => {
-  if (value >= thresholds.high) return "Alto";
-  if (value >= thresholds.medium) return "Medio";
+const normalizePerformanceLevel = (value: number): "Bajo" | "Medio" | "Alto" => {
+  if (value >= 4) return "Alto";
+  if (value >= 3) return "Medio";
+  return "Bajo";
+};
+
+const normalizePotentialLevel = (value: number): "Bajo" | "Medio" | "Alto" => {
+  if (value > 2.5) return "Alto";
+  if (value > 1.5) return "Medio";
   return "Bajo";
 };
 
@@ -73,13 +76,6 @@ export const parseExcelFiles = async (
     const rawData: EmployeeRawData[] = [];
     const unclassified: any[] = [];
     
-    // Default thresholds
-    const defaultThresholds = {
-      low: 1.5,
-      medium: 1.6,
-      high: 4,
-    };
-    
     // Process performance data and merge with potential
     // Using column AG ("Puntuación promedio") from perfomance.xlsx
     perfData.forEach((row) => {
@@ -116,15 +112,17 @@ export const parseExcelFiles = async (
       });
     });
     
-    // Convert raw data to employees with default thresholds
+    // Convert raw data to employees with updated thresholds
+    // Potencial: Bajo ≤1.5, Medio >1.5 hasta ≤2.5, Alto >2.5
+    // Desempeño: Bajo <3, Medio ≥3 hasta <4, Alto ≥4
     const employees: Employee[] = rawData.map((data) => ({
       id: `${data.name}-${Date.now()}-${Math.random()}`,
       name: data.name,
       manager: data.manager,
       performanceScore: data.performanceScore,
       potentialScore: data.potentialScore,
-      performance: normalizeLevel(data.performanceScore, defaultThresholds),
-      potential: normalizeLevel(data.potentialScore, defaultThresholds),
+      performance: normalizePerformanceLevel(data.performanceScore),
+      potential: normalizePotentialLevel(data.potentialScore),
     }));
     
     return { employees, unclassified, rawData };

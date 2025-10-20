@@ -49,7 +49,7 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
         const getQuadrant = (perf: number, pot: number) => {
           const perfLevel = perf >= 4 ? "Alto" : perf >= 3 ? "Medio" : "Bajo";
           const potLevel = pot > 2.5 ? "Alto" : pot > 1.5 ? "Medio" : "Bajo";
-          return `${perfLevel}-${potLevel}`;
+          return `${potLevel}-${perfLevel}`;
         };
 
         const originalQuadrant = getQuadrant(evaluacion.desempeno_score, evaluacion.potencial_score);

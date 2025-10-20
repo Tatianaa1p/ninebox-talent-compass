@@ -23,36 +23,36 @@ export type ViewMode = "original" | "calibrada";
 
 export const QUADRANT_NAMES = {
   "Alto-Alto": "Talento Estratégico",
-  "Alto-Medio": "Desarrollar",
-  "Alto-Bajo": "Consistente",
-  "Medio-Alto": "Clave",
-  "Medio-Medio": "Dilema",
+  "Medio-Alto": "Desarrollar",
+  "Alto-Medio": "Consistente",
+  "Medio-Medio": "Clave",
+  "Bajo-Alto": "Dilema",
   "Medio-Bajo": "Enigma",
-  "Bajo-Alto": "Confiable",
+  "Alto-Bajo": "Confiable",
   "Bajo-Medio": "Estancamiento",
   "Bajo-Bajo": "Riesgo",
 } as const;
 
 export const QUADRANT_DESCRIPTIONS = {
   "Alto-Alto": "Empleados de alto rendimiento y gran potencial, listos para roles de liderazgo",
-  "Alto-Medio": "Desempeño sobresaliente, pero con potencial moderado; necesitan desarrollo dirigido",
-  "Alto-Bajo": "Rendimiento alto, pero con potencial limitado; ideales para roles estables",
-  "Medio-Alto": "Desempeño aceptable con alto potencial; requieren entrenamiento",
-  "Medio-Medio": "Desempeño y potencial moderados; necesitan evaluación",
+  "Medio-Alto": "Desempeño sobresaliente, pero con potencial moderado; necesitan desarrollo dirigido",
+  "Alto-Medio": "Rendimiento alto, pero con potencial limitado; ideales para roles estables",
+  "Medio-Medio": "Desempeño aceptable con alto potencial; requieren entrenamiento",
+  "Bajo-Alto": "Desempeño y potencial moderados; necesitan evaluación",
   "Medio-Bajo": "Desempeño aceptable, bajo potencial; considerar reasignación",
-  "Bajo-Alto": "Bajo rendimiento actual, pero con potencial; necesitan apoyo",
+  "Alto-Bajo": "Bajo rendimiento actual, pero con potencial; necesitan apoyo",
   "Bajo-Medio": "Desempeño bajo con potencial moderado; riesgo de estancamiento",
   "Bajo-Bajo": "Bajo rendimiento y potencial; considerar salida",
 } as const;
 
 export const QUADRANT_KEYS = {
   "Talento Estratégico": "Alto-Alto",
-  "Desarrollar": "Alto-Medio",
-  "Consistente": "Alto-Bajo",
-  "Clave": "Medio-Alto",
-  "Dilema": "Medio-Medio",
+  "Desarrollar": "Medio-Alto",
+  "Consistente": "Alto-Medio",
+  "Clave": "Medio-Medio",
+  "Dilema": "Bajo-Alto",
   "Enigma": "Medio-Bajo",
-  "Confiable": "Bajo-Alto",
+  "Confiable": "Alto-Bajo",
   "Estancamiento": "Bajo-Medio",
   "Riesgo": "Bajo-Bajo",
 } as const;

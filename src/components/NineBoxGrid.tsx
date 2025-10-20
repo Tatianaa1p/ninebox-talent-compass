@@ -13,15 +13,15 @@ interface NineBoxGridProps {
 }
 
 const QUADRANT_LABELS: Record<string, { title: string; color: string }> = {
-  "Alto-Alto": { title: "Key Players", color: "bg-high" },
-  "Alto-Medio": { title: "High Potential", color: "bg-high" },
-  "Alto-Bajo": { title: "Emerging Talent", color: "bg-medium" },
-  "Medio-Alto": { title: "Solid Performers", color: "bg-medium" },
-  "Medio-Medio": { title: "Core Contributors", color: "bg-medium" },
-  "Medio-Bajo": { title: "Inconsistent Performers", color: "bg-medium" },
-  "Bajo-Alto": { title: "High Potential/Low Performance", color: "bg-low" },
-  "Bajo-Medio": { title: "Underperformers", color: "bg-low" },
-  "Bajo-Bajo": { title: "Low Performers", color: "bg-low" },
+  "Alto-Alto": { title: "Talento Estratégico", color: "bg-high" },
+  "Medio-Alto": { title: "Desarrollar", color: "bg-high" },
+  "Alto-Medio": { title: "Consistente", color: "bg-high" },
+  "Medio-Medio": { title: "Clave", color: "bg-medium" },
+  "Bajo-Alto": { title: "Dilema", color: "bg-medium" },
+  "Medio-Bajo": { title: "Enigma", color: "bg-medium" },
+  "Alto-Bajo": { title: "Confiable", color: "bg-medium" },
+  "Bajo-Medio": { title: "Estancamiento", color: "bg-low" },
+  "Bajo-Bajo": { title: "Riesgo", color: "bg-low" },
 };
 
 export const NineBoxGrid = ({ employees }: NineBoxGridProps) => {
@@ -31,7 +31,7 @@ export const NineBoxGrid = ({ employees }: NineBoxGridProps) => {
     
     return potentialLevels.flatMap((potential) =>
       performanceLevels.map((performance) => {
-        const key = `${performance}-${potential}`;
+        const key = `${potential}-${performance}`;
         const config = QUADRANT_LABELS[key];
         
         return {
