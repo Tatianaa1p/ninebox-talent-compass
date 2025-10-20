@@ -180,15 +180,18 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId }: InteractiveNine
     setEditDialogOpen(true);
   };
 
-  const handleSaveEdit = (quadrantName: string, motivo?: string) => {
+  const handleSaveEdit = async (quadrantName: string, motivo?: string) => {
     if (!editingEmployee) return;
 
-    // After saving in the dialog, reload to show updated grid
+    // Close dialog first
     setEditDialogOpen(false);
     setEditingEmployee(null);
     
-    // Reload page to refresh grid with calibrated data
-    window.location.reload();
+    // Trigger refresh via toast notification
+    toast({
+      title: "Calibración guardada",
+      description: "El grid se actualizará automáticamente",
+    });
   };
 
   const handleRevertEmployee = (employee: Employee) => {

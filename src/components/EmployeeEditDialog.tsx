@@ -157,6 +157,21 @@ export const EmployeeEditDialog = ({
         throw new Error("Error al actualizar evaluación");
       }
 
+      // Update empleados table to reflect new scores in the grid
+      const { error: empleadosError } = await supabase
+        .from('empleados' as any)
+        .update({
+          performance: quadrantData.performance,
+          potencial: quadrantData.potential,
+        })
+        .eq('nombre', employee!.name)
+        .eq('tablero_id', tableroId);
+
+      if (empleadosError) {
+        console.error("Error updating empleados:", empleadosError);
+        // Don't throw here, evaluacion was already updated
+      }
+
       toast({
         title: "Calibración guardada",
         description: `${employee!.name} movido a ${quadrantData.label}`,
