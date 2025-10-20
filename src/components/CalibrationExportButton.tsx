@@ -38,12 +38,7 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
       
       if (calibError) throw calibError;
 
-      // Fetch user profiles for manager names
-      const { data: userRoles } = await supabase
-        .from('user_roles')
-        .select('user_id');
-
-      // Build export data
+      // Build export data - include ALL evaluaciones
       const exportData = evaluaciones?.map(evaluacion => {
         // Find latest calibration for this evaluacion
         const calibration = calibraciones?.find(c => c.evaluacion_id === evaluacion.id);
@@ -57,23 +52,37 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
           return `${perfLevel}-${potLevel}`;
         };
 
-        const originalQuadrant = calibration?.cuadrante_original || 
-          getQuadrant(evaluacion.desempeno_score, evaluacion.potencial_score);
+        const originalQuadrant = getQuadrant(evaluacion.desempeno_score, evaluacion.potencial_score);
         
-        const calibratedQuadrant = calibration?.cuadrante_calibrado || originalQuadrant;
-
-        return {
+        // Base data - always present for all employees
+        const baseData: any = {
           "nombre": evaluacion.persona_nombre,
           "cuadrante_original": originalQuadrant,
-          "score_original_potencial": calibration?.score_original_potencial || evaluacion.potencial_score,
-          "score_original_desempeno": calibration?.score_original_desempeno || evaluacion.desempeno_score,
-          "cuadrante_calibrado": calibratedQuadrant,
-          "score_calibrado_potencial": calibration?.score_calibrado_potencial || evaluacion.potencial_score,
-          "score_calibrado_desempeno": calibration?.score_calibrado_desempeno || evaluacion.desempeno_score,
-          "manager": calibration?.manager_id || "N/A",
-          "fecha": calibration?.created_at 
-            ? new Date(calibration.created_at).toLocaleDateString('es-ES')
-            : "Sin calibrar",
+          "score_original_potencial": evaluacion.potencial_score,
+          "score_original_desempeno": evaluacion.desempeno_score,
+        };
+
+        // If calibrated, add calibration data
+        if (calibration) {
+          const calibratedQuadrant = calibration.cuadrante_calibrado || originalQuadrant;
+          return {
+            ...baseData,
+            "cuadrante_calibrado": calibratedQuadrant,
+            "score_calibrado_potencial": calibration.score_calibrado_potencial,
+            "score_calibrado_desempeno": calibration.score_calibrado_desempeno,
+            "modificado": "Sí",
+            "fecha": new Date(calibration.created_at).toLocaleDateString('es-ES'),
+          };
+        }
+
+        // Not calibrated - add empty calibration fields
+        return {
+          ...baseData,
+          "cuadrante_calibrado": "",
+          "score_calibrado_potencial": "",
+          "score_calibrado_desempeno": "",
+          "modificado": "No",
+          "fecha": "",
         };
       }) || [];
 

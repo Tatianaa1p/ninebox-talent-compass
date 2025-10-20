@@ -191,25 +191,31 @@ const Dashboard = () => {
       )
       .subscribe();
 
-    // Subscribe to grid_update broadcast channel for calibration notifications
-    const gridUpdateChannel = supabase
-      .channel('grid_update')
-      .on(
-        'broadcast',
-        { event: 'calibration_saved' },
-        (payload) => {
-          if (payload.payload.tablero_id === selectedTablero) {
-            loadEmpleados();
-          }
-        }
-      )
-      .subscribe();
-
     return () => {
       supabase.removeChannel(empleadosChannel);
-      supabase.removeChannel(gridUpdateChannel);
     };
   }, [selectedTablero, toast]);
+
+  // Function to reload empleados (used after calibration)
+  const reloadEmpleados = async () => {
+    if (!selectedTablero) return;
+    
+    const { data, error } = await supabase
+      .from('empleados' as any)
+      .select('*')
+      .eq('tablero_id', selectedTablero);
+    
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los empleados',
+        variant: 'destructive',
+      });
+    } else {
+      setEmpleados((data as any) || []);
+      convertToEmployees((data as any) || []);
+    }
+  };
 
   const convertToEmployees = (emps: Empleado[]) => {
     const employees: Employee[] = emps.map((e) => ({
@@ -490,7 +496,11 @@ const Dashboard = () => {
                 </div>
                 <CalibrationExportButton tableroId={selectedTablero} />
               </div>
-              <InteractiveNineBoxGrid employees={employees} tableroId={selectedTablero} />
+              <InteractiveNineBoxGrid 
+                employees={employees} 
+                tableroId={selectedTablero} 
+                onDataReload={reloadEmpleados}
+              />
             </Card>
           </>
         )}

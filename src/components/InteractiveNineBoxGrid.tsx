@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 interface InteractiveNineBoxGridProps {
   employees: Employee[];
   tableroId?: string;
+  onDataReload?: () => void;
 }
 
 const QUADRANT_LABELS: Record<string, { title: string; description: string; color: string }> = {
@@ -69,7 +70,7 @@ const QUADRANT_LABELS: Record<string, { title: string; description: string; colo
   },
 };
 
-export const InteractiveNineBoxGrid = ({ employees, tableroId }: InteractiveNineBoxGridProps) => {
+export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: InteractiveNineBoxGridProps) => {
   const { addOverride, removeOverride, getOverride, viewMode, undoLastAction, canUndo } =
     useOverrides();
   const { toast } = useToast();
@@ -185,11 +186,14 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId }: InteractiveNine
 
     // Close dialog
     setEditDialogOpen(false);
-    
-    // Wait a moment for database updates to propagate
-    await new Promise(resolve => setTimeout(resolve, 500));
+    setEditingEmployee(null);
     
     if (success) {
+      // Reload data directly from database
+      if (onDataReload) {
+        await onDataReload();
+      }
+      
       toast({
         title: "Calibración guardada",
         description: `${editingEmployee.name} actualizado correctamente en el grid`,
@@ -201,8 +205,6 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId }: InteractiveNine
         variant: "destructive",
       });
     }
-    
-    setEditingEmployee(null);
   };
 
   const handleRevertEmployee = (employee: Employee) => {

@@ -172,14 +172,6 @@ export const EmployeeEditDialog = ({
         // Don't throw here, evaluacion was already updated
       }
 
-      // Send notification to grid_update channel
-      const channel = supabase.channel('grid_update');
-      await channel.send({
-        type: 'broadcast',
-        event: 'calibration_saved',
-        payload: { evaluacion_id: evaluacion.id, tablero_id: tableroId }
-      });
-
       // Success - notify parent
       onSave(selectedQuadrant, true);
       onClose();
