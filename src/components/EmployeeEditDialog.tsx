@@ -26,10 +26,10 @@ interface EmployeeEditDialogProps {
 const QUADRANTS = [
   { value: "Alto-Alto", label: "Talento Estratégico", performance: 4.5, potential: 3.0 },
   { value: "Alto-Medio", label: "Desarrollar", performance: 3.5, potential: 3.0 },
-  { value: "Alto-Bajo", label: "Dilema", performance: 2.0, potential: 3.0 },
+  { value: "Alto-Bajo", label: "Enigma", performance: 2.0, potential: 3.0 },
   { value: "Medio-Alto", label: "Consistente", performance: 4.5, potential: 2.0 },
   { value: "Medio-Medio", label: "Clave", performance: 3.5, potential: 2.0 },
-  { value: "Medio-Bajo", label: "Enigma", performance: 2.0, potential: 2.0 },
+  { value: "Medio-Bajo", label: "Dilema", performance: 2.0, potential: 2.0 },
   { value: "Bajo-Alto", label: "Confiable", performance: 4.5, potential: 1.0 },
   { value: "Bajo-Medio", label: "Estancamiento", performance: 3.5, potential: 1.0 },
   { value: "Bajo-Bajo", label: "Riesgo", performance: 2.0, potential: 1.0 },
