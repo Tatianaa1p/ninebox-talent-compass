@@ -45,27 +45,11 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // HARDCODED DATA - Temporary solution with valid UUIDs
-  const HARDCODED_EMPRESAS: Empresa[] = [
-    { id: '550e8400-e29b-41d4-a716-446655440000', nombre: 'Argentina' },
-    { id: '550e8400-e29b-41d4-a716-446655440001', nombre: 'Uruguay' },
-    { id: '550e8400-e29b-41d4-a716-446655440002', nombre: 'Paraguay' }
-  ];
-
-  const HARDCODED_EQUIPOS: Record<string, Equipo[]> = {
-    '550e8400-e29b-41d4-a716-446655440000': [
-      { id: '550e8400-e29b-41d4-a716-446655440003', nombre: 'Equipo Comercial', empresa_id: '550e8400-e29b-41d4-a716-446655440000' },
-      { id: '550e8400-e29b-41d4-a716-446655440004', nombre: 'Equipo Operaciones', empresa_id: '550e8400-e29b-41d4-a716-446655440000' }
-    ],
-    '550e8400-e29b-41d4-a716-446655440001': [],
-    '550e8400-e29b-41d4-a716-446655440002': []
-  };
-
-  const [empresas, setEmpresas] = useState<Empresa[]>(HARDCODED_EMPRESAS);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [tableros, setTableros] = useState<Tablero[]>([]);
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
-  const [selectedEmpresa, setSelectedEmpresa] = useState<string>('550e8400-e29b-41d4-a716-446655440000');
+  const [selectedEmpresa, setSelectedEmpresa] = useState<string>('');
   const [selectedEquipo, setSelectedEquipo] = useState<string>('');
   const [selectedTablero, setSelectedTablero] = useState<string>('');
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -74,22 +58,70 @@ const Dashboard = () => {
   const [showCreateEmpresaDialog, setShowCreateEmpresaDialog] = useState(false);
   const [showCreateEquipoDialog, setShowCreateEquipoDialog] = useState(false);
 
-  // Load equipos when empresa changes - HARDCODED
+  // Load empresas from Supabase
+  useEffect(() => {
+    const loadEmpresas = async () => {
+      const { data, error } = await supabase.from('empresas').select('*');
+      if (error) {
+        console.error('Error loading empresas:', error);
+        toast({
+          title: 'Error al cargar empresas',
+          description: error.message.includes('policy') 
+            ? 'No tienes permisos para ver las empresas. Contacta al administrador.'
+            : `Error: ${error.message}`,
+          variant: 'destructive',
+        });
+      } else {
+        // Remove duplicates by nombre, keeping first occurrence
+        const uniqueEmpresas = data?.reduce((acc: Empresa[], current) => {
+          const exists = acc.find(item => item.nombre === current.nombre);
+          if (!exists) {
+            acc.push(current);
+          }
+          return acc;
+        }, []) || [];
+        setEmpresas(uniqueEmpresas);
+      }
+    };
+    loadEmpresas();
+  }, [toast]);
+
+  // Load equipos when empresa changes - FROM SUPABASE
   useEffect(() => {
     if (!selectedEmpresa) {
       setEquipos([]);
+      setSelectedEquipo('');
       return;
     }
-    
-    // Use hardcoded data
-    const hardcodedEquipos = HARDCODED_EQUIPOS[selectedEmpresa] || [];
-    setEquipos(hardcodedEquipos);
-    
-    // Auto-select first equipo if available
-    if (hardcodedEquipos.length > 0) {
-      setSelectedEquipo(hardcodedEquipos[0].id);
-    }
-  }, [selectedEmpresa]);
+
+    const loadEquipos = async () => {
+      const { data, error } = await supabase
+        .from('equipos')
+        .select('*')
+        .eq('empresa_id', selectedEmpresa);
+      
+      if (error) {
+        console.error('Error loading equipos:', error);
+        toast({
+          title: 'Error al cargar equipos',
+          description: error.message.includes('policy')
+            ? 'No tienes permisos para ver los equipos.'
+            : `Error: ${error.message}`,
+          variant: 'destructive',
+        });
+        setEquipos([]);
+      } else {
+        setEquipos(data || []);
+        // Auto-select first equipo if available
+        if (data && data.length > 0) {
+          setSelectedEquipo(data[0].id);
+        } else {
+          setSelectedEquipo('');
+        }
+      }
+    };
+    loadEquipos();
+  }, [selectedEmpresa, toast]);
 
   // Load tableros when equipo changes
   useEffect(() => {
