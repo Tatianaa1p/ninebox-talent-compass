@@ -136,3 +136,12 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide all demo mode elements */
+.demo-mode,
+.demo-banner,
+[data-demo],
+.modo-demo {
+  display: none !important;
+  visibility: hidden !important;
+}
