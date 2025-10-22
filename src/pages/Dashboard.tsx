@@ -45,11 +45,27 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  // HARDCODED DATA - NO SUPABASE QUERIES
+  const HARDCODED_EMPRESAS: Empresa[] = [
+    { id: 'arg', nombre: 'Argentina' },
+    { id: 'uru', nombre: 'Uruguay' },
+    { id: 'pry', nombre: 'Paraguay' }
+  ];
+
+  const HARDCODED_EQUIPOS: Record<string, Equipo[]> = {
+    'arg': [
+      { id: 'eq1', nombre: 'Ventas Q4', empresa_id: 'arg' },
+      { id: 'eq2', nombre: 'Marketing', empresa_id: 'arg' }
+    ],
+    'uru': [],
+    'pry': []
+  };
+
+  const [empresas] = useState<Empresa[]>(HARDCODED_EMPRESAS);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [tableros, setTableros] = useState<Tablero[]>([]);
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
-  const [selectedEmpresa, setSelectedEmpresa] = useState<string>('');
+  const [selectedEmpresa, setSelectedEmpresa] = useState<string>('arg');
   const [selectedEquipo, setSelectedEquipo] = useState<string>('');
   const [selectedTablero, setSelectedTablero] = useState<string>('');
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -58,35 +74,7 @@ const Dashboard = () => {
   const [showCreateEmpresaDialog, setShowCreateEmpresaDialog] = useState(false);
   const [showCreateEquipoDialog, setShowCreateEquipoDialog] = useState(false);
 
-  // Load empresas from Supabase
-  useEffect(() => {
-    const loadEmpresas = async () => {
-      const { data, error } = await supabase.from('empresas').select('*');
-      if (error) {
-        console.error('Error loading empresas:', error);
-        toast({
-          title: 'Error al cargar empresas',
-          description: error.message.includes('policy') 
-            ? 'No tienes permisos para ver las empresas. Contacta al administrador.'
-            : `Error: ${error.message}`,
-          variant: 'destructive',
-        });
-      } else {
-        // Remove duplicates by nombre, keeping first occurrence
-        const uniqueEmpresas = data?.reduce((acc: Empresa[], current) => {
-          const exists = acc.find(item => item.nombre === current.nombre);
-          if (!exists) {
-            acc.push(current);
-          }
-          return acc;
-        }, []) || [];
-        setEmpresas(uniqueEmpresas);
-      }
-    };
-    loadEmpresas();
-  }, [toast]);
-
-  // Load equipos when empresa changes - FROM SUPABASE
+  // Load equipos when empresa changes - HARDCODED
   useEffect(() => {
     if (!selectedEmpresa) {
       setEquipos([]);
@@ -94,34 +82,16 @@ const Dashboard = () => {
       return;
     }
 
-    const loadEquipos = async () => {
-      const { data, error } = await supabase
-        .from('equipos')
-        .select('*')
-        .eq('empresa_id', selectedEmpresa);
-      
-      if (error) {
-        console.error('Error loading equipos:', error);
-        toast({
-          title: 'Error al cargar equipos',
-          description: error.message.includes('policy')
-            ? 'No tienes permisos para ver los equipos.'
-            : `Error: ${error.message}`,
-          variant: 'destructive',
-        });
-        setEquipos([]);
-      } else {
-        setEquipos(data || []);
-        // Auto-select first equipo if available
-        if (data && data.length > 0) {
-          setSelectedEquipo(data[0].id);
-        } else {
-          setSelectedEquipo('');
-        }
-      }
-    };
-    loadEquipos();
-  }, [selectedEmpresa, toast]);
+    const hardcodedEquipos = HARDCODED_EQUIPOS[selectedEmpresa] || [];
+    setEquipos(hardcodedEquipos);
+    
+    // Auto-select first equipo if available
+    if (hardcodedEquipos.length > 0) {
+      setSelectedEquipo(hardcodedEquipos[0].id);
+    } else {
+      setSelectedEquipo('');
+    }
+  }, [selectedEmpresa]);
 
   // Load tableros when equipo changes
   useEffect(() => {
@@ -566,19 +536,8 @@ const Dashboard = () => {
       <CreateEmpresaDialog
         open={showCreateEmpresaDialog}
         onOpenChange={setShowCreateEmpresaDialog}
-        onCreated={async () => {
-          // Reload empresas
-          const { data } = await supabase.from('empresas').select('*');
-          if (data) {
-            const uniqueEmpresas = data.reduce((acc: Empresa[], current) => {
-              const exists = acc.find(item => item.nombre === current.nombre);
-              if (!exists) {
-                acc.push(current);
-              }
-              return acc;
-            }, []);
-            setEmpresas(uniqueEmpresas);
-          }
+        onCreated={() => {
+          // Using hardcoded empresas - just close dialog
           setShowCreateEmpresaDialog(false);
         }}
       />
@@ -587,13 +546,8 @@ const Dashboard = () => {
         open={showCreateEquipoDialog}
         onOpenChange={setShowCreateEquipoDialog}
         empresaId={selectedEmpresa}
-        onCreated={async () => {
-          // Reload equipos
-          const { data } = await supabase
-            .from('equipos')
-            .select('*')
-            .eq('empresa_id', selectedEmpresa);
-          setEquipos(data || []);
+        onCreated={() => {
+          // Using hardcoded equipos - just close dialog
           setShowCreateEquipoDialog(false);
         }}
       />
