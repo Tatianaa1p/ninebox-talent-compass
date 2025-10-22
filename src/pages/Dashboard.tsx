@@ -45,27 +45,27 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // HARDCODED DATA - Temporary solution
+  // HARDCODED DATA - Temporary solution with valid UUIDs
   const HARDCODED_EMPRESAS: Empresa[] = [
-    { id: 'argentina-id', nombre: 'Argentina' },
-    { id: 'uruguay-id', nombre: 'Uruguay' },
-    { id: 'paraguay-id', nombre: 'Paraguay' }
+    { id: '550e8400-e29b-41d4-a716-446655440000', nombre: 'Argentina' },
+    { id: '550e8400-e29b-41d4-a716-446655440001', nombre: 'Uruguay' },
+    { id: '550e8400-e29b-41d4-a716-446655440002', nombre: 'Paraguay' }
   ];
 
   const HARDCODED_EQUIPOS: Record<string, Equipo[]> = {
-    'argentina-id': [
-      { id: 'eq-comercial', nombre: 'Equipo Comercial', empresa_id: 'argentina-id' },
-      { id: 'eq-operaciones', nombre: 'Equipo Operaciones', empresa_id: 'argentina-id' }
+    '550e8400-e29b-41d4-a716-446655440000': [
+      { id: '550e8400-e29b-41d4-a716-446655440003', nombre: 'Equipo Comercial', empresa_id: '550e8400-e29b-41d4-a716-446655440000' },
+      { id: '550e8400-e29b-41d4-a716-446655440004', nombre: 'Equipo Operaciones', empresa_id: '550e8400-e29b-41d4-a716-446655440000' }
     ],
-    'uruguay-id': [],
-    'paraguay-id': []
+    '550e8400-e29b-41d4-a716-446655440001': [],
+    '550e8400-e29b-41d4-a716-446655440002': []
   };
 
   const [empresas, setEmpresas] = useState<Empresa[]>(HARDCODED_EMPRESAS);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [tableros, setTableros] = useState<Tablero[]>([]);
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
-  const [selectedEmpresa, setSelectedEmpresa] = useState<string>('argentina-id');
+  const [selectedEmpresa, setSelectedEmpresa] = useState<string>('550e8400-e29b-41d4-a716-446655440000');
   const [selectedEquipo, setSelectedEquipo] = useState<string>('');
   const [selectedTablero, setSelectedTablero] = useState<string>('');
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -95,6 +95,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (!selectedEquipo) {
       setTableros([]);
+      setSelectedTablero('');
       return;
     }
 
@@ -106,17 +107,24 @@ const Dashboard = () => {
       
       if (error) {
         console.error('Error loading tableros:', error);
-        toast({
-          title: 'Error al cargar tableros',
-          description: error.message.includes('policy')
-            ? 'No tienes permisos para ver los tableros.'
-            : `Error: ${error.message}`,
-          variant: 'destructive',
-        });
+        // Only show error if it's not a "no rows" situation
+        if (!error.message.includes('0 rows')) {
+          toast({
+            title: 'Error al cargar tableros',
+            description: error.message.includes('policy')
+              ? 'No tienes permisos para ver los tableros.'
+              : `Error: ${error.message}`,
+            variant: 'destructive',
+          });
+        }
+        setTableros([]);
+        setSelectedTablero('');
       } else {
         setTableros(data || []);
         if (data && data.length > 0) {
           setSelectedTablero(data[0].id);
+        } else {
+          setSelectedTablero('');
         }
       }
     };
@@ -372,7 +380,7 @@ const Dashboard = () => {
               <div className="flex gap-2">
                 <Select value={selectedTablero} onValueChange={setSelectedTablero} disabled={!selectedEquipo}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar tablero" />
+                    <SelectValue placeholder={tableros.length === 0 ? "No hay tableros creados" : "Seleccionar tablero"} />
                   </SelectTrigger>
                   <SelectContent>
                     {tableros.map((t) => (
