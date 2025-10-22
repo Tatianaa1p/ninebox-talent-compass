@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, Plus } from 'lucide-react';
+import { LogOut, Plus } from 'lucide-react';
 import { InteractiveNineBoxGrid } from '@/components/InteractiveNineBoxGrid';
 import { StatisticsPanel } from '@/components/StatisticsPanel';
 import { CreateBoardDialog } from '@/components/CreateBoardDialog';
@@ -15,6 +15,7 @@ import { CreateEmpresaDialog } from '@/components/CreateEmpresaDialog';
 import { CreateEquipoDialog } from '@/components/CreateEquipoDialog';
 import { CalibrationExportButton } from '@/components/CalibrationExportButton';
 import { Employee } from '@/types/employee';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Empresa {
   id: string;
@@ -44,6 +45,7 @@ interface Empleado {
 const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
@@ -323,8 +325,19 @@ const Dashboard = () => {
     }
   };
 
-  const handleGoToAuth = () => {
+  const handleSignOut = async () => {
+    await signOut();
     navigate('/auth');
+  };
+
+  const getUserDisplayName = () => {
+    if (user?.email) {
+      const name = user.email.split('@')[0];
+      return name.split('.').map(part => 
+        part.charAt(0).toUpperCase() + part.slice(1)
+      ).join(' ');
+    }
+    return 'Usuario';
   };
 
   return (
@@ -333,16 +346,16 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Nine Box Grid - Dashboard</h1>
+              <h1 className="text-2xl font-bold">Nine Box Grid - Gestión Talento Seidor</h1>
               <p className="text-sm text-muted-foreground mt-1">
                 <span className="inline-flex items-center gap-2 px-2 py-1 bg-green-500/10 text-green-600 rounded-md">
-                  ✓ Sesión Activa - Bienvenido
+                  ✓ Sesión Activa - {getUserDisplayName()}
                 </span>
               </p>
             </div>
-            <Button variant="outline" onClick={handleGoToAuth}>
-              <LogIn className="mr-2 h-4 w-4" />
-              Ver Login
+            <Button variant="outline" onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Cerrar Sesión
             </Button>
           </div>
         </div>
