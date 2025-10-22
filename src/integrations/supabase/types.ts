@@ -19,6 +19,7 @@ export type Database = {
           created_at: string | null
           cuadrante_calibrado: string
           cuadrante_original: string
+          empresa_id: string | null
           evaluacion_id: string | null
           id: string
           manager_id: string | null
@@ -31,6 +32,7 @@ export type Database = {
           created_at?: string | null
           cuadrante_calibrado: string
           cuadrante_original: string
+          empresa_id?: string | null
           evaluacion_id?: string | null
           id?: string
           manager_id?: string | null
@@ -43,6 +45,7 @@ export type Database = {
           created_at?: string | null
           cuadrante_calibrado?: string
           cuadrante_original?: string
+          empresa_id?: string | null
           evaluacion_id?: string | null
           id?: string
           manager_id?: string | null
@@ -52,6 +55,13 @@ export type Database = {
           score_original_potencial?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "calibraciones_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "calibraciones_evaluacion_id_fkey"
             columns: ["evaluacion_id"]
@@ -227,6 +237,38 @@ export type Database = {
           },
         ]
       }
+      roles: {
+        Row: {
+          created_at: string | null
+          empresa_id: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          empresa_id: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          empresa_id?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roles_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tableros: {
         Row: {
           created_at: string | null
@@ -299,6 +341,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_hrb_apu: {
+        Args: { _empresa_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_hrb_apu_any: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "manager" | "user" | "hrbp"
