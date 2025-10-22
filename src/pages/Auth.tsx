@@ -19,27 +19,10 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const redirectUser = async () => {
-      if (!user) return;
-
-      // Check user role
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      // Si no hay data?.role, no navegues (mostrá aviso o espera asignación)
-      if (data?.role === 'hrbp') {
-        navigate('/hrbp');
-      } else if (data?.role === 'manager') {
-        navigate('/dashboard');
-      } else {
-        return; // o navigate('/sin-acceso')
-      }
-    };
-
-    redirectUser();
+    if (user) {
+      // HARDCODED: Navigate directly to dashboard after login
+      navigate('/dashboard');
+    }
   }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {

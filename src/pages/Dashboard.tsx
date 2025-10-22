@@ -44,11 +44,28 @@ interface Empleado {
 const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  
+  // HARDCODED DATA - Temporary solution
+  const HARDCODED_EMPRESAS: Empresa[] = [
+    { id: 'argentina-id', nombre: 'Argentina' },
+    { id: 'uruguay-id', nombre: 'Uruguay' },
+    { id: 'paraguay-id', nombre: 'Paraguay' }
+  ];
+
+  const HARDCODED_EQUIPOS: Record<string, Equipo[]> = {
+    'argentina-id': [
+      { id: 'eq-comercial', nombre: 'Equipo Comercial', empresa_id: 'argentina-id' },
+      { id: 'eq-operaciones', nombre: 'Equipo Operaciones', empresa_id: 'argentina-id' }
+    ],
+    'uruguay-id': [],
+    'paraguay-id': []
+  };
+
+  const [empresas, setEmpresas] = useState<Empresa[]>(HARDCODED_EMPRESAS);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [tableros, setTableros] = useState<Tablero[]>([]);
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
-  const [selectedEmpresa, setSelectedEmpresa] = useState<string>('');
+  const [selectedEmpresa, setSelectedEmpresa] = useState<string>('argentina-id');
   const [selectedEquipo, setSelectedEquipo] = useState<string>('');
   const [selectedTablero, setSelectedTablero] = useState<string>('');
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -57,62 +74,22 @@ const Dashboard = () => {
   const [showCreateEmpresaDialog, setShowCreateEmpresaDialog] = useState(false);
   const [showCreateEquipoDialog, setShowCreateEquipoDialog] = useState(false);
 
-  // Load empresas
-  useEffect(() => {
-    const loadEmpresas = async () => {
-      const { data, error } = await supabase.from('empresas').select('*');
-      if (error) {
-        console.error('Error loading empresas:', error);
-        toast({
-          title: 'Error al cargar empresas',
-          description: error.message.includes('policy') 
-            ? 'No tienes permisos para ver las empresas. Contacta al administrador.'
-            : `Error: ${error.message}. Si hay empresas duplicadas, limpia la tabla.`,
-          variant: 'destructive',
-        });
-      } else {
-        // Remove duplicates by nombre, keeping first occurrence
-        const uniqueEmpresas = data?.reduce((acc: Empresa[], current) => {
-          const exists = acc.find(item => item.nombre === current.nombre);
-          if (!exists) {
-            acc.push(current);
-          }
-          return acc;
-        }, []) || [];
-        setEmpresas(uniqueEmpresas);
-      }
-    };
-    loadEmpresas();
-  }, [toast]);
-
-  // Load equipos when empresa changes
+  // Load equipos when empresa changes - HARDCODED
   useEffect(() => {
     if (!selectedEmpresa) {
       setEquipos([]);
       return;
     }
-
-    const loadEquipos = async () => {
-      const { data, error } = await supabase
-        .from('equipos')
-        .select('*')
-        .eq('empresa_id', selectedEmpresa);
-      
-      if (error) {
-        console.error('Error loading equipos:', error);
-        toast({
-          title: 'Error al cargar equipos',
-          description: error.message.includes('policy')
-            ? 'No tienes permisos para ver los equipos.'
-            : `Error: ${error.message}`,
-          variant: 'destructive',
-        });
-      } else {
-        setEquipos(data || []);
-      }
-    };
-    loadEquipos();
-  }, [selectedEmpresa, toast]);
+    
+    // Use hardcoded data
+    const hardcodedEquipos = HARDCODED_EQUIPOS[selectedEmpresa] || [];
+    setEquipos(hardcodedEquipos);
+    
+    // Auto-select first equipo if available
+    if (hardcodedEquipos.length > 0) {
+      setSelectedEquipo(hardcodedEquipos[0].id);
+    }
+  }, [selectedEmpresa]);
 
   // Load tableros when equipo changes
   useEffect(() => {
@@ -318,8 +295,8 @@ const Dashboard = () => {
             <div>
               <h1 className="text-2xl font-bold">Nine Box Grid - Dashboard</h1>
               <p className="text-sm text-muted-foreground mt-1">
-                <span className="inline-flex items-center gap-2 px-2 py-1 bg-primary/10 text-primary rounded-md">
-                  🎯 Modo Demo Activo - Sin Autenticación
+                <span className="inline-flex items-center gap-2 px-2 py-1 bg-green-500/10 text-green-600 rounded-md">
+                  ✓ Sesión Activa - Bienvenido
                 </span>
               </p>
             </div>
