@@ -137,11 +137,28 @@ All colors MUST be HSL.
   }
 }
 
+/* Production header styles */
+.header-produccion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.user-info {
+  font-weight: 500;
+  color: #475569;
+}
+
 /* Hide all demo mode elements */
 .demo-mode,
 .demo-banner,
+.demo-text,
 [data-demo],
-.modo-demo {
+.modo-demo,
+[class*="demo"] {
   display: none !important;
   visibility: hidden !important;
 }
