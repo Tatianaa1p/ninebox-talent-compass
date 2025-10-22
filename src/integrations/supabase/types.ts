@@ -196,6 +196,7 @@ export type Database = {
         Row: {
           created_at: string | null
           desempeno_score: number
+          empresa_id: string | null
           equipo_id: string
           id: string
           persona_nombre: string
@@ -205,6 +206,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           desempeno_score: number
+          empresa_id?: string | null
           equipo_id: string
           id?: string
           persona_nombre: string
@@ -214,6 +216,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           desempeno_score?: number
+          empresa_id?: string | null
           equipo_id?: string
           id?: string
           persona_nombre?: string
@@ -221,6 +224,13 @@ export type Database = {
           tablero_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "evaluaciones_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "evaluaciones_equipo_id_fkey"
             columns: ["equipo_id"]
@@ -243,21 +253,21 @@ export type Database = {
           empresa_id: string
           id: string
           role: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           empresa_id: string
           id?: string
           role: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           empresa_id?: string
           id?: string
           role?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
