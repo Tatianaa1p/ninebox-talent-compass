@@ -365,19 +365,7 @@ const Dashboard = () => {
         <Card className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium">Empresa</label>
-                {empresas.length === 0 && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setShowCreateEmpresaDialog(true)}
-                    className="h-6 text-xs"
-                  >
-                    + Crear
-                  </Button>
-                )}
-              </div>
+              <label className="text-sm font-medium mb-2 block">Empresa</label>
               <Select value={selectedEmpresa} onValueChange={setSelectedEmpresa}>
                 <SelectTrigger>
                   <SelectValue placeholder={empresas.length === 0 ? "Sin empresas" : "Seleccionar empresa"} />
@@ -393,31 +381,28 @@ const Dashboard = () => {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium">Equipo</label>
-                {selectedEmpresa && equipos.length === 0 && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setShowCreateEquipoDialog(true)}
-                    className="h-6 text-xs"
-                  >
-                    + Crear
-                  </Button>
-                )}
+              <label className="text-sm font-medium mb-2 block">Equipo</label>
+              <div className="flex gap-2">
+                <Select value={selectedEquipo} onValueChange={setSelectedEquipo} disabled={!selectedEmpresa}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={!selectedEmpresa ? "Selecciona empresa primero" : equipos.length === 0 ? "Sin equipos" : "Seleccionar equipo"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {equipos.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="icon"
+                  onClick={() => setShowCreateEquipoDialog(true)}
+                  disabled={!selectedEmpresa}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
               </div>
-              <Select value={selectedEquipo} onValueChange={setSelectedEquipo} disabled={!selectedEmpresa}>
-                <SelectTrigger>
-                  <SelectValue placeholder={!selectedEmpresa ? "Selecciona empresa primero" : equipos.length === 0 ? "Sin equipos" : "Seleccionar equipo"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {equipos.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             <div>
