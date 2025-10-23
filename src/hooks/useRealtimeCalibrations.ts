@@ -38,8 +38,8 @@ export const useRealtimeCalibrations = (
         (payload: RealtimePostgresChangesPayload<CalibracionPayload>) => {
           console.log('🔔 Calibration change detected:', {
             event: payload.eventType,
-            cuadrante_calibrado: payload.new?.cuadrante_calibrado,
-            evaluacion_id: payload.new?.evaluacion_id,
+            cuadrante_calibrado: (payload.new as CalibracionPayload | undefined)?.cuadrante_calibrado,
+            evaluacion_id: (payload.new as CalibracionPayload | undefined)?.evaluacion_id,
           });
           onUpdate();
         }
