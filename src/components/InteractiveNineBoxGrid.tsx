@@ -9,6 +9,7 @@ import { QuadrantInfoPanel } from "@/components/QuadrantInfoPanel";
 import { useOverrides } from "@/contexts/OverrideContext";
 import { QUADRANT_KEYS, QUADRANT_NAMES, QUADRANT_DESCRIPTIONS } from "@/types/override";
 import { useRealtimeCalibrations } from "@/hooks/useRealtimeCalibrations";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Tooltip,
   TooltipContent,
@@ -147,7 +148,7 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
     setActiveEmployee(employee);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     setActiveEmployee(null);
 
     const { active, over } = event;
@@ -163,28 +164,120 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
     ];
 
     const currentQuadrantKey = `${employee.potential}-${employee.performance}`;
+    const currentQuadrantName = QUADRANT_NAMES[currentQuadrantKey as keyof typeof QUADRANT_NAMES];
+    
     if (currentQuadrantKey === targetQuadrantKey) {
       return; // No change
     }
 
+    // Map categories to scores (Bajo=2, Medio=3, Alto=4)
+    const scoreCalibreDesempeno = targetPerformance === "Bajo" ? 2 : targetPerformance === "Medio" ? 3 : 4;
+    const scoreCalibradoPotencial = targetPotential === "Bajo" ? 2 : targetPotential === "Medio" ? 3 : 4;
+
+    if (!tableroId) {
+      toast({
+        title: "Error",
+        description: "No se encontró el ID del tablero",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "Usuario no autenticado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Get tablero to find empresa_id
+    const { data: tablero, error: tableroError } = await supabase
+      .from('tableros')
+      .select('empresa_id')
+      .eq('id', tableroId)
+      .single();
+
+    if (tableroError || !tablero) {
+      console.error('Error al obtener tablero:', tableroError);
+      toast({
+        title: "Error",
+        description: "No se pudo obtener información del tablero",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Find evaluacion for this employee
+    const { data: evaluacion, error: evalError } = await supabase
+      .from('evaluaciones')
+      .select('id')
+      .eq('persona_nombre', employee.name)
+      .eq('tablero_id', tableroId)
+      .single();
+
+    if (evalError || !evaluacion) {
+      console.error('Error al obtener evaluación:', evalError);
+      toast({
+        title: "Error",
+        description: "No se encontró la evaluación del empleado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Upsert to calibraciones table
+    const { error } = await supabase
+      .from('calibraciones')
+      .upsert({
+        evaluacion_id: evaluacion.id,
+        empresa_id: tablero.empresa_id,
+        manager_id: user.id,
+        cuadrante_original: currentQuadrantName,
+        cuadrante_calibrado: targetQuadrantName,
+        score_original_desempeno: employee.performanceScore,
+        score_original_potencial: employee.potentialScore,
+        score_calibrado_desempeno: scoreCalibreDesempeno,
+        score_calibrado_potencial: scoreCalibradoPotencial,
+      }, { 
+        onConflict: 'evaluacion_id',
+        ignoreDuplicates: false 
+      });
+
+    if (error) {
+      console.error('Error al calibrar:', error);
+      toast({
+        title: "Error al calibrar",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Also add to override context for local state
     const override = {
       employeeName: employee.name,
       override_potencial_categoria: targetPotential,
       override_desempeno_categoria: targetPerformance,
       override_cuadrante: targetQuadrantName,
       override_fecha: new Date().toISOString(),
-      override_usuario: "Usuario actual",
+      override_usuario: user.email || "Usuario actual",
     };
 
     addOverride(override);
 
-    setUndoMessage(`${employee.name} movido a ${targetQuadrantName}`);
-    setShowUndo(true);
-
     toast({
-      title: "Empleado reubicado",
+      title: "Empleado calibrado",
       description: `${employee.name} → ${targetQuadrantName}`,
     });
+
+    // Trigger reload to show real-time data
+    if (onDataReload) {
+      onDataReload();
+    }
   };
 
   const handleEditEmployee = (employee: Employee) => {
