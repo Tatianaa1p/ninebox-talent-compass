@@ -10,6 +10,7 @@ interface CalibracionPayload {
   score_calibrado_potencial: number;
   cuadrante_calibrado: string;
   cuadrante_original: string;
+  manager_id: string;
   created_at: string;
 }
 

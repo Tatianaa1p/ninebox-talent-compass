@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
-import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -88,185 +87,40 @@ serve(async (req) => {
 
     console.log(`✅ Processing ${employeeData.length} employees`);
 
-    // Create PDF in memory
-    const pdfDoc = await PDFDocument.create();
-    const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-    const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    
-    const page = pdfDoc.addPage([595, 842]); // A4 size
-    const { width, height } = page.getSize();
-    
-    // Title
-    page.drawText(`REPORTE NINE BOX - ${empresa_nombre}`, {
-      x: 50,
-      y: height - 50,
-      size: 20,
-      font: helveticaBold,
-      color: rgb(0, 0, 0.5),
-    });
+    // Generate CSV content
+    const csvLines = [
+      'Nombre,Desempeño,Potencial,Cuadrante,Calibrado',
+      ...employeeData.map(emp => 
+        `"${emp.nombre}",${emp.performance},${emp.potencial},"${emp.cuadrante}",${emp.calibrado ? 'Sí' : 'No'}`
+      )
+    ];
 
-    // Date
-    page.drawText(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, {
-      x: 50,
-      y: height - 75,
-      size: 12,
-      font: timesRomanFont,
-      color: rgb(0, 0, 0),
-    });
-
-    // Total employees
-    page.drawText(`Total Empleados: ${employeeData.length}`, {
-      x: 50,
-      y: height - 95,
-      size: 12,
-      font: timesRomanFont,
-      color: rgb(0, 0, 0),
-    });
-
-    // Draw 3x3 grid
-    const gridStartX = 50;
-    const gridStartY = height - 450;
-    const cellWidth = 165;
-    const cellHeight = 100;
-
-    // Draw grid lines
-    for (let i = 0; i <= 3; i++) {
-      // Vertical lines
-      page.drawLine({
-        start: { x: gridStartX + (i * cellWidth), y: gridStartY },
-        end: { x: gridStartX + (i * cellWidth), y: gridStartY + (3 * cellHeight) },
-        thickness: 1,
-        color: rgb(0, 0, 0),
-      });
-      
-      // Horizontal lines
-      page.drawLine({
-        start: { x: gridStartX, y: gridStartY + (i * cellHeight) },
-        end: { x: gridStartX + (3 * cellWidth), y: gridStartY + (i * cellHeight) },
-        thickness: 1,
-        color: rgb(0, 0, 0),
-      });
-    }
-
-    // Labels
-    const potentialLabels = ['Alto', 'Medio', 'Bajo'];
-    const performanceLabels = ['Bajo', 'Medio', 'Alto'];
-
-    // Draw axis labels
-    page.drawText('POTENCIAL →', {
-      x: gridStartX - 40,
-      y: gridStartY + 150,
-      size: 10,
-      font: helveticaBold,
-      rotate: { angle: 90, type: 'degrees' },
-    });
-
-    page.drawText('DESEMPEÑO →', {
-      x: gridStartX + 200,
-      y: gridStartY - 20,
-      size: 10,
-      font: helveticaBold,
-    });
-
-    // Group by quadrant
+    // Group by quadrant for summary
     const byQuadrant: Record<string, any[]> = {};
     employeeData.forEach(emp => {
-      const quad = emp.cuadrante || emp.cuadrante;
+      const quad = emp.cuadrante;
       if (!byQuadrant[quad]) byQuadrant[quad] = [];
       byQuadrant[quad].push(emp);
     });
 
-    // Draw employee counts in grid
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < 3; col++) {
-        const pot = potentialLabels[row];
-        const perf = performanceLabels[col];
-        const quadName = getCuadranteNombre(perf, pot);
-        const employees = byQuadrant[quadName] || [];
-        
-        const cellX = gridStartX + (col * cellWidth) + 10;
-        const cellY = gridStartY + ((2 - row) * cellHeight) + cellHeight - 20;
-        
-        page.drawText(`${pot}-${perf}`, {
-          x: cellX,
-          y: cellY,
-          size: 8,
-          font: timesRomanFont,
-          color: rgb(0.3, 0.3, 0.3),
-        });
-        
-        page.drawText(`(${employees.length})`, {
-          x: cellX,
-          y: cellY - 15,
-          size: 10,
-          font: helveticaBold,
-          color: rgb(0, 0, 0),
-        });
-      }
-    }
-
-    // Employee list below grid
-    let listY = gridStartY - 50;
-    page.drawText('EMPLEADOS POR CUADRANTE:', {
-      x: 50,
-      y: listY,
-      size: 12,
-      font: helveticaBold,
+    csvLines.push('');
+    csvLines.push('RESUMEN POR CUADRANTE');
+    csvLines.push('Cuadrante,Cantidad');
+    
+    Object.entries(byQuadrant).forEach(([quad, emps]) => {
+      csvLines.push(`"${quad}",${emps.length}`);
     });
 
-    listY -= 25;
-    const quadrantOrder = [
-      'Talento Estratégico', 'Desarrollar', 'Enigma',
-      'Consistente', 'Clave', 'Dilema',
-      'Confiable', 'Estancamiento', 'Riesgo'
-    ];
+    const csvContent = csvLines.join('\n');
+    const fileName = `ninebox_${empresa_nombre}_${Date.now()}.csv`;
 
-    for (const quadName of quadrantOrder) {
-      const employees = byQuadrant[quadName] || [];
-      if (employees.length > 0 && listY > 50) {
-        page.drawText(`${quadName} (${employees.length}):`, {
-          x: 50,
-          y: listY,
-          size: 10,
-          font: helveticaBold,
-        });
-        listY -= 15;
-
-        employees.slice(0, 3).forEach(emp => {
-          if (listY > 50) {
-            page.drawText(
-              `  • ${emp.nombre} (P:${emp.performance.toFixed(1)}, Pot:${emp.potencial.toFixed(1)})`,
-              { x: 60, y: listY, size: 8, font: timesRomanFont }
-            );
-            listY -= 12;
-          }
-        });
-
-        if (employees.length > 3) {
-          page.drawText(`  ... y ${employees.length - 3} más`, {
-            x: 60,
-            y: listY,
-            size: 8,
-            font: timesRomanFont,
-            color: rgb(0.5, 0.5, 0.5),
-          });
-          listY -= 15;
-        }
-        listY -= 5;
-      }
-    }
-
-    // Generate PDF bytes in memory
-    const pdfBytes = await pdfDoc.save();
-    console.log(`✅ PDF generated: ${pdfBytes.length} bytes`);
+    console.log(`✅ CSV generated: ${csvContent.length} characters`);
 
     // Upload to storage
-    const fileName = `ninebox_${empresa_nombre}_${Date.now()}.pdf`;
-    
     const { error: uploadError } = await supabase.storage
       .from('reportes')
-      .upload(fileName, pdfBytes, {
-        contentType: 'application/pdf',
+      .upload(fileName, csvContent, {
+        contentType: 'text/csv',
         upsert: true,
       });
 
@@ -275,7 +129,7 @@ serve(async (req) => {
       throw uploadError;
     }
 
-    console.log('✅ PDF uploaded to storage:', fileName);
+    console.log('✅ CSV uploaded to storage:', fileName);
 
     // Get signed URL
     const { data: signedUrlData, error: signedUrlError } = await supabase.storage
@@ -294,6 +148,8 @@ serve(async (req) => {
         success: true,
         signedUrl: signedUrlData.signedUrl,
         fileName,
+        format: 'csv',
+        employeeCount: employeeData.length,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

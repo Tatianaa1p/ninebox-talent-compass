@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 import { DroppableQuadrant } from "@/components/DroppableQuadrant";
