@@ -8,9 +8,6 @@ interface CalibracionPayload {
   empresa_id: string;
   score_calibrado_desempeno: number;
   score_calibrado_potencial: number;
-  cuadrante_calibrado: string;
-  cuadrante_original: string;
-  manager_id: string;
   created_at: string;
 }
 
@@ -19,15 +16,12 @@ export const useRealtimeCalibrations = (
   onUpdate: () => void
 ) => {
   useEffect(() => {
-    if (!tableroId) {
-      console.log('⚠️ No tableroId provided for realtime');
-      return;
-    }
+    if (!tableroId) return;
 
-    console.log('🔌 Setting up realtime subscription for tablero:', tableroId);
+    console.log('Setting up realtime subscription for calibrations');
 
     const channel = supabase
-      .channel(`calibraciones-realtime-${tableroId}`)
+      .channel(`calibraciones-${tableroId}`)
       .on(
         'postgres_changes',
         {
@@ -36,11 +30,8 @@ export const useRealtimeCalibrations = (
           table: 'calibraciones',
         },
         (payload: RealtimePostgresChangesPayload<CalibracionPayload>) => {
-          console.log('🔔 Calibration change detected:', {
-            event: payload.eventType,
-            cuadrante_calibrado: payload.new?.cuadrante_calibrado,
-            evaluacion_id: payload.new?.evaluacion_id,
-          });
+          console.log('Calibration change detected:', payload);
+          // Trigger data reload on any calibration change
           onUpdate();
         }
       )
@@ -52,7 +43,7 @@ export const useRealtimeCalibrations = (
           table: 'evaluaciones',
         },
         (payload) => {
-          console.log('🔔 Evaluation change detected:', payload.eventType);
+          console.log('Evaluation change detected:', payload);
           onUpdate();
         }
       )
@@ -65,26 +56,16 @@ export const useRealtimeCalibrations = (
           filter: `tablero_id=eq.${tableroId}`,
         },
         (payload) => {
-          console.log('🔔 Employee change detected:', payload.eventType);
+          console.log('Employee change detected:', payload);
           onUpdate();
         }
       )
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Realtime SUBSCRIBED successfully');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Realtime CHANNEL_ERROR');
-        } else if (status === 'TIMED_OUT') {
-          console.error('⏱️ Realtime TIMED_OUT');
-        } else if (status === 'CLOSED') {
-          console.log('🚪 Realtime CLOSED');
-        } else {
-          console.log('📡 Realtime status:', status);
-        }
+        console.log('Realtime subscription status:', status);
       });
 
     return () => {
-      console.log('🧹 Cleaning up realtime subscription');
+      console.log('Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [tableroId, onUpdate]);

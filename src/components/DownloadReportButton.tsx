@@ -54,15 +54,14 @@ export const DownloadReportButton = ({
         // Create download link
         const link = document.createElement('a');
         link.href = data.signedUrl;
-        const extension = data.format || 'csv';
-        link.download = `ninebox_${empresaNombre}_${new Date().toISOString().split('T')[0]}.${extension}`;
+        link.download = `ninebox_${empresaNombre}_${new Date().toISOString().split('T')[0]}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
         toast({
-          title: "✅ Reporte descargado",
-          description: `Reporte con ${data.employeeCount || 0} empleados generado correctamente`,
+          title: "Reporte descargado",
+          description: "El reporte PDF se ha generado correctamente",
         });
       } else {
         throw new Error('No se recibió URL del reporte');
