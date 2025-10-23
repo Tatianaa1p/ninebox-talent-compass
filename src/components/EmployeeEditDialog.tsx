@@ -75,6 +75,8 @@ export const EmployeeEditDialog = ({
     setLoading(true);
 
     try {
+      console.log('🔧 Starting calibration for employee:', employee!.name, 'tablero:', tableroId);
+      
       // Get tablero data with empresa_id
       const { data: tablero, error: tableroError } = await supabase
         .from('tableros')
@@ -82,8 +84,11 @@ export const EmployeeEditDialog = ({
         .eq('id', tableroId)
         .single();
 
+      console.log('📊 Tablero data:', tablero, 'Error:', tableroError);
+
       if (tableroError || !tablero) {
-        throw new Error("No se encontró el tablero");
+        console.error('❌ Error fetching tablero:', tableroError);
+        throw new Error("No se encontró el tablero: " + (tableroError?.message || 'Unknown error'));
       }
 
       // Get current evaluation data
@@ -94,27 +99,39 @@ export const EmployeeEditDialog = ({
         .eq('tablero_id', tableroId)
         .maybeSingle();
 
-      if (evalError) throw evalError;
+      console.log('📋 Existing evaluation:', evaluacion, 'Error:', evalError);
+
+      if (evalError) {
+        console.error('❌ Error fetching evaluation:', evalError);
+        throw evalError;
+      }
 
       // If no evaluation exists, create one first
       if (!evaluacion) {
-        console.log("No evaluation found, creating new one for:", employee!.name);
+        console.log("✨ No evaluation found, creating new one for:", employee!.name);
+
+        const evaluacionData = {
+          persona_nombre: employee!.name,
+          tablero_id: tableroId,
+          equipo_id: tablero.equipo_id,
+          empresa_id: tablero.empresa_id,
+          potencial_score: employee!.potentialScore,
+          desempeno_score: employee!.performanceScore,
+        };
+        
+        console.log('📝 Creating evaluation with data:', evaluacionData);
 
         // Create new evaluation with current scores
         const { data: newEval, error: insertError } = await supabase
           .from('evaluaciones')
-          .insert({
-            persona_nombre: employee!.name,
-            tablero_id: tableroId,
-            equipo_id: tablero.equipo_id,
-            potencial_score: employee!.potentialScore,
-            desempeno_score: employee!.performanceScore,
-          })
+          .insert(evaluacionData)
           .select()
           .single();
 
+        console.log('✅ Created evaluation:', newEval, 'Error:', insertError);
+
         if (insertError) {
-          console.error("Error creating evaluation:", insertError);
+          console.error("❌ Error creating evaluation:", insertError);
           throw new Error("Error al crear evaluación: " + insertError.message);
         }
 
@@ -123,26 +140,37 @@ export const EmployeeEditDialog = ({
 
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('👤 Current user:', user?.id);
+
+      const calibracionData = {
+        evaluacion_id: evaluacion.id,
+        empresa_id: tablero.empresa_id,
+        cuadrante_original: `${employee!.potential}-${employee!.performance}`,
+        cuadrante_calibrado: selectedQuadrant,
+        score_original_potencial: employee!.potentialScore,
+        score_calibrado_potencial: quadrantData.potential,
+        score_original_desempeno: employee!.performanceScore,
+        score_calibrado_desempeno: quadrantData.performance,
+        manager_id: user?.id || null,
+      };
+
+      console.log('💾 Saving calibration with data:', calibracionData);
 
       // Save to calibraciones table (history)
-      const { error: calibError } = await supabase
+      const { data: calibData, error: calibError } = await supabase
         .from('calibraciones')
-        .insert({
-          evaluacion_id: evaluacion.id,
-          empresa_id: tablero.empresa_id,
-          cuadrante_original: `${employee!.potential}-${employee!.performance}`,
-          cuadrante_calibrado: selectedQuadrant,
-          score_original_potencial: employee!.potentialScore,
-          score_calibrado_potencial: quadrantData.potential,
-          score_original_desempeno: employee!.performanceScore,
-          score_calibrado_desempeno: quadrantData.performance,
-          manager_id: user?.id || null,
-        });
+        .insert(calibracionData)
+        .select();
+
+      console.log('✅ Calibration saved:', calibData, 'Error:', calibError);
 
       if (calibError) {
-        console.error("Error saving calibration history:", calibError);
-        throw new Error("Error al guardar historial de calibración");
+        console.error("❌ Error saving calibration history:", calibError);
+        console.error("❌ Error details:", JSON.stringify(calibError, null, 2));
+        throw new Error("Error al guardar historial de calibración: " + calibError.message);
       }
+
+      console.log('🔄 Updating evaluacion scores...');
 
       // Update evaluaciones table
       const { error: updateError } = await supabase
@@ -153,10 +181,14 @@ export const EmployeeEditDialog = ({
         })
         .eq('id', evaluacion.id);
 
+      console.log('✅ Evaluacion updated, Error:', updateError);
+
       if (updateError) {
-        console.error("Error updating evaluaciones:", updateError);
-        throw new Error("Error al actualizar evaluación");
+        console.error("❌ Error updating evaluaciones:", updateError);
+        throw new Error("Error al actualizar evaluación: " + updateError.message);
       }
+
+      console.log('🔄 Updating empleados table...');
 
       // Update empleados table to reflect new scores in the grid
       const { error: empleadosError } = await supabase
@@ -168,10 +200,19 @@ export const EmployeeEditDialog = ({
         .eq('nombre', employee!.name)
         .eq('tablero_id', tableroId);
 
+      console.log('✅ Empleados updated, Error:', empleadosError);
+
       if (empleadosError) {
-        console.error("Error updating empleados:", empleadosError);
+        console.error("⚠️ Error updating empleados:", empleadosError);
         // Don't throw here, evaluacion was already updated
       }
+
+      console.log('✨ Calibration completed successfully!');
+
+      toast({
+        title: "Calibración exitosa",
+        description: `${employee!.name} calibrado a ${quadrantData.label}`,
+      });
 
       // Success - notify parent
       onSave(selectedQuadrant, true);
