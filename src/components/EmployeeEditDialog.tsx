@@ -75,6 +75,17 @@ export const EmployeeEditDialog = ({
     setLoading(true);
 
     try {
+      // Get tablero data with empresa_id
+      const { data: tablero, error: tableroError } = await supabase
+        .from('tableros')
+        .select('equipo_id, empresa_id')
+        .eq('id', tableroId)
+        .single();
+
+      if (tableroError || !tablero) {
+        throw new Error("No se encontró el tablero");
+      }
+
       // Get current evaluation data
       let { data: evaluacion, error: evalError } = await supabase
         .from('evaluaciones')
@@ -88,17 +99,6 @@ export const EmployeeEditDialog = ({
       // If no evaluation exists, create one first
       if (!evaluacion) {
         console.log("No evaluation found, creating new one for:", employee!.name);
-        
-        // Get equipo_id from tablero
-        const { data: tablero } = await supabase
-          .from('tableros')
-          .select('equipo_id')
-          .eq('id', tableroId)
-          .single();
-
-        if (!tablero) {
-          throw new Error("No se encontró el tablero");
-        }
 
         // Create new evaluation with current scores
         const { data: newEval, error: insertError } = await supabase
@@ -129,6 +129,7 @@ export const EmployeeEditDialog = ({
         .from('calibraciones')
         .insert({
           evaluacion_id: evaluacion.id,
+          empresa_id: tablero.empresa_id,
           cuadrante_original: `${employee!.potential}-${employee!.performance}`,
           cuadrante_calibrado: selectedQuadrant,
           score_original_potencial: employee!.potentialScore,
