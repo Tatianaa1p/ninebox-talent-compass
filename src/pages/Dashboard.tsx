@@ -394,27 +394,18 @@ const Dashboard = () => {
 
             <div>
               <label className="text-sm font-medium mb-2 block">Equipo</label>
-              <div className="flex gap-2">
-                <Select value={selectedEquipo} onValueChange={setSelectedEquipo} disabled={!selectedEmpresa}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={!selectedEmpresa ? "Selecciona empresa primero" : equipos.length === 0 ? "Sin equipos" : "Seleccionar equipo"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {equipos.map((e) => (
-                      <SelectItem key={e.id} value={e.id}>
-                        {e.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  size="icon"
-                  onClick={() => setShowCreateEquipoDialog(true)}
-                  disabled={!selectedEmpresa}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+              <Select value={selectedEquipo} onValueChange={setSelectedEquipo} disabled={!selectedEmpresa}>
+                <SelectTrigger>
+                  <SelectValue placeholder={!selectedEmpresa ? "Selecciona empresa primero" : equipos.length === 0 ? "Sin equipos" : "Seleccionar equipo"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {equipos.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
