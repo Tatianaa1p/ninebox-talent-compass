@@ -63,7 +63,14 @@ const Dashboard = () => {
   // Load empresas from Supabase
   useEffect(() => {
     const loadEmpresas = async () => {
+      console.log('🔍 Cargando empresas...');
+      console.log('👤 Usuario autenticado:', user?.email);
+      
       const { data, error } = await supabase.from('empresas').select('*');
+      
+      console.log('📊 Resultado empresas - Data:', data);
+      console.log('❌ Resultado empresas - Error:', error);
+      
       if (error) {
         console.error('Error loading empresas:', error);
         toast({
@@ -73,6 +80,7 @@ const Dashboard = () => {
             : `Error: ${error.message}`,
           variant: 'destructive',
         });
+        setEmpresas([]);
       } else {
         // Remove duplicates by nombre, keeping first occurrence
         const uniqueEmpresas = data?.reduce((acc: Empresa[], current) => {
@@ -82,11 +90,15 @@ const Dashboard = () => {
           }
           return acc;
         }, []) || [];
+        console.log('✅ Empresas únicas cargadas:', uniqueEmpresas);
         setEmpresas(uniqueEmpresas);
       }
     };
-    loadEmpresas();
-  }, [toast]);
+    
+    if (user) {
+      loadEmpresas();
+    }
+  }, [user, toast]);
 
   // Load equipos when empresa changes - FROM SUPABASE
   useEffect(() => {
