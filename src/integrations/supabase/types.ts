@@ -415,6 +415,36 @@ export type Database = {
           },
         ]
       }
+      user_permissions: {
+        Row: {
+          created_at: string | null
+          empresas_acceso: string[]
+          id: string
+          permisos_globales: Json
+          role: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          empresas_acceso?: string[]
+          id?: string
+          permisos_globales?: Json
+          role: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          empresas_acceso?: string[]
+          id?: string
+          permisos_globales?: Json
+          role?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -474,6 +504,14 @@ export type Database = {
         Returns: boolean
       }
       is_hrb_apu_any: { Args: { _user_id: string }; Returns: boolean }
+      user_has_empresa_access: {
+        Args: { _empresa_nombre: string; _user_id: string }
+        Returns: boolean
+      }
+      user_has_permission: {
+        Args: { _permission: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "manager" | "user" | "hrbp"

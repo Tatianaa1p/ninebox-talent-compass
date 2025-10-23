@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Plus } from 'lucide-react';
+import { LogOut, Plus, AlertCircle } from 'lucide-react';
 import { InteractiveNineBoxGrid } from '@/components/InteractiveNineBoxGrid';
 import { StatisticsPanel } from '@/components/StatisticsPanel';
 import { CreateBoardDialog } from '@/components/CreateBoardDialog';
@@ -16,6 +16,8 @@ import { CreateEquipoDialog } from '@/components/CreateEquipoDialog';
 import { CalibrationExportButton } from '@/components/CalibrationExportButton';
 import { Employee } from '@/types/employee';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Empresa {
   id: string;
@@ -46,6 +48,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { permissions, loading: permissionsLoading, hasAccess, canCreateTableros, canCalibrateTableros } = useUserPermissions();
   
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
@@ -62,6 +65,13 @@ const Dashboard = () => {
 
   // Load empresas from Supabase
   useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    if (permissionsLoading) return;
+
     const loadEmpresas = async () => {
       console.log('🔍 Cargando empresas...');
       console.log('👤 Usuario autenticado:', user?.email);
@@ -83,22 +93,26 @@ const Dashboard = () => {
         setEmpresas([]);
       } else {
         // Remove duplicates by nombre, keeping first occurrence
-        const uniqueEmpresas = data?.reduce((acc: Empresa[], current) => {
+        let uniqueEmpresas = data?.reduce((acc: Empresa[], current) => {
           const exists = acc.find(item => item.nombre === current.nombre);
           if (!exists) {
             acc.push(current);
           }
           return acc;
         }, []) || [];
+        
+        // Filter by user permissions
+        if (permissions) {
+          uniqueEmpresas = uniqueEmpresas.filter(empresa => hasAccess(empresa.nombre));
+        }
+        
         console.log('✅ Empresas únicas cargadas:', uniqueEmpresas);
         setEmpresas(uniqueEmpresas);
       }
     };
     
-    if (user) {
-      loadEmpresas();
-    }
-  }, [user, toast]);
+    loadEmpresas();
+  }, [user, navigate, permissions, permissionsLoading, hasAccess, toast]);
 
   // Load equipos when empresa changes - FROM SUPABASE
   useEffect(() => {
@@ -352,6 +366,27 @@ const Dashboard = () => {
     return 'Usuario';
   };
 
+  if (permissionsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Cargando permisos...</div>
+      </div>
+    );
+  }
+
+  if (!permissions) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            No tienes permisos asignados. Por favor contacta al administrador.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
@@ -359,11 +394,21 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Nine Box Grid - Gestión Talento Seidor</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                <span className="inline-flex items-center gap-2 px-2 py-1 bg-green-500/10 text-green-600 rounded-md">
-                  ✓ Sesión Activa - {getUserDisplayName()}
+              <div className="flex items-center gap-3 mt-2">
+                <span className="inline-flex items-center gap-2 px-2 py-1 bg-green-500/10 text-green-600 rounded-md text-sm">
+                  ✓ {getUserDisplayName()}
                 </span>
-              </p>
+                <span className="inline-flex items-center gap-2 px-2 py-1 bg-primary/10 text-primary rounded-md text-sm font-medium">
+                  {permissions.role.toUpperCase()}
+                </span>
+                <div className="flex gap-1">
+                  {permissions.empresas_acceso.map((empresa) => (
+                    <span key={empresa} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-accent text-accent-foreground border border-border">
+                      {empresa}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
             <Button variant="outline" onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" />
@@ -483,16 +528,19 @@ const Dashboard = () => {
             <div className="flex items-end gap-2">
               <Button
                 onClick={() => setShowCreateBoardDialog(true)}
-                disabled={!selectedEquipo}
-                className="flex-1"
+                disabled={!selectedEquipo || !canCreateTableros()}
+                className={canCreateTableros() ? "border-2 border-green-500/50" : ""}
+                title={!canCreateTableros() ? "No tienes permisos para crear tableros" : ""}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Crear Tablero
               </Button>
               <Button
                 onClick={() => setShowFileUploadDialog(true)}
-                disabled={!selectedTablero}
+                disabled={!selectedTablero || !canCalibrateTableros()}
                 variant="secondary"
+                className={canCalibrateTableros() ? "border-2 border-blue-500/50" : ""}
+                title={!canCalibrateTableros() ? "No tienes permisos para calibrar tableros" : ""}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Evaluación
