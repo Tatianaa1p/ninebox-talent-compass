@@ -9,6 +9,8 @@ export interface UserPermissions {
     crear_tableros?: boolean;
     calibrar_tableros?: boolean;
     ver_equipos?: boolean;
+    calibrar_ninebox?: boolean;
+    descargar_reportes?: boolean;
   };
 }
 
@@ -70,6 +72,14 @@ export const useUserPermissions = () => {
     return permissions?.permisos_globales?.ver_equipos === true;
   };
 
+  const canCalibrateNinebox = () => {
+    return permissions?.permisos_globales?.calibrar_ninebox === true;
+  };
+
+  const canDownloadReports = () => {
+    return permissions?.permisos_globales?.descargar_reportes === true;
+  };
+
   return {
     permissions,
     loading,
@@ -77,5 +87,7 @@ export const useUserPermissions = () => {
     canCreateTableros,
     canCalibrateTableros,
     canViewEquipos,
+    canCalibrateNinebox,
+    canDownloadReports,
   };
 };

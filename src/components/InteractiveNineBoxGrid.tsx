@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 import { DroppableQuadrant } from "@/components/DroppableQuadrant";
@@ -8,6 +8,7 @@ import { UndoSnackbar } from "@/components/UndoSnackbar";
 import { QuadrantInfoPanel } from "@/components/QuadrantInfoPanel";
 import { useOverrides } from "@/contexts/OverrideContext";
 import { QUADRANT_KEYS, QUADRANT_NAMES, QUADRANT_DESCRIPTIONS } from "@/types/override";
+import { useRealtimeCalibrations } from "@/hooks/useRealtimeCalibrations";
 import {
   Tooltip,
   TooltipContent,
@@ -85,6 +86,16 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
     potential: string;
     performance: string;
   } | null>(null);
+
+  // Setup realtime subscription for calibration updates
+  const handleRealtimeUpdate = useCallback(() => {
+    console.log('🔄 Realtime update received, reloading data...');
+    if (onDataReload) {
+      onDataReload();
+    }
+  }, [onDataReload]);
+
+  useRealtimeCalibrations(tableroId, handleRealtimeUpdate);
 
   // Get employees with overrides applied in calibrated mode
   const displayEmployees = useMemo(() => {

@@ -1,2 +1,4 @@
 project_id = "feljnpkciqvrnvtwqkkk"
-# Force types regeneration
+
+[functions.generate-ninebox-report]
+verify_jwt = true
