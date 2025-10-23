@@ -6,6 +6,18 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { z } from 'zod';
+
+// Security: Input validation schema
+const evaluationSchema = z.object({
+  persona_nombre: z.string()
+    .trim()
+    .min(2, 'El nombre debe tener al menos 2 caracteres')
+    .max(100, 'El nombre no puede exceder 100 caracteres')
+    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/, 'Solo se permiten letras, espacios, guiones y apóstrofes'),
+  potencial_score: z.number().min(1, 'Mínimo 1').max(5, 'Máximo 5'),
+  desempeno_score: z.number().min(1, 'Mínimo 1').max(5, 'Máximo 5')
+});
 
 interface EvaluationDialogProps {
   open: boolean;
@@ -33,18 +45,27 @@ export const EvaluationDialog = ({
     const potencialScore = parseFloat(potencial);
     const desempenoScore = parseFloat(desempeno);
 
-    if (potencialScore < 1 || potencialScore > 5 || desempenoScore < 1 || desempenoScore > 5) {
-      toast({
-        title: 'Error',
-        description: 'Las puntuaciones deben estar entre 1 y 5',
-        variant: 'destructive',
+    // Security: Validate input before database insertion
+    try {
+      evaluationSchema.parse({
+        persona_nombre: nombre,
+        potencial_score: potencialScore,
+        desempeno_score: desempenoScore
       });
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        toast({
+          title: 'Error de validación',
+          description: validationError.errors[0].message,
+          variant: 'destructive',
+        });
+      }
       setLoading(false);
       return;
     }
 
     const { error } = await supabase.from('evaluaciones').insert({
-      persona_nombre: nombre,
+      persona_nombre: nombre.trim(),
       potencial_score: potencialScore,
       desempeno_score: desempenoScore,
       equipo_id: equipoId,
@@ -85,7 +106,12 @@ export const EvaluationDialog = ({
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               required
+              maxLength={100}
+              placeholder="Ej: Juan Pérez"
             />
+            <p className="text-xs text-muted-foreground">
+              Entre 2 y 100 caracteres
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="potencial">Puntuación Potencial (1-5)</Label>
