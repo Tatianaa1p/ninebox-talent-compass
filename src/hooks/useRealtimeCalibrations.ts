@@ -8,6 +8,8 @@ interface CalibracionPayload {
   empresa_id: string;
   score_calibrado_desempeno: number;
   score_calibrado_potencial: number;
+  cuadrante_calibrado: string;
+  cuadrante_original: string;
   created_at: string;
 }
 
@@ -31,7 +33,6 @@ export const useRealtimeCalibrations = (
         },
         (payload: RealtimePostgresChangesPayload<CalibracionPayload>) => {
           console.log('Calibration change detected:', payload);
-          // Trigger data reload on any calibration change
           onUpdate();
         }
       )

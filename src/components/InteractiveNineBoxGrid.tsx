@@ -199,7 +199,7 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
       .from('tableros')
       .select('empresa_id')
       .eq('id', tableroId)
-      .single();
+      .maybeSingle();
 
     if (tableroError || !tablero) {
       console.error('Error al obtener tablero:', tableroError);
@@ -217,7 +217,7 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
       .select('id')
       .eq('persona_nombre', employee.name)
       .eq('tablero_id', tableroId)
-      .single();
+      .maybeSingle();
 
     if (evalError || !evaluacion) {
       console.error('Error al obtener evaluación:', evalError);
