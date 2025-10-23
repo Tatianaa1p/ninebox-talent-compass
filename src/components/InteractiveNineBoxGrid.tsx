@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 import { DroppableQuadrant } from "@/components/DroppableQuadrant";
@@ -91,12 +91,20 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
   // Setup realtime subscription for calibration updates
   const handleRealtimeUpdate = useCallback(() => {
     console.log('🔄 Realtime update received, reloading data...');
+    console.log('📊 Tablero ID:', tableroId);
     if (onDataReload) {
       onDataReload();
     }
   }, [onDataReload]);
 
   useRealtimeCalibrations(tableroId, handleRealtimeUpdate);
+
+  // Log initial state
+  useEffect(() => {
+    console.log('📊 Nine Box Grid montado');
+    console.log('👤 Total empleados:', employees.length);
+    console.log('🎯 Tablero actual:', tableroId);
+  }, [tableroId, employees.length]);
 
   // Get employees with overrides applied in calibrated mode
   const displayEmployees = useMemo(() => {
@@ -149,14 +157,21 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    console.log('🎯 Drag end event triggered');
     setActiveEmployee(null);
 
     const { active, over } = event;
-    if (!over) return;
+    if (!over) {
+      console.log('⚠️ No drop target');
+      return;
+    }
 
     const employee = active.data.current as Employee;
     const targetQuadrantKey = over.id as string;
     const targetQuadrantName = QUADRANT_NAMES[targetQuadrantKey as keyof typeof QUADRANT_NAMES];
+
+    console.log('📦 Employee:', employee.name);
+    console.log('🎯 Target quadrant:', targetQuadrantName);
 
     const [targetPotential, targetPerformance] = targetQuadrantKey.split("-") as [
       PotentialLevel,
@@ -167,14 +182,18 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
     const currentQuadrantName = QUADRANT_NAMES[currentQuadrantKey as keyof typeof QUADRANT_NAMES];
     
     if (currentQuadrantKey === targetQuadrantKey) {
-      return; // No change
+      console.log('✋ Same quadrant, no change');
+      return;
     }
 
     // Map categories to scores (Bajo=2, Medio=3, Alto=4)
     const scoreCalibreDesempeno = targetPerformance === "Bajo" ? 2 : targetPerformance === "Medio" ? 3 : 4;
     const scoreCalibradoPotencial = targetPotential === "Bajo" ? 2 : targetPotential === "Medio" ? 3 : 4;
 
+    console.log('📊 Scores - Performance:', scoreCalibreDesempeno, 'Potential:', scoreCalibradoPotencial);
+
     if (!tableroId) {
+      console.error('❌ No tablero ID');
       toast({
         title: "Error",
         description: "No se encontró el ID del tablero",
@@ -186,6 +205,7 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.error('❌ No user authenticated');
       toast({
         title: "Error",
         description: "Usuario no autenticado",
@@ -194,15 +214,17 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
       return;
     }
 
+    console.log('👤 Calibrating as user:', user.email);
+
     // Get tablero to find empresa_id
     const { data: tablero, error: tableroError } = await supabase
       .from('tableros')
       .select('empresa_id')
       .eq('id', tableroId)
-      .single();
+      .maybeSingle();
 
     if (tableroError || !tablero) {
-      console.error('Error al obtener tablero:', tableroError);
+      console.error('❌ Error fetching tablero:', tableroError);
       toast({
         title: "Error",
         description: "No se pudo obtener información del tablero",
@@ -211,16 +233,18 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
       return;
     }
 
+    console.log('🏢 Empresa ID:', tablero.empresa_id);
+
     // Find evaluacion for this employee
     const { data: evaluacion, error: evalError } = await supabase
       .from('evaluaciones')
       .select('id')
       .eq('persona_nombre', employee.name)
       .eq('tablero_id', tableroId)
-      .single();
+      .maybeSingle();
 
     if (evalError || !evaluacion) {
-      console.error('Error al obtener evaluación:', evalError);
+      console.error('❌ Error fetching evaluacion:', evalError);
       toast({
         title: "Error",
         description: "No se encontró la evaluación del empleado",
@@ -229,26 +253,33 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
       return;
     }
 
+    console.log('📝 Evaluacion ID:', evaluacion.id);
+
     // Upsert to calibraciones table
-    const { error } = await supabase
+    const calibrationData = {
+      evaluacion_id: evaluacion.id,
+      empresa_id: tablero.empresa_id,
+      manager_id: user.id,
+      cuadrante_original: currentQuadrantName,
+      cuadrante_calibrado: targetQuadrantName,
+      score_original_desempeno: employee.performanceScore,
+      score_original_potencial: employee.potentialScore,
+      score_calibrado_desempeno: scoreCalibreDesempeno,
+      score_calibrado_potencial: scoreCalibradoPotencial,
+    };
+
+    console.log('💾 Saving calibration:', calibrationData);
+
+    const { data: calibData, error } = await supabase
       .from('calibraciones')
-      .upsert({
-        evaluacion_id: evaluacion.id,
-        empresa_id: tablero.empresa_id,
-        manager_id: user.id,
-        cuadrante_original: currentQuadrantName,
-        cuadrante_calibrado: targetQuadrantName,
-        score_original_desempeno: employee.performanceScore,
-        score_original_potencial: employee.potentialScore,
-        score_calibrado_desempeno: scoreCalibreDesempeno,
-        score_calibrado_potencial: scoreCalibradoPotencial,
-      }, { 
+      .upsert(calibrationData, { 
         onConflict: 'evaluacion_id',
         ignoreDuplicates: false 
-      });
+      })
+      .select();
 
     if (error) {
-      console.error('Error al calibrar:', error);
+      console.error('❌ Error saving calibration:', error);
       toast({
         title: "Error al calibrar",
         description: error.message,
@@ -256,6 +287,8 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
       });
       return;
     }
+
+    console.log('✅ Calibration saved successfully:', calibData);
 
     // Also add to override context for local state
     const override = {
@@ -270,10 +303,11 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
     addOverride(override);
 
     toast({
-      title: "Empleado calibrado",
+      title: "✅ Empleado calibrado",
       description: `${employee.name} → ${targetQuadrantName}`,
     });
 
+    console.log('🔄 Triggering data reload...');
     // Trigger reload to show real-time data
     if (onDataReload) {
       onDataReload();

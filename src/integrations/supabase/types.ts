@@ -45,57 +45,48 @@ export type Database = {
       }
       calibraciones: {
         Row: {
+          calibrado_por: string | null
           created_at: string | null
-          cuadrante_calibrado: string
-          cuadrante_original: string
-          empresa_id: string | null
-          evaluacion_id: string | null
+          empleado_id: string
           id: string
-          manager_id: string | null
-          score_calibrado_desempeno: number
-          score_calibrado_potencial: number
-          score_original_desempeno: number
-          score_original_potencial: number
+          performance_score: number
+          potential_score: number
+          tablero_id: string
+          updated_at: string | null
         }
         Insert: {
+          calibrado_por?: string | null
           created_at?: string | null
-          cuadrante_calibrado: string
-          cuadrante_original: string
-          empresa_id?: string | null
-          evaluacion_id?: string | null
+          empleado_id: string
           id?: string
-          manager_id?: string | null
-          score_calibrado_desempeno: number
-          score_calibrado_potencial: number
-          score_original_desempeno: number
-          score_original_potencial: number
+          performance_score: number
+          potential_score: number
+          tablero_id: string
+          updated_at?: string | null
         }
         Update: {
+          calibrado_por?: string | null
           created_at?: string | null
-          cuadrante_calibrado?: string
-          cuadrante_original?: string
-          empresa_id?: string | null
-          evaluacion_id?: string | null
+          empleado_id?: string
           id?: string
-          manager_id?: string | null
-          score_calibrado_desempeno?: number
-          score_calibrado_potencial?: number
-          score_original_desempeno?: number
-          score_original_potencial?: number
+          performance_score?: number
+          potential_score?: number
+          tablero_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "calibraciones_empresa_id_fkey"
-            columns: ["empresa_id"]
+            foreignKeyName: "calibraciones_empleado_id_fkey"
+            columns: ["empleado_id"]
             isOneToOne: false
-            referencedRelation: "empresas"
+            referencedRelation: "empleados"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "calibraciones_evaluacion_id_fkey"
-            columns: ["evaluacion_id"]
+            foreignKeyName: "calibraciones_tablero_id_fkey"
+            columns: ["tablero_id"]
             isOneToOne: false
-            referencedRelation: "evaluaciones"
+            referencedRelation: "tableros"
             referencedColumns: ["id"]
           },
         ]

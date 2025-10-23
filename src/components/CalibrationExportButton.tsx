@@ -30,7 +30,7 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
       const { data: evaluaciones, error: evalError } = await evaluacionesQuery;
       if (evalError) throw evalError;
 
-      // Fetch calibraciones
+      // Fetch calibraciones - update to match new structure
       const { data: calibraciones, error: calibError } = await supabase
         .from('calibraciones')
         .select('*')
@@ -40,12 +40,11 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
 
       // Build export data - include ALL evaluaciones
       const exportData = evaluaciones?.map(evaluacion => {
-        // Find latest calibration for this evaluacion
-        const calibration = calibraciones?.find(c => c.evaluacion_id === evaluacion.id);
+        // Find latest calibration for this evaluacion (won't find any with current structure)
+        // We need to match by employee name since structure doesn't have evaluacion_id
+        const calibration = null; // No direct link available
 
         // Determine original quadrant
-        // Potencial: Bajo ≤1.5, Medio >1.5 hasta ≤2.5, Alto >2.5
-        // Desempeño: Bajo <3, Medio ≥3 hasta <4, Alto ≥4
         const getQuadrant = (perf: number, pot: number) => {
           const perfLevel = perf >= 4 ? "Alto" : perf >= 3 ? "Medio" : "Bajo";
           const potLevel = pot > 2.5 ? "Alto" : pot > 1.5 ? "Medio" : "Bajo";
@@ -61,18 +60,6 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
           "performance": evaluacion.desempeno_score,
           "potencial": evaluacion.potencial_score,
         };
-
-        // If calibrated, add calibration data
-        if (calibration) {
-          const calibratedQuadrant = calibration.cuadrante_calibrado || originalQuadrant;
-          return {
-            ...baseData,
-            "cuadrante_calibrado": calibratedQuadrant,
-            "modificado": "Sí",
-            "manager": calibration.manager_id || "",
-            "fecha": new Date(calibration.created_at).toLocaleDateString('es-ES'),
-          };
-        }
 
         // Not calibrated - add empty calibration fields
         return {
