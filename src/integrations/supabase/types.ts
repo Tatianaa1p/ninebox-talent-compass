@@ -49,7 +49,7 @@ export type Database = {
           cuadrante_calibrado: string
           cuadrante_original: string
           empresa_id: string | null
-          evaluacion_id: string
+          evaluacion_id: string | null
           id: string
           manager_id: string | null
           score_calibrado_desempeno: number
@@ -62,7 +62,7 @@ export type Database = {
           cuadrante_calibrado: string
           cuadrante_original: string
           empresa_id?: string | null
-          evaluacion_id: string
+          evaluacion_id?: string | null
           id?: string
           manager_id?: string | null
           score_calibrado_desempeno: number
@@ -75,7 +75,7 @@ export type Database = {
           cuadrante_calibrado?: string
           cuadrante_original?: string
           empresa_id?: string | null
-          evaluacion_id?: string
+          evaluacion_id?: string | null
           id?: string
           manager_id?: string | null
           score_calibrado_desempeno?: number
@@ -94,7 +94,7 @@ export type Database = {
           {
             foreignKeyName: "calibraciones_evaluacion_id_fkey"
             columns: ["evaluacion_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "evaluaciones"
             referencedColumns: ["id"]
           },
