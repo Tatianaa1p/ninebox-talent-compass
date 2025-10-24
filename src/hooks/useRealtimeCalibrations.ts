@@ -4,11 +4,13 @@ import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface CalibracionPayload {
   id: string;
-  evaluacion_id: string;
-  empresa_id: string;
-  score_calibrado_desempeno: number;
-  score_calibrado_potencial: number;
+  empleado_id: string;
+  tablero_id: string;
+  performance_score: number;
+  potential_score: number;
+  calibrado_por: string | null;
   created_at: string;
+  updated_at: string | null;
 }
 
 export const useRealtimeCalibrations = (
