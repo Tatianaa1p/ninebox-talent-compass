@@ -18,68 +18,77 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
         description: "Preparando datos de calibración...",
       });
 
-      // Fetch evaluaciones
-      let evaluacionesQuery = supabase
-        .from('evaluaciones')
+      // Fetch empleados
+      let empleadosQuery = supabase
+        .from('empleados')
         .select('*');
       
       if (tableroId) {
-        evaluacionesQuery = evaluacionesQuery.eq('tablero_id', tableroId);
+        empleadosQuery = empleadosQuery.eq('tablero_id', tableroId);
       }
 
-      const { data: evaluaciones, error: evalError } = await evaluacionesQuery;
-      if (evalError) throw evalError;
+      const { data: empleados, error: empleadosError } = await empleadosQuery;
+      if (empleadosError) throw empleadosError;
 
-      // Fetch calibraciones
-      const { data: calibraciones, error: calibError } = await supabase
+      // Fetch calibraciones for this tablero
+      let calibracionesQuery = supabase
         .from('calibraciones')
         .select('*')
         .order('created_at', { ascending: false });
       
+      if (tableroId) {
+        calibracionesQuery = calibracionesQuery.eq('tablero_id', tableroId);
+      }
+      
+      const { data: calibraciones, error: calibError } = await calibracionesQuery;
       if (calibError) throw calibError;
 
-      // Build export data - include ALL evaluaciones
-      const exportData = evaluaciones?.map(evaluacion => {
-        // Find latest calibration for this evaluacion
-        const calibration = calibraciones?.find(c => c.evaluacion_id === evaluacion.id);
+      // Helper function to determine quadrant from scores
+      const getQuadrant = (perf: number, pot: number) => {
+        const perfLevel = perf >= 4 ? "Alto" : perf >= 3 ? "Medio" : "Bajo";
+        const potLevel = pot > 2.5 ? "Alto" : pot > 1.5 ? "Medio" : "Bajo";
+        return `${potLevel}-${perfLevel}`;
+      };
 
-        // Determine original quadrant
-        // Potencial: Bajo ≤1.5, Medio >1.5 hasta ≤2.5, Alto >2.5
-        // Desempeño: Bajo <3, Medio ≥3 hasta <4, Alto ≥4
-        const getQuadrant = (perf: number, pot: number) => {
-          const perfLevel = perf >= 4 ? "Alto" : perf >= 3 ? "Medio" : "Bajo";
-          const potLevel = pot > 2.5 ? "Alto" : pot > 1.5 ? "Medio" : "Bajo";
-          return `${potLevel}-${perfLevel}`;
-        };
+      // Build export data - include ALL empleados
+      const exportData = empleados?.map(empleado => {
+        // Find latest calibration for this empleado
+        const calibration = calibraciones?.find(c => c.empleado_id === empleado.id);
 
-        const originalQuadrant = getQuadrant(evaluacion.desempeno_score, evaluacion.potencial_score);
+        const originalPerf = empleado.performance || 0;
+        const originalPot = empleado.potencial || 0;
+        const originalQuadrant = getQuadrant(originalPerf, originalPot);
         
         // Base data - always present for all employees
         const baseData: any = {
-          "nombre": evaluacion.persona_nombre,
+          "nombre": empleado.nombre,
           "cuadrante_original": originalQuadrant,
-          "performance": evaluacion.desempeno_score,
-          "potencial": evaluacion.potencial_score,
+          "performance_original": originalPerf,
+          "potencial_original": originalPot,
         };
 
         // If calibrated, add calibration data
         if (calibration) {
-          const calibratedQuadrant = calibration.cuadrante_calibrado || originalQuadrant;
+          const calibratedQuadrant = getQuadrant(calibration.performance_score, calibration.potential_score);
           return {
             ...baseData,
+            "performance_calibrado": calibration.performance_score,
+            "potencial_calibrado": calibration.potential_score,
             "cuadrante_calibrado": calibratedQuadrant,
             "modificado": "Sí",
-            "manager": calibration.manager_id || "",
-            "fecha": new Date(calibration.created_at).toLocaleDateString('es-ES'),
+            "calibrado_por": calibration.calibrado_por || "",
+            "fecha": new Date(calibration.created_at || "").toLocaleDateString('es-ES'),
           };
         }
 
         // Not calibrated - add empty calibration fields
         return {
           ...baseData,
+          "performance_calibrado": "",
+          "potencial_calibrado": "",
           "cuadrante_calibrado": "",
           "modificado": "No",
-          "manager": "",
+          "calibrado_por": "",
           "fecha": "",
         };
       }) || [];

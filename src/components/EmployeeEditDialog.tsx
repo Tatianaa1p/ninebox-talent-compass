@@ -142,32 +142,45 @@ export const EmployeeEditDialog = ({
       const { data: { user } } = await supabase.auth.getUser();
       console.log('👤 Current user:', user?.id);
 
+      // Get empleado_id from empleados table
+      const { data: empleadoData, error: empleadoError } = await supabase
+        .from('empleados')
+        .select('id')
+        .eq('nombre', employee!.name)
+        .eq('tablero_id', tableroId)
+        .single();
+
+      console.log('👤 Empleado data:', empleadoData, 'Error:', empleadoError);
+
+      if (empleadoError || !empleadoData) {
+        console.error('❌ Error fetching empleado:', empleadoError);
+        throw new Error("No se encontró el empleado: " + (empleadoError?.message || 'Unknown error'));
+      }
+
       const calibracionData = {
-        evaluacion_id: evaluacion.id,
-        empresa_id: tablero.empresa_id,
-        cuadrante_original: `${employee!.potential}-${employee!.performance}`,
-        cuadrante_calibrado: selectedQuadrant,
-        score_original_potencial: employee!.potentialScore,
-        score_calibrado_potencial: quadrantData.potential,
-        score_original_desempeno: employee!.performanceScore,
-        score_calibrado_desempeno: quadrantData.performance,
-        manager_id: user?.id || null,
+        empleado_id: empleadoData.id,
+        tablero_id: tableroId!,
+        performance_score: quadrantData.performance,
+        potential_score: quadrantData.potential,
+        calibrado_por: user?.id || null,
       };
 
       console.log('💾 Saving calibration with data:', calibracionData);
 
-      // Save to calibraciones table (history)
+      // Save to calibraciones table (upsert to update if exists)
       const { data: calibData, error: calibError } = await supabase
         .from('calibraciones')
-        .insert(calibracionData)
+        .upsert(calibracionData, {
+          onConflict: 'empleado_id,tablero_id',
+        })
         .select();
 
       console.log('✅ Calibration saved:', calibData, 'Error:', calibError);
 
       if (calibError) {
-        console.error("❌ Error saving calibration history:", calibError);
+        console.error("❌ Error saving calibration:", calibError);
         console.error("❌ Error details:", JSON.stringify(calibError, null, 2));
-        throw new Error("Error al guardar historial de calibración: " + calibError.message);
+        throw new Error("Error al guardar calibración: " + calibError.message);
       }
 
       console.log('🔄 Updating evaluacion scores...');
