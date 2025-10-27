@@ -167,52 +167,25 @@ export const EmployeeEditDialog = ({
 
       console.log('💾 Saving calibration with data:', calibracionData);
 
-      // Check if calibration already exists
-      const { data: existingCalib, error: selectError } = await supabase
+      // Upsert to calibraciones table
+      const { error: calibError } = await supabase
         .from('calibraciones')
-        .select('id')
-        .eq('empleado_id', empleadoData.id)
-        .eq('tablero_id', tableroId!)
-        .maybeSingle();
-
-      console.log('🔍 Existing calibration:', existingCalib, 'Error:', selectError);
-
-      let calibData;
-      let calibError;
-
-      if (existingCalib) {
-        // Update existing calibration
-        console.log('🔄 Updating existing calibration...');
-        const { data: updatedData, error: updateErr } = await supabase
-          .from('calibraciones')
-          .update({
+        .upsert(
+          {
+            empleado_id: empleadoData.id,
+            tablero_id: tableroId!,
             performance_score: quadrantData.performance,
             potential_score: quadrantData.potential,
             calibrado_por: user?.id || null,
             updated_at: new Date().toISOString(),
-          })
-          .eq('id', existingCalib.id)
-          .select();
-        
-        calibData = updatedData;
-        calibError = updateErr;
-      } else {
-        // Insert new calibration
-        console.log('✨ Creating new calibration...');
-        const { data: insertedData, error: insertErr } = await supabase
-          .from('calibraciones')
-          .insert(calibracionData)
-          .select();
-        
-        calibData = insertedData;
-        calibError = insertErr;
-      }
+          },
+          { onConflict: 'empleado_id,tablero_id' }
+        );
 
-      console.log('✅ Calibration saved:', calibData, 'Error:', calibError);
+      console.log('✅ Calibration saved, Error:', calibError);
 
       if (calibError) {
         console.error("❌ Error saving calibration:", calibError);
-        console.error("❌ Error details:", JSON.stringify(calibError, null, 2));
         throw new Error("Error al guardar calibración: " + calibError.message);
       }
 

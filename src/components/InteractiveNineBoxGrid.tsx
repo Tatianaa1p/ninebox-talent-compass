@@ -192,47 +192,28 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
         .select('id')
         .eq('nombre', employee.name)
         .eq('tablero_id', tableroId)
-        .single();
+        .maybeSingle();
 
       if (empleadoError || !empleadoData) {
         throw new Error("No se encontró el empleado");
       }
 
-      // Check if calibration exists
-      const { data: existingCalib } = await supabase
+      // Upsert to calibraciones table
+      const { error: calibError } = await supabase
         .from('calibraciones')
-        .select('id')
-        .eq('empleado_id', empleadoData.id)
-        .eq('tablero_id', tableroId!)
-        .maybeSingle();
-
-      if (existingCalib) {
-        // Update existing
-        const { error: updateError } = await supabase
-          .from('calibraciones')
-          .update({
-            performance_score: perfScore,
-            potential_score: potScore,
-            calibrado_por: user?.id || null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', existingCalib.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Insert new
-        const { error: insertError } = await supabase
-          .from('calibraciones')
-          .insert({
+        .upsert(
+          {
             empleado_id: empleadoData.id,
             tablero_id: tableroId!,
             performance_score: perfScore,
             potential_score: potScore,
             calibrado_por: user?.id || null,
-          });
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'empleado_id,tablero_id' }
+        );
 
-        if (insertError) throw insertError;
-      }
+      if (calibError) throw calibError;
 
       // Update empleados table
       await supabase
