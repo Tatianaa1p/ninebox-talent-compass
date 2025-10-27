@@ -93,7 +93,12 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
     if (onDataReload) {
       onDataReload();
     }
-  }, [onDataReload]);
+    
+    toast({
+      title: "🔄 Actualizado",
+      description: "Grid actualizado en tiempo real",
+    });
+  }, [onDataReload, toast]);
 
   useRealtimeCalibrations(tableroId, handleRealtimeUpdate);
 
@@ -195,24 +200,29 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
   const handleSaveEdit = async (quadrantName: string, success: boolean) => {
     if (!editingEmployee) return;
 
+    const employeeName = editingEmployee.name;
+
     // Close dialog
     setEditDialogOpen(false);
     setEditingEmployee(null);
     
     if (success) {
-      // Reload data directly from database
-      if (onDataReload) {
-        await onDataReload();
-      }
-      
       toast({
-        title: "Calibración guardada",
-        description: `${editingEmployee.name} actualizado correctamente en el grid`,
+        title: "✅ Cambios guardados",
+        description: `${employeeName} calibrado correctamente`,
       });
+      
+      // Realtime will handle the update automatically
+      // Manual reload as backup
+      setTimeout(() => {
+        if (onDataReload) {
+          onDataReload();
+        }
+      }, 500);
     } else {
       toast({
-        title: "Actualización fallida",
-        description: "Recarga la página para ver los cambios",
+        title: "Error al guardar",
+        description: "Hubo un problema, intenta nuevamente",
         variant: "destructive",
       });
     }
