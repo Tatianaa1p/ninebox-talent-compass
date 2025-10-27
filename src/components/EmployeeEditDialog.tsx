@@ -167,13 +167,46 @@ export const EmployeeEditDialog = ({
 
       console.log('💾 Saving calibration with data:', calibracionData);
 
-      // Save to calibraciones table (upsert to update if exists)
-      const { data: calibData, error: calibError } = await supabase
+      // Check if calibration already exists
+      const { data: existingCalib, error: selectError } = await supabase
         .from('calibraciones')
-        .upsert(calibracionData, {
-          onConflict: 'empleado_id,tablero_id',
-        })
-        .select();
+        .select('id')
+        .eq('empleado_id', empleadoData.id)
+        .eq('tablero_id', tableroId!)
+        .maybeSingle();
+
+      console.log('🔍 Existing calibration:', existingCalib, 'Error:', selectError);
+
+      let calibData;
+      let calibError;
+
+      if (existingCalib) {
+        // Update existing calibration
+        console.log('🔄 Updating existing calibration...');
+        const { data: updatedData, error: updateErr } = await supabase
+          .from('calibraciones')
+          .update({
+            performance_score: quadrantData.performance,
+            potential_score: quadrantData.potential,
+            calibrado_por: user?.id || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingCalib.id)
+          .select();
+        
+        calibData = updatedData;
+        calibError = updateErr;
+      } else {
+        // Insert new calibration
+        console.log('✨ Creating new calibration...');
+        const { data: insertedData, error: insertErr } = await supabase
+          .from('calibraciones')
+          .insert(calibracionData)
+          .select();
+        
+        calibData = insertedData;
+        calibError = insertErr;
+      }
 
       console.log('✅ Calibration saved:', calibData, 'Error:', calibError);
 
