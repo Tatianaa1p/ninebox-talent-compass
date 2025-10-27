@@ -9,6 +9,7 @@ import { QuadrantInfoPanel } from "@/components/QuadrantInfoPanel";
 import { useOverrides } from "@/contexts/OverrideContext";
 import { QUADRANT_KEYS, QUADRANT_NAMES, QUADRANT_DESCRIPTIONS } from "@/types/override";
 import { useRealtimeCalibrations } from "@/hooks/useRealtimeCalibrations";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Tooltip,
   TooltipContent,
@@ -152,7 +153,7 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
     setActiveEmployee(employee);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     setActiveEmployee(null);
 
     const { active, over } = event;
@@ -172,24 +173,103 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
       return; // No change
     }
 
-    const override = {
-      employeeName: employee.name,
-      override_potencial_categoria: targetPotential,
-      override_desempeno_categoria: targetPerformance,
-      override_cuadrante: targetQuadrantName,
-      override_fecha: new Date().toISOString(),
-      override_usuario: "Usuario actual",
+    // Map quadrant to numeric scores
+    const getScores = (performance: PerformanceLevel, potential: PotentialLevel) => {
+      const perfScore = performance === "Alto" ? 4.5 : performance === "Medio" ? 3.5 : 2.0;
+      const potScore = potential === "Alto" ? 3.0 : potential === "Medio" ? 2.0 : 1.0;
+      return { perfScore, potScore };
     };
 
-    addOverride(override);
+    const { perfScore, potScore } = getScores(targetPerformance, targetPotential);
 
-    setUndoMessage(`${employee.name} movido a ${targetQuadrantName}`);
-    setShowUndo(true);
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Get empleado_id from empleados table
+      const { data: empleadoData, error: empleadoError } = await supabase
+        .from('empleados')
+        .select('id')
+        .eq('nombre', employee.name)
+        .eq('tablero_id', tableroId)
+        .single();
 
-    toast({
-      title: "Empleado reubicado",
-      description: `${employee.name} → ${targetQuadrantName}`,
-    });
+      if (empleadoError || !empleadoData) {
+        throw new Error("No se encontró el empleado");
+      }
+
+      // Check if calibration exists
+      const { data: existingCalib } = await supabase
+        .from('calibraciones')
+        .select('id')
+        .eq('empleado_id', empleadoData.id)
+        .eq('tablero_id', tableroId!)
+        .maybeSingle();
+
+      if (existingCalib) {
+        // Update existing
+        const { error: updateError } = await supabase
+          .from('calibraciones')
+          .update({
+            performance_score: perfScore,
+            potential_score: potScore,
+            calibrado_por: user?.id || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingCalib.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Insert new
+        const { error: insertError } = await supabase
+          .from('calibraciones')
+          .insert({
+            empleado_id: empleadoData.id,
+            tablero_id: tableroId!,
+            performance_score: perfScore,
+            potential_score: potScore,
+            calibrado_por: user?.id || null,
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      // Update empleados table
+      await supabase
+        .from('empleados' as any)
+        .update({
+          performance: perfScore,
+          potencial: potScore,
+        })
+        .eq('id', empleadoData.id);
+
+      // Update evaluaciones if exists
+      await supabase
+        .from('evaluaciones')
+        .update({
+          desempeno_score: perfScore,
+          potencial_score: potScore,
+        })
+        .eq('persona_nombre', employee.name)
+        .eq('tablero_id', tableroId);
+
+      toast({
+        title: "✅ Calibración guardada",
+        description: `${employee.name} → ${targetQuadrantName}`,
+      });
+
+      // Reload data
+      if (onDataReload) {
+        setTimeout(() => onDataReload(), 300);
+      }
+    } catch (error: any) {
+      console.error("Error saving calibration:", error);
+      toast({
+        title: "Error al guardar",
+        description: error.message || "Intenta nuevamente",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditEmployee = (employee: Employee) => {
