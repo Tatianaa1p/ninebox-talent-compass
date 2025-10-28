@@ -1,16 +1,18 @@
 import * as XLSX from "xlsx";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 
-// Helper function to normalize performance/potential values based on thresholds (1-3 scale)
+// Helper function to normalize performance/potential values based on thresholds
+// Desempeño: < 3 = Bajo, < 4 = Medio, >= 4 = Alto
 const normalizePerformanceLevel = (value: number): "Bajo" | "Medio" | "Alto" => {
-  if (value >= 3) return "Alto";
-  if (value >= 2) return "Medio";
+  if (value >= 4) return "Alto";
+  if (value >= 3) return "Medio";
   return "Bajo";
 };
 
+// Potencial: <= 1.5 = Bajo, <= 2.5 = Medio, > 2.5 = Alto
 const normalizePotentialLevel = (value: number): "Bajo" | "Medio" | "Alto" => {
-  if (value >= 3) return "Alto";
-  if (value >= 2) return "Medio";
+  if (value > 2.5) return "Alto";
+  if (value > 1.5) return "Medio";
   return "Bajo";
 };
 
@@ -25,16 +27,15 @@ const parseNumericValue = (value: string | number | undefined): number | null =>
   return isNaN(num) ? null : num;
 };
 
-// Helper function to parse and validate score in 1-3 range
+// Helper function to parse and validate score (1-5 scale)
 const parseAndValidateScore = (value: string | number | undefined, fieldName: string): number | null => {
   const parsed = parseNumericValue(value);
   if (parsed === null) return null;
   
-  // Clamp to 1-3 range and log
-  const clamped = Math.max(1, Math.min(3, parsed));
-  console.log(`${fieldName} raw: "${value}", parsed: ${parsed}, clamped: ${clamped}`);
+  // Log for debugging
+  console.log(`${fieldName} raw: "${value}", parsed: ${parsed}`);
   
-  return clamped;
+  return parsed;
 };
 
 export interface EmployeeRawData {
@@ -146,9 +147,9 @@ export const parseExcelFiles = async (
       });
     });
     
-    // Convert raw data to employees with updated thresholds
-    // Potencial: Bajo ≤1.5, Medio >1.5 hasta ≤2.5, Alto >2.5
+    // Convert raw data to employees with thresholds:
     // Desempeño: Bajo <3, Medio ≥3 hasta <4, Alto ≥4
+    // Potencial: Bajo ≤1.5, Medio >1.5 hasta ≤2.5, Alto >2.5
     const employees: Employee[] = rawData.map((data) => ({
       id: `${data.name}-${Date.now()}-${Math.random()}`,
       name: data.name,

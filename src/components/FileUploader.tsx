@@ -104,14 +104,13 @@ export const FileUploader = ({ onFilesUploaded, onClose }: FileUploaderProps) =>
         continue;
       }
       
-      // Clamp to 1-3 range and log
-      const clampedScore = Math.max(1, Math.min(3, numScore));
-      console.log(`${type} [${nombreCompleto}] raw: "${puntuacionPromedio}", parsed: ${numScore}, clamped: ${clampedScore}`);
+      // Log for debugging (1-5 scale)
+      console.log(`${type} [${nombreCompleto}] raw: "${puntuacionPromedio}", parsed: ${numScore}`);
       
-      // Store as clamped NUMERIC value (1-3 range)
+      // Store as NUMERIC value (1-5 scale)
       results.push({
         nombre: String(nombreCompleto).trim(),
-        [type]: clampedScore
+        [type]: numScore
       });
     }
     
