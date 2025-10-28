@@ -48,11 +48,16 @@ export const EmployeeEditDialog = ({
 
   useEffect(() => {
     if (employee) {
-      // Determine current quadrant based on performance and potential (1-3 scale)
-      // Bajo = 1, Medio = 2, Alto = 3
-      const perfLevel = employee.performanceScore >= 3 ? "Alto" : employee.performanceScore >= 2 ? "Medio" : "Bajo";
-      const potLevel = employee.potentialScore >= 3 ? "Alto" : employee.potentialScore >= 2 ? "Medio" : "Bajo";
+      // Map employee scores to quadrant (1-3 scale)
+      // Round to nearest integer for categorization
+      const perfScore = Math.round(employee.performanceScore);
+      const potScore = Math.round(employee.potentialScore);
+      
+      const perfLevel = perfScore >= 3 ? "Alto" : perfScore >= 2 ? "Medio" : "Bajo";
+      const potLevel = potScore >= 3 ? "Alto" : potScore >= 2 ? "Medio" : "Bajo";
+      
       setSelectedQuadrant(`${potLevel}-${perfLevel}`);
+      console.log('📍 Current position:', { perfScore, potScore, perfLevel, potLevel });
     }
   }, [employee]);
 

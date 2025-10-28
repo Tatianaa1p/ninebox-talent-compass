@@ -239,9 +239,10 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
         description: `${employee.name} → ${targetQuadrantName}`,
       });
 
-      // Reload data
+      // Force immediate reload - realtime will also trigger
+      console.log('🔄 Triggering data reload after drag calibration');
       if (onDataReload) {
-        setTimeout(() => onDataReload(), 300);
+        onDataReload();
       }
     } catch (error: any) {
       console.error("Error saving calibration:", error);

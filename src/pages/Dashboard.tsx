@@ -246,18 +246,22 @@ const Dashboard = () => {
   const reloadEmpleados = async () => {
     if (!selectedTablero) return;
     
+    console.log('🔄 Reloading empleados after calibration...');
+    
     const { data, error } = await supabase
       .from('empleados' as any)
       .select('*')
       .eq('tablero_id', selectedTablero);
     
     if (error) {
+      console.error('❌ Error reloading empleados:', error);
       toast({
         title: 'Error',
         description: 'No se pudieron cargar los empleados',
         variant: 'destructive',
       });
     } else {
+      console.log('✅ Empleados reloaded:', data);
       setEmpleados((data as any) || []);
       convertToEmployees((data as any) || []);
     }
@@ -277,14 +281,14 @@ const Dashboard = () => {
   };
 
   const getPerformanceLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score >= 4) return 'Alto';
-    if (score >= 3) return 'Medio';
+    if (score >= 3) return 'Alto';
+    if (score >= 2) return 'Medio';
     return 'Bajo';
   };
 
   const getPotentialLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score > 2.5) return 'Alto';
-    if (score > 1.5) return 'Medio';
+    if (score >= 3) return 'Alto';
+    if (score >= 2) return 'Medio';
     return 'Bajo';
   };
 
