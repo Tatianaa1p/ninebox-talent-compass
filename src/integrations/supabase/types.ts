@@ -252,31 +252,37 @@ export type Database = {
         Row: {
           created_at: string | null
           desempeno_score: number
+          desempeno_score_original: number | null
           empresa_id: string | null
           equipo_id: string
           id: string
           persona_nombre: string
           potencial_score: number
+          potencial_score_original: number | null
           tablero_id: string | null
         }
         Insert: {
           created_at?: string | null
           desempeno_score: number
+          desempeno_score_original?: number | null
           empresa_id?: string | null
           equipo_id: string
           id?: string
           persona_nombre: string
           potencial_score: number
+          potencial_score_original?: number | null
           tablero_id?: string | null
         }
         Update: {
           created_at?: string | null
           desempeno_score?: number
+          desempeno_score_original?: number | null
           empresa_id?: string | null
           equipo_id?: string
           id?: string
           persona_nombre?: string
           potencial_score?: number
+          potencial_score_original?: number | null
           tablero_id?: string | null
         }
         Relationships: [

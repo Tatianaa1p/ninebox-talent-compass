@@ -122,6 +122,8 @@ export const EmployeeEditDialog = ({
           empresa_id: tablero.empresa_id,
           potencial_score: employee!.potentialScore,
           desempeno_score: employee!.performanceScore,
+          potencial_score_original: employee!.potentialScore,  // Save original snapshot
+          desempeno_score_original: employee!.performanceScore, // Save original snapshot
         };
         
         console.log('📝 Creating evaluation with data:', evaluacionData);
@@ -141,6 +143,23 @@ export const EmployeeEditDialog = ({
         }
 
         evaluacion = newEval;
+      } else {
+        // If evaluation exists but has no original values, save them now
+        if (evaluacion.potencial_score_original == null || evaluacion.desempeno_score_original == null) {
+          console.log("💾 Saving original snapshot for first calibration:", employee!.name);
+          
+          const { error: snapshotError } = await supabase
+            .from('evaluaciones')
+            .update({
+              potencial_score_original: employee!.potentialScore,
+              desempeno_score_original: employee!.performanceScore,
+            })
+            .eq('id', evaluacion.id);
+          
+          if (snapshotError) {
+            console.error("⚠️ Error saving original snapshot:", snapshotError);
+          }
+        }
       }
 
       // Get current user

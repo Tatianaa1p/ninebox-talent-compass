@@ -18,10 +18,16 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
         description: "Preparando datos de calibración...",
       });
 
-      // Fetch empleados
+      // Fetch empleados with evaluaciones data (to get original scores)
       let empleadosQuery = supabase
         .from('empleados')
-        .select('*');
+        .select(`
+          *,
+          evaluaciones!left (
+            potencial_score_original,
+            desempeno_score_original
+          )
+        `);
       
       if (tableroId) {
         empleadosQuery = empleadosQuery.eq('tablero_id', tableroId);
@@ -55,8 +61,10 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
         // Find latest calibration for this empleado
         const calibration = calibraciones?.find(c => c.empleado_id === empleado.id);
 
-        const originalPerf = empleado.performance || 0;
-        const originalPot = empleado.potencial || 0;
+        // Use original scores from evaluaciones if available, otherwise use current scores
+        const evaluacion = (empleado as any).evaluaciones?.[0];
+        const originalPerf = evaluacion?.desempeno_score_original ?? empleado.performance ?? 0;
+        const originalPot = evaluacion?.potencial_score_original ?? empleado.potencial ?? 0;
         const originalQuadrant = getQuadrant(originalPerf, originalPot);
         
         // Base data - always present for all employees
