@@ -18,11 +18,23 @@ const normalizePotentialLevel = (value: number): "Bajo" | "Medio" | "Alto" => {
 const parseNumericValue = (value: string | number | undefined): number | null => {
   if (value === undefined || value === null || value === "") return null;
   
-  // Handle numeric values - convert comma to dot for decimal parsing
-  const numStr = String(value).replace(",", ".");
+  // Handle numeric values - convert comma to dot for decimal parsing, trim spaces
+  const numStr = String(value).trim().replace(",", ".");
   const num = parseFloat(numStr);
   
   return isNaN(num) ? null : num;
+};
+
+// Helper function to parse and validate score in 1-3 range
+const parseAndValidateScore = (value: string | number | undefined, fieldName: string): number | null => {
+  const parsed = parseNumericValue(value);
+  if (parsed === null) return null;
+  
+  // Clamp to 1-3 range and log
+  const clamped = Math.max(1, Math.min(3, parsed));
+  console.log(`${fieldName} raw: "${value}", parsed: ${parsed}, clamped: ${clamped}`);
+  
+  return clamped;
 };
 
 export interface EmployeeRawData {
@@ -59,7 +71,7 @@ export const parseExcelFiles = async (
       const name = row["Nombre completo"];
       if (!name) return;
       
-      // Try ALL possible variants of Potential column
+      // Try ALL possible variants of Potential column (with trim for spaces)
       let potentialScore = 
         row["Puntuación promedio"] || 
         row["Puntuacion promedio"] ||
@@ -70,14 +82,17 @@ export const parseExcelFiles = async (
         row["Nivel de Potencial"] || 
         row["potential"] || 
         row["Potential"] ||
+        row["POTENTIAL"] ||
+        row["Potencial "] ||  // Con espacio al final
+        row[" Potencial"] ||  // Con espacio al inicio
         row["R"];
       
       // Skip if no score found or empty
       if (potentialScore === undefined || potentialScore === null || potentialScore === "") return;
       
-      // Convert comma to dot for decimal numbers
+      // Trim spaces and convert comma to dot for decimal numbers
       if (typeof potentialScore === "string") {
-        potentialScore = potentialScore.replace(",", ".");
+        potentialScore = potentialScore.trim().replace(",", ".");
       }
       
       potentialMap.set(name, potentialScore);
@@ -105,11 +120,11 @@ export const parseExcelFiles = async (
         row["performance"] || 
         row["PERFORMANCE"] ||
         row["AG"];
-      const performanceScore = parseNumericValue(performanceValue);
+      const performanceScore = parseAndValidateScore(performanceValue, `Performance [${name}]`);
       
       // Get potential score from the map
       const potentialValue = potentialMap.get(name);
-      const potentialScore = parseNumericValue(potentialValue);
+      const potentialScore = parseAndValidateScore(potentialValue, `Potential [${name}]`);
       
       // Skip if either value is missing or empty
       if (performanceScore === null || potentialScore === null) {

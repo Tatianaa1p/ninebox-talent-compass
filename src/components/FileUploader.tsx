@@ -75,7 +75,7 @@ export const FileUploader = ({ onFilesUploaded, onClose }: FileUploaderProps) =>
           row['performance'] || 
           row['PERFORMANCE'];
       } else {
-        // type === 'potencial'
+        // type === 'potencial' - ALL possible variants
         puntuacionPromedio = 
           row['Puntuación promedio'] || 
           row['Puntuacion promedio'] ||
@@ -85,25 +85,33 @@ export const FileUploader = ({ onFilesUploaded, onClose }: FileUploaderProps) =>
           row['Pot.'] || 
           row['Nivel de Potencial'] || 
           row['potential'] || 
-          row['Potential'];
+          row['Potential'] ||
+          row['POTENTIAL'] ||
+          row['Potencial '] ||  // Con espacio al final
+          row[' Potencial'];    // Con espacio al inicio
       }
       
       // Skip empty or invalid rows
       if (!nombreCompleto || puntuacionPromedio === undefined || puntuacionPromedio === '' || puntuacionPromedio === null) continue;
       
-      // Convert to number and validate as decimal
-      const numScore = Number(puntuacionPromedio);
+      // Trim spaces and convert to number
+      const trimmedValue = String(puntuacionPromedio).trim().replace(',', '.');
+      const numScore = Number(trimmedValue);
       
-      // Ignore non-numeric or out-of-range values
-      if (isNaN(numScore) || numScore < 1 || numScore > 5) {
-        console.warn(`Score inválido para ${nombreCompleto}: ${puntuacionPromedio}`);
+      // Ignore non-numeric values
+      if (isNaN(numScore)) {
+        console.warn(`Score inválido para ${nombreCompleto}: "${puntuacionPromedio}"`);
         continue;
       }
       
-      // Store as decimal NUMERIC value
+      // Clamp to 1-3 range and log
+      const clampedScore = Math.max(1, Math.min(3, numScore));
+      console.log(`${type} [${nombreCompleto}] raw: "${puntuacionPromedio}", parsed: ${numScore}, clamped: ${clampedScore}`);
+      
+      // Store as clamped NUMERIC value (1-3 range)
       results.push({
         nombre: String(nombreCompleto).trim(),
-        [type]: numScore
+        [type]: clampedScore
       });
     }
     
