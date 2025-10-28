@@ -66,29 +66,38 @@ export const parseExcelFiles = async (
     const potData: any[] = XLSX.utils.sheet_to_json(potSheet);
     
     // Create a map for potential data
-    // Try ALL possible column names for Potential
     const potentialMap = new Map();
-    potData.forEach((row) => {
+    potData.forEach((row, index) => {
       const name = row["Nombre completo"];
       if (!name) return;
       
-      // Try ALL possible variants of Potential column (with trim for spaces)
-      let potentialScore = 
-        row["Puntuación promedio"] || 
-        row["Puntuacion promedio"] ||
-        row["Potencial"] || 
-        row["potencial"] || 
-        row["POTENCIAL"] ||
-        row["Pot."] || 
-        row["Nivel de Potencial"] || 
-        row["potential"] || 
-        row["Potential"] ||
-        row["POTENTIAL"] ||
-        row["Potencial "] ||  // Con espacio al final
-        row[" Potencial"] ||  // Con espacio al inicio
-        row["R"];
+      // Log ALL columns for first 3 employees
+      if (index < 3) {
+        console.log(`\n🟢 ========== POTENTIAL ROW ${index}: ${name} ==========`);
+        console.log("📋 Todas las columnas y valores:");
+        Object.keys(row).forEach(key => {
+          const value = row[key];
+          console.log(`  "${key}": "${value}" (tipo: ${typeof value})`);
+        });
+      }
       
-      // Skip if no score found or empty
+      // Find column that contains "promedio" and is numeric
+      let potentialScore = null;
+      const allKeys = Object.keys(row);
+      
+      for (const key of allKeys) {
+        if (key.includes("promedio") || key.includes("Promedio")) {
+          const val = row[key];
+          const numVal = parseFloat(String(val));
+          if (!isNaN(numVal) && numVal >= 1 && numVal <= 5) {
+            potentialScore = val;
+            console.log(`✅ [${name}] Encontré columna potential: "${key}" = ${val}`);
+            break;
+          }
+        }
+      }
+      
+      // Skip if no score found
       if (potentialScore === undefined || potentialScore === null || potentialScore === "") return;
       
       // Trim spaces and convert comma to dot for decimal numbers
@@ -104,24 +113,42 @@ export const parseExcelFiles = async (
     
     // Process performance data and merge with potential
     // CRITICAL: Use ONLY "Puntuación promedio" (numeric), NOT "Puntuación de desempeño" (text)
-    perfData.forEach((row) => {
+    perfData.forEach((row, index) => {
       const name = row["Nombre completo"];
       if (!name) return;
       
       const manager = row["Mánager"] || row["Manager"];
       
-      // Log ALL columns for first employee to debug
-      if (perfData.indexOf(row) === 0) {
-        console.log("🔍 Columnas disponibles en Performance Excel:", Object.keys(row));
+      // Log ALL columns and values for first 3 employees to debug
+      if (index < 3) {
+        console.log(`\n🔍 ========== ROW ${index}: ${name} ==========`);
+        console.log("📋 Todas las columnas y valores:");
+        Object.keys(row).forEach(key => {
+          const value = row[key];
+          console.log(`  "${key}": "${value}" (tipo: ${typeof value})`);
+        });
       }
       
-      // ONLY use "Puntuación promedio" - IGNORE "Puntuación de desempeño"
-      let performanceValue = 
-        row["Puntuación promedio"] || 
-        row["Puntuacion promedio"];
+      // Search for "Puntuación promedio" that is NUMERIC (not text like "Alta")
+      let performanceValue = null;
+      const allKeys = Object.keys(row);
       
-      // Debug: show what we found
-      console.log(`🎯 Performance [${name}]: buscando "Puntuación promedio" = "${performanceValue}"`);
+      // Find column that contains "promedio" and is numeric
+      for (const key of allKeys) {
+        if (key.includes("promedio") || key.includes("Promedio")) {
+          const val = row[key];
+          const numVal = parseFloat(String(val));
+          if (!isNaN(numVal) && numVal >= 1 && numVal <= 5) {
+            performanceValue = val;
+            console.log(`✅ [${name}] Encontré columna performance: "${key}" = ${val}`);
+            break;
+          }
+        }
+      }
+      
+      if (!performanceValue) {
+        console.warn(`❌ [${name}] NO encontré columna performance válida`);
+      }
       
       const performanceScore = parseAndValidateScore(performanceValue, `Performance [${name}]`);
       
