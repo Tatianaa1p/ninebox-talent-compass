@@ -18,7 +18,7 @@ interface EmployeeEditDialogProps {
   employee: Employee | null;
   open: boolean;
   onClose: () => void;
-  onSave: (quadrant: string, success: boolean) => void;
+  onSave: (quadrant: string, success: boolean, scores?: { performance: number; potential: number }) => void;
   currentOverrideMotivo?: string;
   tableroId?: string;
 }
@@ -237,8 +237,11 @@ export const EmployeeEditDialog = ({
         description: `${employee!.name} calibrado a ${quadrantData.label}`,
       });
 
-      // Success - notify parent
-      onSave(selectedQuadrant, true);
+      // Success - notify parent with updated scores
+      onSave(selectedQuadrant, true, { 
+        performance: quadrantData.performance, 
+        potential: quadrantData.potential 
+      });
       onClose();
     } catch (error: any) {
       console.error("Calibration error:", error);

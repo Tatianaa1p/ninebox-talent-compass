@@ -259,7 +259,7 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
     setEditDialogOpen(true);
   };
 
-  const handleSaveEdit = async (quadrantName: string, success: boolean) => {
+  const handleSaveEdit = async (quadrantName: string, success: boolean, scores?: { performance: number; potential: number }) => {
     if (!editingEmployee) return;
 
     const employeeName = editingEmployee.name;
@@ -268,19 +268,16 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
     setEditDialogOpen(false);
     setEditingEmployee(null);
     
-    if (success) {
+    if (success && scores) {
       toast({
         title: "✅ Cambios guardados",
         description: `${employeeName} calibrado correctamente`,
       });
       
-      // Realtime will handle the update automatically
-      // Manual reload as backup
-      setTimeout(() => {
-        if (onDataReload) {
-          onDataReload();
-        }
-      }, 500);
+      // Reload immediately to show updated scores
+      if (onDataReload) {
+        onDataReload();
+      }
     } else {
       toast({
         title: "Error al guardar",
