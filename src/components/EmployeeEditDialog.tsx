@@ -24,15 +24,15 @@ interface EmployeeEditDialogProps {
 }
 
 const QUADRANTS = [
-  { value: "Alto-Alto", label: "Talento Estratégico", performance: 3, potential: 3 },
-  { value: "Alto-Medio", label: "Desarrollar", performance: 2, potential: 3 },
-  { value: "Alto-Bajo", label: "Enigma", performance: 1, potential: 3 },
-  { value: "Medio-Alto", label: "Consistente", performance: 3, potential: 2 },
-  { value: "Medio-Medio", label: "Clave", performance: 2, potential: 2 },
-  { value: "Medio-Bajo", label: "Dilema", performance: 1, potential: 2 },
-  { value: "Bajo-Alto", label: "Confiable", performance: 3, potential: 1 },
-  { value: "Bajo-Medio", label: "Estancamiento", performance: 2, potential: 1 },
-  { value: "Bajo-Bajo", label: "Riesgo", performance: 1, potential: 1 },
+  { value: "Alto-Alto", label: "Talento Estratégico", performance: 4.2, potential: 2.8 },
+  { value: "Alto-Medio", label: "Desarrollar", performance: 3.5, potential: 2.8 },
+  { value: "Alto-Bajo", label: "Enigma", performance: 2.5, potential: 2.8 },
+  { value: "Medio-Alto", label: "Consistente", performance: 4.2, potential: 2.0 },
+  { value: "Medio-Medio", label: "Clave", performance: 3.5, potential: 2.0 },
+  { value: "Medio-Bajo", label: "Dilema", performance: 2.5, potential: 2.0 },
+  { value: "Bajo-Alto", label: "Confiable", performance: 4.2, potential: 1.0 },
+  { value: "Bajo-Medio", label: "Estancamiento", performance: 3.5, potential: 1.0 },
+  { value: "Bajo-Bajo", label: "Riesgo", performance: 2.5, potential: 1.0 },
 ];
 
 export const EmployeeEditDialog = ({
@@ -280,8 +280,8 @@ export const EmployeeEditDialog = ({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              Escala 1-3: Bajo = 1, Medio = 2, Alto = 3 (Performance y Potential)
+            <p className="text-xs text-muted-foreground mt-2">
+              Escala real: Bajo (&lt;3 / ≤1.5), Medio (≥3-&lt;4 / &gt;1.5-≤2.5), Alto (≥4 / &gt;2.5)
             </p>
           </div>
 
@@ -290,7 +290,7 @@ export const EmployeeEditDialog = ({
               <strong>Ubicación actual:</strong> {employee.performance} Desempeño, {employee.potential} Potencial
             </p>
             <p>
-              <strong>Scores actuales:</strong> Desempeño {employee.performanceScore.toFixed(2)}, Potencial {employee.potentialScore.toFixed(2)}
+              <strong>Scores reales:</strong> Desempeño {employee.performanceScore.toFixed(2)}, Potencial {employee.potentialScore.toFixed(2)}
             </p>
             <p>
               <strong>Manager:</strong> {employee.manager}
