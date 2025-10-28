@@ -61,7 +61,32 @@ export const FileUploader = ({ onFilesUploaded, onClose }: FileUploaderProps) =>
     for (const row of data) {
       // Map column names from Excel files - prioritize exact match for 'Nombre completo'
       const nombreCompleto = row['Nombre completo'] || row.nombre || row.Nombre || row.name || row.Name;
-      const puntuacionPromedio = row['Puntuación promedio'] || row.performance || row.Performance || row.desempeño || row.Desempeño || row.potencial || row.Potencial || row.potential || row.Potential;
+      
+      // Separate column mapping for Performance vs Potential
+      let puntuacionPromedio;
+      if (type === 'performance') {
+        puntuacionPromedio = 
+          row['Puntuación promedio'] || 
+          row['Puntuacion promedio'] ||
+          row['Desempeño'] || 
+          row['desempeño'] || 
+          row['DESEMPEÑO'] ||
+          row['Performance'] || 
+          row['performance'] || 
+          row['PERFORMANCE'];
+      } else {
+        // type === 'potencial'
+        puntuacionPromedio = 
+          row['Puntuación promedio'] || 
+          row['Puntuacion promedio'] ||
+          row['Potencial'] || 
+          row['potencial'] || 
+          row['POTENCIAL'] ||
+          row['Pot.'] || 
+          row['Nivel de Potencial'] || 
+          row['potential'] || 
+          row['Potential'];
+      }
       
       // Skip empty or invalid rows
       if (!nombreCompleto || puntuacionPromedio === undefined || puntuacionPromedio === '' || puntuacionPromedio === null) continue;

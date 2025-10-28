@@ -1,16 +1,16 @@
 import * as XLSX from "xlsx";
 import { Employee, PerformanceLevel, PotentialLevel } from "@/types/employee";
 
-// Helper function to normalize performance/potential values based on thresholds
+// Helper function to normalize performance/potential values based on thresholds (1-3 scale)
 const normalizePerformanceLevel = (value: number): "Bajo" | "Medio" | "Alto" => {
-  if (value >= 4) return "Alto";
-  if (value >= 3) return "Medio";
+  if (value >= 3) return "Alto";
+  if (value >= 2) return "Medio";
   return "Bajo";
 };
 
 const normalizePotentialLevel = (value: number): "Bajo" | "Medio" | "Alto" => {
-  if (value > 2.5) return "Alto";
-  if (value > 1.5) return "Medio";
+  if (value >= 3) return "Alto";
+  if (value >= 2) return "Medio";
   return "Bajo";
 };
 
@@ -53,14 +53,24 @@ export const parseExcelFiles = async (
     const potData: any[] = XLSX.utils.sheet_to_json(potSheet);
     
     // Create a map for potential data
-    // Using column R ("Puntuación promedio") from potencial.xlsx
+    // Try ALL possible column names for Potential
     const potentialMap = new Map();
     potData.forEach((row) => {
       const name = row["Nombre completo"];
       if (!name) return;
       
-      // Try to get the value from column R or "Puntuación promedio"
-      let potentialScore = row["Puntuación promedio"] || row["R"] || row["Puntuacion promedio"];
+      // Try ALL possible variants of Potential column
+      let potentialScore = 
+        row["Puntuación promedio"] || 
+        row["Puntuacion promedio"] ||
+        row["Potencial"] || 
+        row["potencial"] || 
+        row["POTENCIAL"] ||
+        row["Pot."] || 
+        row["Nivel de Potencial"] || 
+        row["potential"] || 
+        row["Potential"] ||
+        row["R"];
       
       // Skip if no score found or empty
       if (potentialScore === undefined || potentialScore === null || potentialScore === "") return;
@@ -84,8 +94,17 @@ export const parseExcelFiles = async (
       
       const manager = row["Mánager"] || row["Manager"];
       
-      // Try to get performance value from column AG or "Puntuación promedio"
-      let performanceValue = row["Puntuación promedio"] || row["AG"] || row["Puntuacion promedio"];
+      // Try ALL possible variants of Performance column
+      let performanceValue = 
+        row["Puntuación promedio"] || 
+        row["Puntuacion promedio"] ||
+        row["Desempeño"] || 
+        row["desempeño"] || 
+        row["DESEMPEÑO"] ||
+        row["Performance"] || 
+        row["performance"] || 
+        row["PERFORMANCE"] ||
+        row["AG"];
       const performanceScore = parseNumericValue(performanceValue);
       
       // Get potential score from the map
