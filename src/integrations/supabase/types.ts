@@ -45,7 +45,7 @@ export type Database = {
       }
       calibraciones: {
         Row: {
-          calibrado_por: string | null
+          calibrado_por: string
           created_at: string | null
           empleado_id: string
           id: string
@@ -55,17 +55,17 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          calibrado_por?: string | null
+          calibrado_por?: string
           created_at?: string | null
           empleado_id: string
           id?: string
-          performance_score: number
-          potential_score: number
+          performance_score?: number
+          potential_score?: number
           tablero_id: string
           updated_at?: string | null
         }
         Update: {
-          calibrado_por?: string | null
+          calibrado_por?: string
           created_at?: string | null
           empleado_id?: string
           id?: string

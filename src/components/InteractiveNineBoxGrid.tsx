@@ -173,10 +173,10 @@ export const InteractiveNineBoxGrid = ({ employees, tableroId, onDataReload }: I
       return; // No change
     }
 
-    // Map quadrant to numeric scores
+    // Map quadrant to numeric scores (1-3 scale)
     const getScores = (performance: PerformanceLevel, potential: PotentialLevel) => {
-      const perfScore = performance === "Alto" ? 4.5 : performance === "Medio" ? 3.5 : 2.0;
-      const potScore = potential === "Alto" ? 3.0 : potential === "Medio" ? 2.0 : 1.0;
+      const perfScore = performance === "Alto" ? 3 : performance === "Medio" ? 2 : 1;
+      const potScore = potential === "Alto" ? 3 : potential === "Medio" ? 2 : 1;
       return { perfScore, potScore };
     };
 
