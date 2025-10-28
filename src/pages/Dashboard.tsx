@@ -281,14 +281,16 @@ const Dashboard = () => {
   };
 
   const getPerformanceLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score >= 3) return 'Alto';
-    if (score >= 2) return 'Medio';
+    console.log(`🔵 Dashboard getPerformanceLevel: score=${score}`);
+    if (score >= 4) return 'Alto';
+    if (score >= 3) return 'Medio';
     return 'Bajo';
   };
 
   const getPotentialLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
-    if (score >= 3) return 'Alto';
-    if (score >= 2) return 'Medio';
+    console.log(`🔵 Dashboard getPotentialLevel: score=${score}`);
+    if (score > 2.5) return 'Alto';
+    if (score > 1.5) return 'Medio';
     return 'Bajo';
   };
 

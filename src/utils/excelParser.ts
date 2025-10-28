@@ -103,28 +103,31 @@ export const parseExcelFiles = async (
     const unclassified: any[] = [];
     
     // Process performance data and merge with potential
-    // Using column AG ("Puntuación promedio") from perfomance.xlsx
+    // CRITICAL: Use ONLY "Puntuación promedio" (numeric), NOT "Puntuación de desempeño" (text)
     perfData.forEach((row) => {
       const name = row["Nombre completo"];
       if (!name) return;
       
       const manager = row["Mánager"] || row["Manager"];
       
-      // Try ALL possible variants of Performance column
+      // Log ALL columns for first employee to debug
+      if (perfData.indexOf(row) === 0) {
+        console.log("🔍 Columnas disponibles en Performance Excel:", Object.keys(row));
+      }
+      
+      // ONLY use "Puntuación promedio" - IGNORE "Puntuación de desempeño"
       let performanceValue = 
         row["Puntuación promedio"] || 
-        row["Puntuacion promedio"] ||
-        row["Desempeño"] || 
-        row["desempeño"] || 
-        row["DESEMPEÑO"] ||
-        row["Performance"] || 
-        row["performance"] || 
-        row["PERFORMANCE"] ||
-        row["AG"];
+        row["Puntuacion promedio"];
+      
+      // Debug: show what we found
+      console.log(`🎯 Performance [${name}]: buscando "Puntuación promedio" = "${performanceValue}"`);
+      
       const performanceScore = parseAndValidateScore(performanceValue, `Performance [${name}]`);
       
       // Get potential score from the map
       const potentialValue = potentialMap.get(name);
+      console.log(`🎯 Potential [${name}]: encontrado en mapa = "${potentialValue}"`);
       const potentialScore = parseAndValidateScore(potentialValue, `Potential [${name}]`);
       
       // Skip if either value is missing or empty
