@@ -111,6 +111,31 @@ export const EmployeeEditDialog = ({
         throw evalError;
       }
 
+      // Get empleado_id from empleados table
+      const { data: empleadoData, error: empleadoError } = await supabase
+        .from('empleados')
+        .select('id')
+        .eq('nombre', employee!.name)
+        .eq('tablero_id', tableroId)
+        .single();
+
+      console.log('👤 Empleado data:', empleadoData, 'Error:', empleadoError);
+
+      if (empleadoError || !empleadoData) {
+        console.error('❌ Error fetching empleado:', empleadoError);
+        throw new Error("No se encontró el empleado: " + (empleadoError?.message || 'Unknown error'));
+      }
+
+      // Check if calibration already exists (to determine if this is first calibration)
+      const { data: existingCalibration } = await supabase
+        .from('calibraciones')
+        .select('id')
+        .eq('empleado_id', empleadoData.id)
+        .eq('tablero_id', tableroId!)
+        .maybeSingle();
+
+      console.log('🔍 Existing calibration:', existingCalibration ? 'YES' : 'NO');
+
       // If no evaluation exists, create one first
       if (!evaluacion) {
         console.log("✨ No evaluation found, creating new one for:", employee!.name);
@@ -122,8 +147,9 @@ export const EmployeeEditDialog = ({
           empresa_id: tablero.empresa_id,
           potencial_score: employee!.potentialScore,
           desempeno_score: employee!.performanceScore,
-          potencial_score_original: employee!.potentialScore,  // Save original snapshot
-          desempeno_score_original: employee!.performanceScore, // Save original snapshot
+          // Only save original snapshot if this is the first calibration
+          potencial_score_original: existingCalibration ? null : employee!.potentialScore,
+          desempeno_score_original: existingCalibration ? null : employee!.performanceScore,
         };
         
         console.log('📝 Creating evaluation with data:', evaluacionData);
@@ -144,8 +170,8 @@ export const EmployeeEditDialog = ({
 
         evaluacion = newEval;
       } else {
-        // If evaluation exists but has no original values, save them now
-        if (evaluacion.potencial_score_original == null || evaluacion.desempeno_score_original == null) {
+        // If evaluation exists but has no original values AND this is first calibration, save them now
+        if (!existingCalibration && (evaluacion.potencial_score_original == null || evaluacion.desempeno_score_original == null)) {
           console.log("💾 Saving original snapshot for first calibration:", employee!.name);
           
           const { error: snapshotError } = await supabase
@@ -158,6 +184,10 @@ export const EmployeeEditDialog = ({
           
           if (snapshotError) {
             console.error("⚠️ Error saving original snapshot:", snapshotError);
+          } else {
+            // Update local evaluacion object
+            evaluacion.potencial_score_original = employee!.potentialScore;
+            evaluacion.desempeno_score_original = employee!.performanceScore;
           }
         }
       }
@@ -165,21 +195,6 @@ export const EmployeeEditDialog = ({
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       console.log('👤 Current user:', user?.id);
-
-      // Get empleado_id from empleados table
-      const { data: empleadoData, error: empleadoError } = await supabase
-        .from('empleados')
-        .select('id')
-        .eq('nombre', employee!.name)
-        .eq('tablero_id', tableroId)
-        .single();
-
-      console.log('👤 Empleado data:', empleadoData, 'Error:', empleadoError);
-
-      if (empleadoError || !empleadoData) {
-        console.error('❌ Error fetching empleado:', empleadoError);
-        throw new Error("No se encontró el empleado: " + (empleadoError?.message || 'Unknown error'));
-      }
 
       const calibracionData = {
         empleado_id: empleadoData.id,
