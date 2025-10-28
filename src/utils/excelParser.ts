@@ -150,15 +150,42 @@ export const parseExcelFiles = async (
     // Convert raw data to employees with thresholds:
     // Desempeño: Bajo <3, Medio ≥3 hasta <4, Alto ≥4
     // Potencial: Bajo ≤1.5, Medio >1.5 hasta ≤2.5, Alto >2.5
-    const employees: Employee[] = rawData.map((data) => ({
-      id: `${data.name}-${Date.now()}-${Math.random()}`,
-      name: data.name,
-      manager: data.manager,
-      performanceScore: data.performanceScore,
-      potentialScore: data.potentialScore,
-      performance: normalizePerformanceLevel(data.performanceScore),
-      potential: normalizePotentialLevel(data.potentialScore),
-    }));
+    const employees: Employee[] = rawData.map((data) => {
+      const performance = normalizePerformanceLevel(data.performanceScore);
+      const potential = normalizePotentialLevel(data.potentialScore);
+      
+      // Determine Nine Box category
+      const getNineBoxCategory = (perf: string, pot: string): string => {
+        if (perf === "Bajo" && pot === "Bajo") return "Riesgo";
+        if (perf === "Bajo" && pot === "Medio") return "Dilema";
+        if (perf === "Bajo" && pot === "Alto") return "Enigma";
+        if (perf === "Medio" && pot === "Bajo") return "Estancamiento";
+        if (perf === "Medio" && pot === "Medio") return "Clave";
+        if (perf === "Medio" && pot === "Alto") return "Desarrollar";
+        if (perf === "Alto" && pot === "Bajo") return "Confiable";
+        if (perf === "Alto" && pot === "Medio") return "Consistente";
+        if (perf === "Alto" && pot === "Alto") return "Talento Estratégico";
+        return "Unknown";
+      };
+      
+      const category = getNineBoxCategory(performance, potential);
+      
+      // Debug log
+      console.log(`📊 ${data.name}:
+        Desempeño: ${data.performanceScore.toFixed(2)} → ${performance}
+        Potencial: ${data.potentialScore.toFixed(2)} → ${potential}
+        Box: ${category}`);
+      
+      return {
+        id: `${data.name}-${Date.now()}-${Math.random()}`,
+        name: data.name,
+        manager: data.manager,
+        performanceScore: data.performanceScore,
+        potentialScore: data.potentialScore,
+        performance,
+        potential,
+      };
+    });
     
     return { employees, unclassified, rawData };
   } catch (error) {
