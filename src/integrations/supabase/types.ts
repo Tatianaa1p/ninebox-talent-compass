@@ -316,6 +316,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           id: string
+          role: string | null
           user_id: string
         }
         Insert: {
@@ -324,6 +325,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
+          role?: string | null
           user_id: string
         }
         Update: {
@@ -332,6 +334,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
+          role?: string | null
           user_id?: string
         }
         Relationships: [
@@ -486,6 +489,38 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      usuarios_empresas: {
+        Row: {
+          created_at: string | null
+          empresa_id: string
+          id: string
+          rol: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          empresa_id: string
+          id?: string
+          rol?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          empresa_id?: string
+          id?: string
+          rol?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_empresas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
