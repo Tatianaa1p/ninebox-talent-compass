@@ -18,23 +18,23 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
         description: "Preparando datos de calibración...",
       });
 
-      // Fetch empleados with evaluaciones data (to get original scores)
-      let empleadosQuery = supabase
-        .from('empleados')
-        .select(`
-          *,
-          evaluaciones!left (
-            potencial_score_original,
-            desempeno_score_original
-          )
-        `);
-      
+      // Fetch empleados
+      let empleadosQuery = supabase.from('empleados').select('*');
       if (tableroId) {
         empleadosQuery = empleadosQuery.eq('tablero_id', tableroId);
       }
-
       const { data: empleados, error: empleadosError } = await empleadosQuery;
       if (empleadosError) throw empleadosError;
+
+      // Fetch evaluaciones separately
+      let evaluacionesQuery = supabase
+        .from('evaluaciones')
+        .select('id, persona_nombre, tablero_id, potencial_score_original, desempeno_score_original');
+      if (tableroId) {
+        evaluacionesQuery = evaluacionesQuery.eq('tablero_id', tableroId);
+      }
+      const { data: evaluaciones, error: evalError } = await evaluacionesQuery;
+      if (evalError) throw evalError;
 
       // Fetch calibraciones for this tablero
       let calibracionesQuery = supabase
@@ -61,8 +61,8 @@ export const CalibrationExportButton = ({ tableroId }: CalibrationExportButtonPr
         // Find latest calibration for this empleado
         const calibration = calibraciones?.find(c => c.empleado_id === empleado.id);
 
-        // Use original scores from evaluaciones if available, otherwise use current scores
-        const evaluacion = (empleado as any).evaluaciones?.[0];
+        // Find evaluacion by matching nombre
+        const evaluacion = evaluaciones?.find(e => e.persona_nombre === empleado.nombre && e.tablero_id === empleado.tablero_id);
         const originalPerf = evaluacion?.desempeno_score_original ?? empleado.performance ?? 0;
         const originalPot = evaluacion?.potencial_score_original ?? empleado.potencial ?? 0;
         const originalQuadrant = getQuadrant(originalPerf, originalPot);
