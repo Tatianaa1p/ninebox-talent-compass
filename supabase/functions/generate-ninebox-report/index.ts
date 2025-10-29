@@ -38,6 +38,38 @@ serve(async (req) => {
 
     console.log('📊 Generating report for tablero:', tablero_id, 'empresa:', empresa_id);
 
+    // Validate user permissions
+    const { data: permissions, error: permError } = await supabase
+      .from('user_permissions')
+      .select('permisos_globales, empresas_acceso')
+      .eq('user_id', user.id)
+      .single();
+
+    if (permError || !permissions) {
+      throw new Error('No permissions found for user');
+    }
+
+    // Check download permission
+    if (!permissions.permisos_globales?.descargar_reportes) {
+      throw new Error('No permission to download reports');
+    }
+
+    // Verify empresa access
+    if (!permissions.empresas_acceso.includes(empresa_nombre)) {
+      throw new Error('No access to this company');
+    }
+
+    // Verify tablero belongs to empresa
+    const { data: tableroData, error: tableroError } = await supabase
+      .from('tableros')
+      .select('empresa_id')
+      .eq('id', tablero_id)
+      .single();
+
+    if (tableroError || !tableroData || tableroData.empresa_id !== empresa_id) {
+      throw new Error('Invalid tablero/empresa combination');
+    }
+
     // Get employees data
     const { data: empleados, error: empleadosError } = await supabase
       .from('empleados')
