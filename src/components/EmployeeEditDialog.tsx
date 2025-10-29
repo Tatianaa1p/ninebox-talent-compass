@@ -169,16 +169,19 @@ export const EmployeeEditDialog = ({
         }
 
         evaluacion = newEval;
-      } else {
-        // If evaluation exists but has no original values AND this is first calibration, save them now
-        if (!existingCalibration && (evaluacion.potencial_score_original == null || evaluacion.desempeno_score_original == null)) {
-          console.log("💾 Saving original snapshot for first calibration:", employee!.name);
+      }
+
+      // ⚠️ CRITICAL: Save original snapshot BEFORE calibration (first time only)
+      if (!existingCalibration && evaluacion) {
+        if (evaluacion.potencial_score_original == null || evaluacion.desempeno_score_original == null) {
+          console.log("💾 Saving original snapshot BEFORE calibration:", employee!.name);
+          console.log("📊 Current scores in DB:", evaluacion.potencial_score, evaluacion.desempeno_score);
           
           const { error: snapshotError } = await supabase
             .from('evaluaciones')
             .update({
-              potencial_score_original: employee!.potentialScore,
-              desempeno_score_original: employee!.performanceScore,
+              potencial_score_original: evaluacion.potencial_score,  // ← CURRENT score, not calibrated yet
+              desempeno_score_original: evaluacion.desempeno_score,  // ← CURRENT score, not calibrated yet
             })
             .eq('id', evaluacion.id);
           
@@ -186,8 +189,9 @@ export const EmployeeEditDialog = ({
             console.error("⚠️ Error saving original snapshot:", snapshotError);
           } else {
             // Update local evaluacion object
-            evaluacion.potencial_score_original = employee!.potentialScore;
-            evaluacion.desempeno_score_original = employee!.performanceScore;
+            evaluacion.potencial_score_original = evaluacion.potencial_score;
+            evaluacion.desempeno_score_original = evaluacion.desempeno_score;
+            console.log("✅ Original snapshot saved:", evaluacion.potencial_score_original, evaluacion.desempeno_score_original);
           }
         }
       }
