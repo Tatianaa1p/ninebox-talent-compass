@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -52,6 +52,19 @@ const Dashboard = () => {
   const { permissions, loading: permissionsLoading, hasAccess, canCreateTableros, canCalibrateTableros } = useUserPermissions();
   
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
+
+  // Memoize filtered empresas by permissions
+  const filteredEmpresas = useMemo(() => {
+    if (!permissions) return [];
+    const uniqueEmpresas = empresas.reduce((acc: Empresa[], current) => {
+      const exists = acc.find(item => item.nombre === current.nombre);
+      if (!exists) {
+        acc.push(current);
+      }
+      return acc;
+    }, []);
+    return uniqueEmpresas.filter(empresa => hasAccess(empresa.nombre));
+  }, [empresas, permissions, hasAccess]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [tableros, setTableros] = useState<Tablero[]>([]);
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
@@ -93,27 +106,12 @@ const Dashboard = () => {
         });
         setEmpresas([]);
       } else {
-        // Remove duplicates by nombre, keeping first occurrence
-        let uniqueEmpresas = data?.reduce((acc: Empresa[], current) => {
-          const exists = acc.find(item => item.nombre === current.nombre);
-          if (!exists) {
-            acc.push(current);
-          }
-          return acc;
-        }, []) || [];
-        
-        // Filter by user permissions
-        if (permissions) {
-          uniqueEmpresas = uniqueEmpresas.filter(empresa => hasAccess(empresa.nombre));
-        }
-        
-        console.log('✅ Empresas únicas cargadas:', uniqueEmpresas);
-        setEmpresas(uniqueEmpresas);
+        setEmpresas(data || []);
       }
     };
     
     loadEmpresas();
-  }, [user, navigate, permissions, permissionsLoading, hasAccess, toast]);
+  }, [user?.id, permissionsLoading, permissions?.role, navigate]);
 
   // Load equipos when empresa changes - FROM SUPABASE
   useEffect(() => {
@@ -432,10 +430,10 @@ const Dashboard = () => {
               <label className="text-sm font-medium mb-2 block">Empresa</label>
               <Select value={selectedEmpresa} onValueChange={setSelectedEmpresa}>
                 <SelectTrigger>
-                  <SelectValue placeholder={empresas.length === 0 ? "Sin empresas" : "Seleccionar empresa"} />
+                  <SelectValue placeholder={filteredEmpresas.length === 0 ? "Sin empresas" : "Seleccionar empresa"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {empresas.map((e) => (
+                  {filteredEmpresas.map((e) => (
                     <SelectItem key={e.id} value={e.id}>
                       {e.nombre}
                     </SelectItem>

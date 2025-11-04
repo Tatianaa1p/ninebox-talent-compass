@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -55,30 +55,30 @@ export const useUserPermissions = () => {
     fetchPermissions();
   }, [user]);
 
-  const hasAccess = (empresaNombre: string) => {
+  const hasAccess = useCallback((empresaNombre: string) => {
     if (!permissions) return false;
     return permissions.empresas_acceso.includes(empresaNombre);
-  };
+  }, [permissions]);
 
-  const canCreateTableros = () => {
+  const canCreateTableros = useCallback(() => {
     return permissions?.permisos_globales?.crear_tableros === true;
-  };
+  }, [permissions?.permisos_globales?.crear_tableros]);
 
-  const canCalibrateTableros = () => {
+  const canCalibrateTableros = useCallback(() => {
     return permissions?.permisos_globales?.calibrar_tableros === true;
-  };
+  }, [permissions?.permisos_globales?.calibrar_tableros]);
 
-  const canViewEquipos = () => {
+  const canViewEquipos = useCallback(() => {
     return permissions?.permisos_globales?.ver_equipos === true;
-  };
+  }, [permissions?.permisos_globales?.ver_equipos]);
 
-  const canCalibrateNinebox = () => {
+  const canCalibrateNinebox = useCallback(() => {
     return permissions?.permisos_globales?.calibrar_ninebox === true;
-  };
+  }, [permissions?.permisos_globales?.calibrar_ninebox]);
 
-  const canDownloadReports = () => {
+  const canDownloadReports = useCallback(() => {
     return permissions?.permisos_globales?.descargar_reportes === true;
-  };
+  }, [permissions?.permisos_globales?.descargar_reportes]);
 
   return {
     permissions,
