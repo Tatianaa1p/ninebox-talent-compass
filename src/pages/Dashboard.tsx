@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,10 @@ import { Employee } from '@/types/employee';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useEmpresasQuery } from '@/hooks/queries/useEmpresasQuery';
+import { useEquiposQuery } from '@/hooks/queries/useEquiposQuery';
+import { useTablerosQuery } from '@/hooks/queries/useTablerosQuery';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Empresa {
   id: string;
@@ -48,6 +52,7 @@ interface Empleado {
 const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const { permissions, loading: permissionsLoading, hasAccess, canCreateTableros, canCalibrateTableros } = useUserPermissions();
   
@@ -77,7 +82,12 @@ const Dashboard = () => {
   const [showCreateEmpresaDialog, setShowCreateEmpresaDialog] = useState(false);
   const [showCreateEquipoDialog, setShowCreateEquipoDialog] = useState(false);
 
-  // Load empresas from Supabase
+  // Use cached queries
+  const { data: empresasFromQuery, isLoading: isLoadingEmpresas } = useEmpresasQuery(!permissionsLoading && !!user);
+  const { data: equiposFromQuery } = useEquiposQuery(selectedEmpresa);
+  const { data: tablerosFromQuery } = useTablerosQuery(selectedEquipo);
+
+  // Load empresas from cache
   useEffect(() => {
     if (!user) {
       navigate('/auth');
@@ -86,34 +96,13 @@ const Dashboard = () => {
 
     if (permissionsLoading) return;
 
-    const loadEmpresas = async () => {
-      console.log('🔍 Cargando empresas...');
-      console.log('👤 Usuario autenticado:', user?.email);
-      
-      const { data, error } = await supabase.from('empresas').select('*');
-      
-      console.log('📊 Resultado empresas - Data:', data);
-      console.log('❌ Resultado empresas - Error:', error);
-      
-      if (error) {
-        console.error('Error loading empresas:', error);
-        toast({
-          title: 'Error al cargar empresas',
-          description: error.message.includes('policy') 
-            ? 'No tienes permisos para ver las empresas. Contacta al administrador.'
-            : `Error: ${error.message}`,
-          variant: 'destructive',
-        });
-        setEmpresas([]);
-      } else {
-        setEmpresas(data || []);
-      }
-    };
-    
-    loadEmpresas();
-  }, [user?.id, permissionsLoading, permissions?.role, navigate]);
+    if (empresasFromQuery) {
+      console.log('✅ Empresas loaded from cache:', empresasFromQuery);
+      setEmpresas(empresasFromQuery);
+    }
+  }, [user?.id, permissionsLoading, empresasFromQuery, navigate]);
 
-  // Load equipos when empresa changes - FROM SUPABASE
+  // Load equipos from cache
   useEffect(() => {
     if (!selectedEmpresa) {
       setEquipos([]);
@@ -121,36 +110,18 @@ const Dashboard = () => {
       return;
     }
 
-    const loadEquipos = async () => {
-      const { data, error } = await supabase
-        .from('equipos')
-        .select('*')
-        .eq('empresa_id', selectedEmpresa);
-      
-      if (error) {
-        console.error('Error loading equipos:', error);
-        toast({
-          title: 'Error al cargar equipos',
-          description: error.message.includes('policy')
-            ? 'No tienes permisos para ver los equipos.'
-            : `Error: ${error.message}`,
-          variant: 'destructive',
-        });
-        setEquipos([]);
+    if (equiposFromQuery) {
+      setEquipos(equiposFromQuery);
+      // Auto-select first equipo if available
+      if (equiposFromQuery.length > 0) {
+        setSelectedEquipo(equiposFromQuery[0].id);
       } else {
-        setEquipos(data || []);
-        // Auto-select first equipo if available
-        if (data && data.length > 0) {
-          setSelectedEquipo(data[0].id);
-        } else {
-          setSelectedEquipo('');
-        }
+        setSelectedEquipo('');
       }
-    };
-    loadEquipos();
-  }, [selectedEmpresa, toast]);
+    }
+  }, [selectedEmpresa, equiposFromQuery]);
 
-  // Load tableros when equipo changes
+  // Load tableros from cache
   useEffect(() => {
     if (!selectedEquipo) {
       setTableros([]);
@@ -158,37 +129,15 @@ const Dashboard = () => {
       return;
     }
 
-    const loadTableros = async () => {
-      const { data, error } = await supabase
-        .from('tableros')
-        .select('*')
-        .eq('equipo_id', selectedEquipo);
-      
-      if (error) {
-        console.error('Error loading tableros:', error);
-        // Only show error if it's not a "no rows" situation
-        if (!error.message.includes('0 rows')) {
-          toast({
-            title: 'Error al cargar tableros',
-            description: error.message.includes('policy')
-              ? 'No tienes permisos para ver los tableros.'
-              : `Error: ${error.message}`,
-            variant: 'destructive',
-          });
-        }
-        setTableros([]);
-        setSelectedTablero('');
+    if (tablerosFromQuery) {
+      setTableros(tablerosFromQuery);
+      if (tablerosFromQuery.length > 0) {
+        setSelectedTablero(tablerosFromQuery[0].id);
       } else {
-        setTableros(data || []);
-        if (data && data.length > 0) {
-          setSelectedTablero(data[0].id);
-        } else {
-          setSelectedTablero('');
-        }
+        setSelectedTablero('');
       }
-    };
-    loadTableros();
-  }, [selectedEquipo, toast]);
+    }
+  }, [selectedEquipo, tablerosFromQuery]);
 
   // Load empleados and subscribe to changes
   useEffect(() => {
@@ -375,7 +324,7 @@ const Dashboard = () => {
     return 'Usuario';
   };
 
-  if (permissionsLoading || empresas.length === 0) {
+  if (permissionsLoading || isLoadingEmpresas) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-muted-foreground">Cargando datos...</div>
@@ -617,12 +566,8 @@ const Dashboard = () => {
         equipoId={selectedEquipo}
         empresaId={selectedEmpresa}
         onCreated={async (tableroId) => {
-          // Reload tableros
-          const { data } = await supabase
-            .from('tableros')
-            .select('*')
-            .eq('equipo_id', selectedEquipo);
-          setTableros(data || []);
+          // Invalidate and refetch tableros
+          await queryClient.invalidateQueries({ queryKey: ['tableros', selectedEquipo] });
           setSelectedTablero(tableroId);
           setShowCreateBoardDialog(false);
         }}
@@ -632,18 +577,8 @@ const Dashboard = () => {
         open={showCreateEmpresaDialog}
         onOpenChange={setShowCreateEmpresaDialog}
         onCreated={async () => {
-          // Reload empresas from Supabase
-          const { data } = await supabase.from('empresas').select('*');
-          if (data) {
-            const uniqueEmpresas = data.reduce((acc: Empresa[], current) => {
-              const exists = acc.find(item => item.nombre === current.nombre);
-              if (!exists) {
-                acc.push(current);
-              }
-              return acc;
-            }, []);
-            setEmpresas(uniqueEmpresas);
-          }
+          // Invalidate and refetch empresas
+          await queryClient.invalidateQueries({ queryKey: ['empresas'] });
           setShowCreateEmpresaDialog(false);
         }}
       />
@@ -653,12 +588,8 @@ const Dashboard = () => {
         onOpenChange={setShowCreateEquipoDialog}
         empresaId={selectedEmpresa}
         onCreated={async () => {
-          // Reload equipos from Supabase
-          const { data } = await supabase
-            .from('equipos')
-            .select('*')
-            .eq('empresa_id', selectedEmpresa);
-          setEquipos(data || []);
+          // Invalidate and refetch equipos
+          await queryClient.invalidateQueries({ queryKey: ['equipos', selectedEmpresa] });
           setShowCreateEquipoDialog(false);
         }}
       />
