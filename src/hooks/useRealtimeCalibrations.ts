@@ -68,7 +68,11 @@ export const useRealtimeCalibrations = (
 
     return () => {
       console.log('Cleaning up realtime subscription');
-      supabase.removeChannel(channel);
+      try {
+        channel.unsubscribe();
+      } catch (_) {
+        // Ignore cleanup errors
+      }
     };
   }, [tableroId, onUpdate]);
 };

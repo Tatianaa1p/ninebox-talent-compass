@@ -236,7 +236,11 @@ const Dashboard = () => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(empleadosChannel);
+      try {
+        empleadosChannel.unsubscribe();
+      } catch (_) {
+        // Ignore cleanup errors
+      }
     };
   }, [selectedTablero, toast]);
 
@@ -371,10 +375,10 @@ const Dashboard = () => {
     return 'Usuario';
   };
 
-  if (permissionsLoading) {
+  if (permissionsLoading || empresas.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Cargando permisos...</div>
+        <div className="text-muted-foreground">Cargando datos...</div>
       </div>
     );
   }
