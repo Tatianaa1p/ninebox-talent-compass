@@ -23,7 +23,8 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <OverrideProvider>
-          <BrowserRouter>
+          {/* Silencia warnings de React Router v7 (no afecta comportamiento) */}
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <App />
           </BrowserRouter>
         </OverrideProvider>
