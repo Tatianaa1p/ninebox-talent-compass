@@ -477,6 +477,7 @@ export type Database = {
           empresa_id: string | null
           equipo_id: string | null
           id: string
+          modulo_origen: string
           nombre: string
           pais: string | null
         }
@@ -485,6 +486,7 @@ export type Database = {
           empresa_id?: string | null
           equipo_id?: string | null
           id?: string
+          modulo_origen?: string
           nombre: string
           pais?: string | null
         }
@@ -493,6 +495,7 @@ export type Database = {
           empresa_id?: string | null
           equipo_id?: string | null
           id?: string
+          modulo_origen?: string
           nombre?: string
           pais?: string | null
         }

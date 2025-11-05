@@ -46,8 +46,8 @@ const CurvaGauss = () => {
   const [selectedPaisTablero, setSelectedPaisTablero] = useState('all');
   const [selectedTablero, setSelectedTablero] = useState('all');
 
-  const [media, setMedia] = useState(3.0);
-  const [desviacion, setDesviacion] = useState(0.5);
+  const [media, setMedia] = useState(2.5); // Media objetivo por defecto
+  const [desviacion, setDesviacion] = useState(0.5); // Desviación estándar por defecto
 
   useEffect(() => {
     console.log('[CurvaGauss useEffect] Checking access...');

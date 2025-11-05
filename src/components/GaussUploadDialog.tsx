@@ -44,6 +44,7 @@ export const GaussUploadDialog = () => {
           pais: selectedPais,
           empresa_id: null,
           equipo_id: null,
+          modulo_origen: 'gauss', // Mark as Gauss module tablero for independence
         })
         .select()
         .single();

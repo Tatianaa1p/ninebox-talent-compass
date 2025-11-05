@@ -12,6 +12,7 @@ const fetchTablerosPorPais = async (pais?: string): Promise<Tablero[]> => {
   let query = supabase
     .from('tableros')
     .select('*')
+    .eq('modulo_origen', 'gauss') // Only fetch Gauss module tableros
     .order('created_at', { ascending: false });
   
   if (pais && pais !== 'all') {
