@@ -86,22 +86,13 @@ const CurvaGauss = () => {
     toast.info('Función "Forzar Curva" en desarrollo');
   };
 
-  const handleExportCSV = () => {
+  const handleExportExcel = () => {
     if (filteredCalibraciones.length === 0) {
       toast.error('No hay datos para exportar');
       return;
     }
-    exportCalibracionesToCSV(filteredCalibraciones);
-    toast.success('CSV exportado correctamente');
-  };
-
-  const handleExportExcel = (formato: 'largo' | 'ancho') => {
-    if (filteredCalibraciones.length === 0) {
-      toast.error('No hay datos para exportar');
-      return;
-    }
-    exportCalibracionesToExcel(filteredCalibraciones, formato);
-    toast.success(`Excel exportado en formato ${formato}`);
+    exportCalibracionesToExcel(filteredCalibraciones, 'ancho');
+    toast.success('Reporte descargado correctamente');
   };
 
   const handleDeleteAll = () => {
@@ -145,17 +136,9 @@ const CurvaGauss = () => {
         <div className="flex justify-between items-center">
           <GaussUploadDialog />
           <div className="flex gap-2">
-            <Button onClick={handleExportCSV} variant="outline">
+            <Button onClick={handleExportExcel} variant="outline">
               <Download className="mr-2 h-4 w-4" />
-              Exportar CSV
-            </Button>
-            <Button onClick={() => handleExportExcel('ancho')} variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Excel (Ancho)
-            </Button>
-            <Button onClick={() => handleExportExcel('largo')} variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Excel (Largo)
+              Descargar reporte en Excel
             </Button>
             <Button onClick={handleDeleteAll} variant="destructive">
               <Trash2 className="mr-2 h-4 w-4" />

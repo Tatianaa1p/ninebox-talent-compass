@@ -23,6 +23,37 @@ const generateDummyEmail = (nombreCompleto: string): string => {
   return `${normalized}@dummy.local`;
 };
 
+const normalizeHeader = (header: string): string => {
+  return header
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/\s+/g, '_');
+};
+
+const HEADER_MAPPINGS: Record<string, string[]> = {
+  'empleado_email': ['empleado_email', 'email', 'correo', 'mail'],
+  'nombre_completo': ['nombre_completo', 'nombre', 'name', 'empleado'],
+  'competencia': ['competencia', 'competency', 'skill'],
+  'score_original': ['score_original', 'puntuacion_de_desempeno', 'puntuacion', 'score', 'calificacion'],
+  'pais': ['pais', 'country', 'nation'],
+  'equipo': ['equipo', 'team', 'grupo'],
+  'seniority': ['seniority', 'nivel', 'level'],
+  'posicion': ['posicion', 'position', 'cargo', 'puesto', 'role'],
+};
+
+const findColumnName = (row: any, targetColumn: string): string | null => {
+  const possibleNames = HEADER_MAPPINGS[targetColumn] || [targetColumn];
+  for (const key of Object.keys(row)) {
+    const normalized = normalizeHeader(key);
+    if (possibleNames.some(name => normalized === normalizeHeader(name))) {
+      return key;
+    }
+  }
+  return null;
+};
+
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
@@ -61,35 +92,50 @@ export const parseGaussExcel = async (file: File): Promise<{ validRows: ParsedRo
             const rowErrors: string[] = [];
             const rowNumber = index + 2;
 
-            // Get email or nombre_completo
-            const nombreCompleto = row['Nombre completo'] || row.nombre_completo || '';
-            let empleadoEmail = row.empleado_email || '';
+            // Flexible column detection
+            const nombreCompletoCol = findColumnName(row, 'nombre_completo');
+            const empleadoEmailCol = findColumnName(row, 'empleado_email');
+            const competenciaCol = findColumnName(row, 'competencia');
+            const scoreCol = findColumnName(row, 'score_original');
+            const paisCol = findColumnName(row, 'pais');
+            const equipoCol = findColumnName(row, 'equipo');
+            const seniorityCol = findColumnName(row, 'seniority');
+            const posicionCol = findColumnName(row, 'posicion');
+
+            const nombreCompleto = nombreCompletoCol ? row[nombreCompletoCol] : '';
+            let empleadoEmail = empleadoEmailCol ? row[empleadoEmailCol] : '';
 
             if (!empleadoEmail && !nombreCompleto) {
-              rowErrors.push('Falta empleado_email o Nombre completo');
+              rowErrors.push('Se requiere "empleado_email" o "Nombre completo"');
             } else if (!empleadoEmail) {
               empleadoEmail = generateDummyEmail(nombreCompleto);
             } else if (!validateEmail(empleadoEmail)) {
-              rowErrors.push('Email inválido');
+              rowErrors.push(`Email inválido: "${empleadoEmail}"`);
             }
 
-            if (!row.competencia) {
-              rowErrors.push('Falta competencia');
-            } else if (!validateCompetencia(row.competencia)) {
-              rowErrors.push(`Competencia no válida: "${row.competencia}"`);
+            const competencia = competenciaCol ? row[competenciaCol] : '';
+            if (!competencia) {
+              rowErrors.push('Se requiere columna "competencia"');
+            } else if (!validateCompetencia(competencia)) {
+              rowErrors.push(`Competencia no válida: "${competencia}". Debe ser una de las 14 competencias estándar.`);
             }
 
-            const scoreOriginal = row.score_original || row['Puntuación de desempeño'];
-            if (scoreOriginal === undefined || scoreOriginal === null) {
-              rowErrors.push('Falta score_original o Puntuación de desempeño');
+            const scoreOriginal = scoreCol ? row[scoreCol] : undefined;
+            if (scoreOriginal === undefined || scoreOriginal === null || scoreOriginal === '') {
+              rowErrors.push('Se requiere "score_original" o "Puntuación de desempeño"');
             } else if (!validateScore(Number(scoreOriginal))) {
-              rowErrors.push(`Score debe estar entre 1.0 y 4.0 (actual: ${scoreOriginal})`);
+              rowErrors.push(`El score debe estar entre 1.0 y 4.0 (valor actual: ${scoreOriginal})`);
             }
 
-            if (!row.pais && !row.País) rowErrors.push('Falta país');
-            if (!row.equipo && !row.Equipo) rowErrors.push('Falta equipo');
-            if (!row.seniority && !row.Seniority) rowErrors.push('Falta seniority');
-            if (!row.posicion && !row.Posición) rowErrors.push('Falta posición');
+            const pais = paisCol ? row[paisCol] : '';
+            const equipo = equipoCol ? row[equipoCol] : '';
+            const seniority = seniorityCol ? row[seniorityCol] : '';
+            const posicion = posicionCol ? row[posicionCol] : '';
+
+            if (!pais) rowErrors.push('Se requiere columna "País"');
+            if (!equipo) rowErrors.push('Se requiere columna "Equipo"');
+            if (!seniority) rowErrors.push('Se requiere columna "Seniority"');
+            if (!posicion) rowErrors.push('Se requiere columna "Posición"');
 
             if (rowErrors.length > 0) {
               errors.push({ row: rowNumber, errors: rowErrors });
@@ -97,13 +143,13 @@ export const parseGaussExcel = async (file: File): Promise<{ validRows: ParsedRo
               validRows.push({
                 empleado_email: empleadoEmail.trim(),
                 nombre_completo: nombreCompleto || undefined,
-                competencia: row.competencia.trim(),
+                competencia: competencia.trim(),
                 score_original: Number(scoreOriginal),
-                pais: (row.pais || row.País).trim(),
-                equipo: (row.equipo || row.Equipo).trim(),
-                seniority: (row.seniority || row.Seniority).trim(),
-                posicion: (row.posicion || row.Posición).trim(),
-                familia_cargo: getFamiliaCargo(row.posicion || row.Posición),
+                pais: pais.trim(),
+                equipo: equipo.trim(),
+                seniority: seniority.trim(),
+                posicion: posicion.trim(),
+                familia_cargo: getFamiliaCargo(posicion),
               });
             }
           });
@@ -111,21 +157,29 @@ export const parseGaussExcel = async (file: File): Promise<{ validRows: ParsedRo
           // FORMATO ANCHO (competencias en columnas)
           jsonData.forEach((row: any, index: number) => {
             const rowNumber = index + 2;
-            const nombreCompleto = row['Nombre completo'] || row.nombre_completo || '';
-            const empleadoEmail = row.empleado_email || generateDummyEmail(nombreCompleto);
             
-            const pais = row.País || row.pais || '';
-            const equipo = row.Equipo || row.equipo || '';
-            const posicion = row.Posición || row.posicion || '';
-            const seniority = row.Seniority || row.seniority || '';
+            // Flexible column detection
+            const nombreCompletoCol = findColumnName(row, 'nombre_completo');
+            const empleadoEmailCol = findColumnName(row, 'empleado_email');
+            const paisCol = findColumnName(row, 'pais');
+            const equipoCol = findColumnName(row, 'equipo');
+            const posicionCol = findColumnName(row, 'posicion');
+            const seniorityCol = findColumnName(row, 'seniority');
+
+            const nombreCompleto = nombreCompletoCol ? row[nombreCompletoCol] : '';
+            const empleadoEmail = empleadoEmailCol ? row[empleadoEmailCol] : generateDummyEmail(nombreCompleto);
+            const pais = paisCol ? row[paisCol] : '';
+            const equipo = equipoCol ? row[equipoCol] : '';
+            const posicion = posicionCol ? row[posicionCol] : '';
+            const seniority = seniorityCol ? row[seniorityCol] : '';
 
             // Base validation
             const baseErrors: string[] = [];
-            if (!nombreCompleto && !row.empleado_email) baseErrors.push('Falta Nombre completo o empleado_email');
-            if (!pais) baseErrors.push('Falta País');
-            if (!equipo) baseErrors.push('Falta Equipo');
-            if (!posicion) baseErrors.push('Falta Posición');
-            if (!seniority) baseErrors.push('Falta Seniority');
+            if (!nombreCompleto && !empleadoEmailCol) baseErrors.push('Se requiere "Nombre completo" o "empleado_email"');
+            if (!pais) baseErrors.push('Se requiere columna "País"');
+            if (!equipo) baseErrors.push('Se requiere columna "Equipo"');
+            if (!posicion) baseErrors.push('Se requiere columna "Posición"');
+            if (!seniority) baseErrors.push('Se requiere columna "Seniority"');
 
             if (baseErrors.length > 0) {
               errors.push({ row: rowNumber, errors: baseErrors });
@@ -140,7 +194,7 @@ export const parseGaussExcel = async (file: File): Promise<{ validRows: ParsedRo
                 const rowErrors: string[] = [];
                 
                 if (!validateScore(Number(score))) {
-                  rowErrors.push(`Score de "${competencia}" debe estar entre 1.0 y 4.0 (actual: ${score})`);
+                  rowErrors.push(`El score de "${competencia}" debe estar entre 1.0 y 4.0 (valor actual: ${score})`);
                 }
 
                 if (rowErrors.length > 0) {
