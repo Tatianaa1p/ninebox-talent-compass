@@ -1,10 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { CalibracionGauss } from '@/types/gauss';
 import { useUpdateCalibracionGauss } from '@/hooks/queries/useCalibracionGaussQuery';
 import { useAuth } from '@/contexts/AuthContext';
-import { debounce } from 'lodash';
 
 interface GaussCalibracionTableProps {
   calibraciones: CalibracionGauss[];
@@ -15,22 +14,23 @@ export const GaussCalibracionTable = ({ calibraciones }: GaussCalibracionTablePr
   const updateCalibracion = useUpdateCalibracionGauss();
   const [editingScores, setEditingScores] = useState<Record<string, number>>({});
 
-  const debouncedUpdate = useCallback(
-    debounce((id: string, score: number, email: string) => {
-      updateCalibracion.mutate({
-        id,
-        score_calibrado: score,
-        calibrador_email: email,
-      });
-    }, 800),
-    []
-  );
-
   const handleScoreChange = (id: string, value: string) => {
     const score = Number(value);
     if (score >= 1.0 && score <= 4.0) {
       setEditingScores(prev => ({ ...prev, [id]: score }));
-      debouncedUpdate(id, score, user?.email || '');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, id: string) => {
+    if (e.key === 'Enter') {
+      const score = editingScores[id];
+      if (score !== undefined) {
+        updateCalibracion.mutate({
+          id,
+          score_calibrado: score,
+          calibrador_email: user?.email || '',
+        });
+      }
     }
   };
 
@@ -72,7 +72,9 @@ export const GaussCalibracionTable = ({ calibraciones }: GaussCalibracionTablePr
                       max="4.0"
                       value={currentScore}
                       onChange={(e) => handleScoreChange(cal.id, e.target.value)}
+                      onKeyPress={(e) => handleKeyPress(e, cal.id)}
                       className="w-20"
+                      placeholder="1.0-4.0"
                     />
                   </TableCell>
                   <TableCell>

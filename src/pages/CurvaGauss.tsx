@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, LogOut, Trash2 } from 'lucide-react';
+import { Download, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGaussAccess } from '@/hooks/useGaussAccess';
-import { useCalibracionGaussQuery, useDeleteAllCalibraciones } from '@/hooks/queries/useCalibracionGaussQuery';
+import { useCalibracionGaussQuery } from '@/hooks/queries/useCalibracionGaussQuery';
 import { GaussUploadDialog } from '@/components/GaussUploadDialog';
 import { GaussFilters } from '@/components/GaussFilters';
 import { GaussChart } from '@/components/GaussChart';
@@ -12,7 +12,6 @@ import { GaussCalibracionTable } from '@/components/GaussCalibracionTable';
 import { GaussEmpleadosTable } from '@/components/GaussEmpleadosTable';
 import { GaussStats } from '@/components/GaussStats';
 import { GaussTableroSelector } from '@/components/GaussTableroSelector';
-import { BorrarTablerosPaisDialog } from '@/components/BorrarTablerosPaisDialog';
 import { exportEmpleadosToExcel } from '@/utils/gaussExport';
 import { calcularPromediosPorPersona } from '@/utils/gaussCalculations';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,7 +22,6 @@ const CurvaGauss = () => {
   const { signOut, user, loading: authLoading } = useAuth();
   const { hasAccess, isLoading: accessLoading, role } = useGaussAccess();
   const { data: calibraciones = [], isLoading } = useCalibracionGaussQuery();
-  const deleteAll = useDeleteAllCalibraciones();
 
   console.log('========================================');
   console.log('🔍 CURVA GAUSS - DEBUG DE AUTENTICACIÓN');
@@ -108,12 +106,6 @@ const CurvaGauss = () => {
     toast.success('Reporte descargado correctamente');
   };
 
-  const handleDeleteAll = () => {
-    if (confirm('¿Estás seguro de eliminar todas las calibraciones? Esta acción no se puede deshacer.')) {
-      deleteAll.mutate();
-    }
-  };
-
   const handleLogout = async () => {
     await signOut();
     navigate('/auth');
@@ -148,17 +140,10 @@ const CurvaGauss = () => {
       <main className="container mx-auto px-4 py-6 space-y-6">
         <div className="flex justify-between items-center">
           <GaussUploadDialog />
-          <div className="flex gap-2">
-            <Button onClick={handleExportExcel} variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Descargar reporte en Excel
-            </Button>
-            <BorrarTablerosPaisDialog />
-            <Button onClick={handleDeleteAll} variant="destructive">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Limpiar Todo
-            </Button>
-          </div>
+          <Button onClick={handleExportExcel} variant="outline">
+            <Download className="mr-2 h-4 w-4" />
+            Descargar reporte en Excel
+          </Button>
         </div>
 
         <GaussTableroSelector
