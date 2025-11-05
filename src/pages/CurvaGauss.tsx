@@ -20,13 +20,15 @@ const CurvaGauss = () => {
   const { data: calibraciones = [], isLoading } = useCalibracionGaussQuery();
   const deleteAll = useDeleteAllCalibraciones();
 
-  console.log('[CurvaGauss] === DEBUG INFO ===');
-  console.log('[CurvaGauss] 1. Current user email:', user?.email);
-  console.log('[CurvaGauss] 2. User ID:', user?.id);
-  console.log('[CurvaGauss] 3. hasAccess:', hasAccess);
-  console.log('[CurvaGauss] 4. role:', role);
-  console.log('[CurvaGauss] 5. accessLoading:', accessLoading);
-  console.log('[CurvaGauss] ====================');
+  console.log('========================================');
+  console.log('🔍 CURVA GAUSS - DEBUG DE AUTENTICACIÓN');
+  console.log('========================================');
+  console.log('📧 Email autenticado:', user?.email);
+  console.log('🆔 User ID:', user?.id);
+  console.log('✅ ¿Tiene acceso?:', hasAccess);
+  console.log('👤 Rol asignado:', role);
+  console.log('⏳ Cargando permisos:', accessLoading);
+  console.log('========================================');
 
   const [filters, setFilters] = useState({
     familia_cargo: 'all',
