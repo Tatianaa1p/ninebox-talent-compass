@@ -166,6 +166,7 @@ const CurvaGauss = () => {
           selectedTablero={selectedTablero}
           onPaisChange={setSelectedPaisTablero}
           onTableroChange={setSelectedTablero}
+          onTableroEliminado={() => toast.success('Tablero eliminado exitosamente')}
         />
 
         <GaussStats empleados={empleadosConPromedio} />

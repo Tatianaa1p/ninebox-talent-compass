@@ -3,12 +3,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { useTablerosPaisQuery } from '@/hooks/queries/useTablerosPaisQuery';
 import { Loader2 } from 'lucide-react';
+import { EliminarTableroDialog } from './EliminarTableroDialog';
 
 interface GaussTableroSelectorProps {
   selectedPais: string;
   selectedTablero: string;
   onPaisChange: (pais: string) => void;
   onTableroChange: (tablero: string) => void;
+  onTableroEliminado?: () => void;
 }
 
 const PAISES = ['all', 'Argentina', 'Uruguay', 'Paraguay', 'Chile'] as const;
@@ -18,6 +20,7 @@ export const GaussTableroSelector = ({
   selectedTablero,
   onPaisChange,
   onTableroChange,
+  onTableroEliminado,
 }: GaussTableroSelectorProps) => {
   const { data: tableros = [], isLoading } = useTablerosPaisQuery(selectedPais);
 
@@ -25,6 +28,13 @@ export const GaussTableroSelector = ({
     onPaisChange(value);
     onTableroChange('all'); // Reset tablero when país changes
   };
+
+  const handleTableroEliminado = () => {
+    onTableroChange('all');
+    onTableroEliminado?.();
+  };
+
+  const tableroSeleccionado = tableros.find(t => t.id === selectedTablero);
 
   return (
     <Card>
@@ -80,6 +90,16 @@ export const GaussTableroSelector = ({
           <p className="text-sm text-muted-foreground">
             📊 {tableros.length} tablero{tableros.length !== 1 ? 's' : ''} disponible{tableros.length !== 1 ? 's' : ''}
           </p>
+        )}
+
+        {selectedTablero !== 'all' && tableroSeleccionado && (
+          <div className="flex justify-end pt-2">
+            <EliminarTableroDialog
+              tableroId={selectedTablero}
+              tableroNombre={tableroSeleccionado.nombre}
+              onTableroEliminado={handleTableroEliminado}
+            />
+          </div>
         )}
       </CardContent>
     </Card>
