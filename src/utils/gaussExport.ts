@@ -27,11 +27,9 @@ export const exportEmpleadosToExcel = (empleados: EmpleadoPromedio[]) => {
     // Add position in curve
     const score = emp.puntuacion_desempeno;
     let posicionCurva = '';
-    if (score >= 3.5) posicionCurva = 'Alto';
-    else if (score >= 2.5) posicionCurva = 'Medio-Alto';
-    else if (score >= 2.0) posicionCurva = 'Medio';
-    else if (score >= 1.5) posicionCurva = 'Medio-Bajo';
-    else posicionCurva = 'Bajo';
+    if (score >= 3.0) posicionCurva = 'Alto desempeño';
+    else if (score >= 2.0) posicionCurva = 'Desempeño esperado';
+    else posicionCurva = 'Bajo desempeño';
 
     row['Posición en Curva'] = posicionCurva;
 

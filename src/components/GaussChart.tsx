@@ -87,7 +87,7 @@ export const GaussChart = ({ empleados, media, desviacion }: GaussChartProps) =>
       },
       title: {
         display: true,
-        text: 'Distribución de Puntuación de Desempeño vs Curva Gaussiana Ideal',
+        text: 'Distribución de Puntuación de Desempeño vs Curva Gaussiana Ideal (15% Bajo | 75% Esperado | 10% Alto)',
       },
     },
     scales: {

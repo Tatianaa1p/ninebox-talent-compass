@@ -11,11 +11,9 @@ export const GaussEmpleadosTable = ({ empleados }: GaussEmpleadosTableProps) => 
   const sortedEmpleados = [...empleados].sort((a, b) => b.puntuacion_desempeno - a.puntuacion_desempeno);
 
   const getCurvePosition = (score: number): { label: string; color: string } => {
-    if (score >= 3.5) return { label: 'Alto', color: 'bg-green-500' };
-    if (score >= 2.5) return { label: 'Medio-Alto', color: 'bg-blue-500' };
-    if (score >= 2.0) return { label: 'Medio', color: 'bg-yellow-500' };
-    if (score >= 1.5) return { label: 'Medio-Bajo', color: 'bg-orange-500' };
-    return { label: 'Bajo', color: 'bg-red-500' };
+    if (score >= 3.0) return { label: 'Alto desempeño', color: 'bg-green-500' };
+    if (score >= 2.0) return { label: 'Desempeño esperado', color: 'bg-blue-500' };
+    return { label: 'Bajo desempeño', color: 'bg-red-500' };
   };
 
   return (

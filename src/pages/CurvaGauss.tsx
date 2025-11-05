@@ -12,7 +12,6 @@ import { GaussCalibracionTable } from '@/components/GaussCalibracionTable';
 import { GaussEmpleadosTable } from '@/components/GaussEmpleadosTable';
 import { GaussStats } from '@/components/GaussStats';
 import { GaussTableroSelector } from '@/components/GaussTableroSelector';
-import { ForzarCurvaDialog } from '@/components/ForzarCurvaDialog';
 import { BorrarTablerosPaisDialog } from '@/components/BorrarTablerosPaisDialog';
 import { exportEmpleadosToExcel } from '@/utils/gaussExport';
 import { calcularPromediosPorPersona } from '@/utils/gaussCalculations';
@@ -150,11 +149,6 @@ const CurvaGauss = () => {
         <div className="flex justify-between items-center">
           <GaussUploadDialog />
           <div className="flex gap-2">
-            <ForzarCurvaDialog 
-              empleados={empleadosConPromedio} 
-              mediaObjetivo={media} 
-              desviacionObjetivo={desviacion} 
-            />
             <Button onClick={handleExportExcel} variant="outline">
               <Download className="mr-2 h-4 w-4" />
               Descargar reporte en Excel
