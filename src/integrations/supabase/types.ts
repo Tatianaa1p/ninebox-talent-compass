@@ -43,6 +43,60 @@ export type Database = {
           },
         ]
       }
+      calibracion_gauss: {
+        Row: {
+          competencia: string
+          created_at: string | null
+          empleado_email: string
+          equipo: string
+          familia_cargo: string
+          fecha_calibracion: string | null
+          fecha_evaluacion: string
+          id: string
+          pais: string
+          posicion: string
+          score_calibrado: number
+          score_original: number
+          seniority: string
+          ultima_calibracion_por: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          competencia: string
+          created_at?: string | null
+          empleado_email: string
+          equipo: string
+          familia_cargo: string
+          fecha_calibracion?: string | null
+          fecha_evaluacion?: string
+          id?: string
+          pais: string
+          posicion: string
+          score_calibrado: number
+          score_original: number
+          seniority: string
+          ultima_calibracion_por?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          competencia?: string
+          created_at?: string | null
+          empleado_email?: string
+          equipo?: string
+          familia_cargo?: string
+          fecha_calibracion?: string | null
+          fecha_evaluacion?: string
+          id?: string
+          pais?: string
+          posicion?: string
+          score_calibrado?: number
+          score_original?: number
+          seniority?: string
+          ultima_calibracion_por?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       calibraciones: {
         Row: {
           calibrado_por: string
@@ -309,6 +363,30 @@ export type Database = {
           },
         ]
       }
+      gauss_user_roles: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          role: Database["public"]["Enums"]["gauss_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          role: Database["public"]["Enums"]["gauss_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          role?: Database["public"]["Enums"]["gauss_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -527,6 +605,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_any_gauss_role: { Args: { _user_id: string }; Returns: boolean }
+      has_gauss_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["gauss_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -550,6 +636,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "user" | "hrbp"
+      gauss_role: "hrbp" | "hrbp_cl" | "manager" | "manager_cl"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -678,6 +765,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "user", "hrbp"],
+      gauss_role: ["hrbp", "hrbp_cl", "manager", "manager_cl"],
     },
   },
 } as const
