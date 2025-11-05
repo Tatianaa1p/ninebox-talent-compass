@@ -53,11 +53,13 @@ export type Database = {
           fecha_calibracion: string | null
           fecha_evaluacion: string
           id: string
+          nombre_completo: string | null
           pais: string
           posicion: string
           score_calibrado: number
           score_original: number
           seniority: string
+          tablero_id: string | null
           ultima_calibracion_por: string | null
           updated_at: string | null
         }
@@ -70,11 +72,13 @@ export type Database = {
           fecha_calibracion?: string | null
           fecha_evaluacion?: string
           id?: string
+          nombre_completo?: string | null
           pais: string
           posicion: string
           score_calibrado: number
           score_original: number
           seniority: string
+          tablero_id?: string | null
           ultima_calibracion_por?: string | null
           updated_at?: string | null
         }
@@ -87,15 +91,25 @@ export type Database = {
           fecha_calibracion?: string | null
           fecha_evaluacion?: string
           id?: string
+          nombre_completo?: string | null
           pais?: string
           posicion?: string
           score_calibrado?: number
           score_original?: number
           seniority?: string
+          tablero_id?: string | null
           ultima_calibracion_por?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "calibracion_gauss_tablero_id_fkey"
+            columns: ["tablero_id"]
+            isOneToOne: false
+            referencedRelation: "tableros"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calibraciones: {
         Row: {

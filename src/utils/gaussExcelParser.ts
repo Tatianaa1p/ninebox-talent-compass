@@ -3,6 +3,7 @@ import { COMPETENCIAS, getFamiliaCargo, UploadError, UploadResult } from '@/type
 
 export interface ParsedRow {
   empleado_email: string;
+  nombre_completo?: string;
   competencia: string;
   score_original: number;
   pais: string;
@@ -11,6 +12,16 @@ export interface ParsedRow {
   posicion: string;
   familia_cargo: string;
 }
+
+const generateDummyEmail = (nombreCompleto: string): string => {
+  const normalized = nombreCompleto
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]/g, '');
+  return `${normalized}@dummy.local`;
+};
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,49 +51,117 @@ export const parseGaussExcel = async (file: File): Promise<{ validRows: ParsedRo
         const validRows: ParsedRow[] = [];
         const errors: UploadError[] = [];
 
-        jsonData.forEach((row: any, index: number) => {
-          const rowErrors: string[] = [];
-          const rowNumber = index + 2; // +2 because index starts at 0 and we skip header
+        // Detect format: wide (competencies in columns) or long (one row per competency)
+        const firstRow: any = jsonData[0] || {};
+        const hasCompetenciaColumn = 'competencia' in firstRow;
+        
+        if (hasCompetenciaColumn) {
+          // FORMATO LARGO (original)
+          jsonData.forEach((row: any, index: number) => {
+            const rowErrors: string[] = [];
+            const rowNumber = index + 2;
 
-          // Validate required fields
-          if (!row.empleado_email) {
-            rowErrors.push('Falta empleado_email');
-          } else if (!validateEmail(row.empleado_email)) {
-            rowErrors.push('Email inválido');
-          }
+            // Get email or nombre_completo
+            const nombreCompleto = row['Nombre completo'] || row.nombre_completo || '';
+            let empleadoEmail = row.empleado_email || '';
 
-          if (!row.competencia) {
-            rowErrors.push('Falta competencia');
-          } else if (!validateCompetencia(row.competencia)) {
-            rowErrors.push(`Competencia no válida: "${row.competencia}"`);
-          }
+            if (!empleadoEmail && !nombreCompleto) {
+              rowErrors.push('Falta empleado_email o Nombre completo');
+            } else if (!empleadoEmail) {
+              empleadoEmail = generateDummyEmail(nombreCompleto);
+            } else if (!validateEmail(empleadoEmail)) {
+              rowErrors.push('Email inválido');
+            }
 
-          if (row.score_original === undefined || row.score_original === null) {
-            rowErrors.push('Falta score_original');
-          } else if (!validateScore(Number(row.score_original))) {
-            rowErrors.push(`Score debe estar entre 1.0 y 4.0 (actual: ${row.score_original})`);
-          }
+            if (!row.competencia) {
+              rowErrors.push('Falta competencia');
+            } else if (!validateCompetencia(row.competencia)) {
+              rowErrors.push(`Competencia no válida: "${row.competencia}"`);
+            }
 
-          if (!row.pais) rowErrors.push('Falta país');
-          if (!row.equipo) rowErrors.push('Falta equipo');
-          if (!row.seniority) rowErrors.push('Falta seniority');
-          if (!row.posicion) rowErrors.push('Falta posición');
+            const scoreOriginal = row.score_original || row['Puntuación de desempeño'];
+            if (scoreOriginal === undefined || scoreOriginal === null) {
+              rowErrors.push('Falta score_original o Puntuación de desempeño');
+            } else if (!validateScore(Number(scoreOriginal))) {
+              rowErrors.push(`Score debe estar entre 1.0 y 4.0 (actual: ${scoreOriginal})`);
+            }
 
-          if (rowErrors.length > 0) {
-            errors.push({ row: rowNumber, errors: rowErrors });
-          } else {
-            validRows.push({
-              empleado_email: row.empleado_email.trim(),
-              competencia: row.competencia.trim(),
-              score_original: Number(row.score_original),
-              pais: row.pais.trim(),
-              equipo: row.equipo.trim(),
-              seniority: row.seniority.trim(),
-              posicion: row.posicion.trim(),
-              familia_cargo: getFamiliaCargo(row.posicion),
+            if (!row.pais && !row.País) rowErrors.push('Falta país');
+            if (!row.equipo && !row.Equipo) rowErrors.push('Falta equipo');
+            if (!row.seniority && !row.Seniority) rowErrors.push('Falta seniority');
+            if (!row.posicion && !row.Posición) rowErrors.push('Falta posición');
+
+            if (rowErrors.length > 0) {
+              errors.push({ row: rowNumber, errors: rowErrors });
+            } else {
+              validRows.push({
+                empleado_email: empleadoEmail.trim(),
+                nombre_completo: nombreCompleto || undefined,
+                competencia: row.competencia.trim(),
+                score_original: Number(scoreOriginal),
+                pais: (row.pais || row.País).trim(),
+                equipo: (row.equipo || row.Equipo).trim(),
+                seniority: (row.seniority || row.Seniority).trim(),
+                posicion: (row.posicion || row.Posición).trim(),
+                familia_cargo: getFamiliaCargo(row.posicion || row.Posición),
+              });
+            }
+          });
+        } else {
+          // FORMATO ANCHO (competencias en columnas)
+          jsonData.forEach((row: any, index: number) => {
+            const rowNumber = index + 2;
+            const nombreCompleto = row['Nombre completo'] || row.nombre_completo || '';
+            const empleadoEmail = row.empleado_email || generateDummyEmail(nombreCompleto);
+            
+            const pais = row.País || row.pais || '';
+            const equipo = row.Equipo || row.equipo || '';
+            const posicion = row.Posición || row.posicion || '';
+            const seniority = row.Seniority || row.seniority || '';
+
+            // Base validation
+            const baseErrors: string[] = [];
+            if (!nombreCompleto && !row.empleado_email) baseErrors.push('Falta Nombre completo o empleado_email');
+            if (!pais) baseErrors.push('Falta País');
+            if (!equipo) baseErrors.push('Falta Equipo');
+            if (!posicion) baseErrors.push('Falta Posición');
+            if (!seniority) baseErrors.push('Falta Seniority');
+
+            if (baseErrors.length > 0) {
+              errors.push({ row: rowNumber, errors: baseErrors });
+              return;
+            }
+
+            // Extract competencies from columns
+            COMPETENCIAS.forEach(competencia => {
+              const score = row[competencia];
+              
+              if (score !== undefined && score !== null && score !== '') {
+                const rowErrors: string[] = [];
+                
+                if (!validateScore(Number(score))) {
+                  rowErrors.push(`Score de "${competencia}" debe estar entre 1.0 y 4.0 (actual: ${score})`);
+                }
+
+                if (rowErrors.length > 0) {
+                  errors.push({ row: rowNumber, errors: rowErrors });
+                } else {
+                  validRows.push({
+                    empleado_email: empleadoEmail.trim(),
+                    nombre_completo: nombreCompleto || undefined,
+                    competencia: competencia,
+                    score_original: Number(score),
+                    pais: pais.trim(),
+                    equipo: equipo.trim(),
+                    seniority: seniority.trim(),
+                    posicion: posicion.trim(),
+                    familia_cargo: getFamiliaCargo(posicion),
+                  });
+                }
+              }
             });
-          }
-        });
+          });
+        }
 
         resolve({ validRows, errors });
       } catch (error) {

@@ -9,7 +9,7 @@ import { GaussFilters } from '@/components/GaussFilters';
 import { GaussChart } from '@/components/GaussChart';
 import { GaussCalibracionTable } from '@/components/GaussCalibracionTable';
 import { GaussStats } from '@/components/GaussStats';
-import { exportCalibracionesToCSV } from '@/utils/gaussExport';
+import { exportCalibracionesToCSV, exportCalibracionesToExcel } from '@/utils/gaussExport';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -86,13 +86,22 @@ const CurvaGauss = () => {
     toast.info('Función "Forzar Curva" en desarrollo');
   };
 
-  const handleExport = () => {
+  const handleExportCSV = () => {
     if (filteredCalibraciones.length === 0) {
       toast.error('No hay datos para exportar');
       return;
     }
     exportCalibracionesToCSV(filteredCalibraciones);
-    toast.success('Exportación completada');
+    toast.success('CSV exportado correctamente');
+  };
+
+  const handleExportExcel = (formato: 'largo' | 'ancho') => {
+    if (filteredCalibraciones.length === 0) {
+      toast.error('No hay datos para exportar');
+      return;
+    }
+    exportCalibracionesToExcel(filteredCalibraciones, formato);
+    toast.success(`Excel exportado en formato ${formato}`);
   };
 
   const handleDeleteAll = () => {
@@ -136,9 +145,17 @@ const CurvaGauss = () => {
         <div className="flex justify-between items-center">
           <GaussUploadDialog />
           <div className="flex gap-2">
-            <Button onClick={handleExport} variant="outline">
+            <Button onClick={handleExportCSV} variant="outline">
               <Download className="mr-2 h-4 w-4" />
               Exportar CSV
+            </Button>
+            <Button onClick={() => handleExportExcel('ancho')} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Excel (Ancho)
+            </Button>
+            <Button onClick={() => handleExportExcel('largo')} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Excel (Largo)
             </Button>
             <Button onClick={handleDeleteAll} variant="destructive">
               <Trash2 className="mr-2 h-4 w-4" />

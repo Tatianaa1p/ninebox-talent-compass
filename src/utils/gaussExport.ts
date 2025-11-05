@@ -1,4 +1,5 @@
-import { CalibracionGauss } from '@/types/gauss';
+import { CalibracionGauss, COMPETENCIAS } from '@/types/gauss';
+import * as XLSX from 'xlsx';
 
 export const exportCalibracionesToCSV = (calibraciones: CalibracionGauss[]) => {
   // Calculate average per employee
@@ -57,4 +58,83 @@ export const exportCalibracionesToCSV = (calibraciones: CalibracionGauss[]) => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+};
+
+export const exportCalibracionesToExcel = (calibraciones: CalibracionGauss[], formato: 'largo' | 'ancho' = 'ancho') => {
+  if (formato === 'largo') {
+    // FORMATO LARGO: Una fila por competencia
+    const empleadoPromedios = new Map<string, number[]>();
+    
+    calibraciones.forEach(cal => {
+      const current = empleadoPromedios.get(cal.empleado_email) || [];
+      empleadoPromedios.set(cal.empleado_email, [...current, cal.score_calibrado]);
+    });
+
+    const promedios = new Map<string, number>();
+    empleadoPromedios.forEach((scores, email) => {
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      promedios.set(email, avg);
+    });
+
+    const data = calibraciones.map(cal => ({
+      'Nombre Completo': cal.nombre_completo || '',
+      'Email': cal.empleado_email,
+      'País': cal.pais,
+      'Equipo': cal.equipo,
+      'Posición': cal.posicion,
+      'Seniority': cal.seniority,
+      'Familia Cargo': cal.familia_cargo,
+      'Competencia': cal.competencia,
+      'Score Original': Number(cal.score_original.toFixed(2)),
+      'Score Calibrado': Number(cal.score_calibrado.toFixed(2)),
+      'Diferencia': Number((cal.score_calibrado - cal.score_original).toFixed(2)),
+      'Promedio Calibrado Persona': Number((promedios.get(cal.empleado_email) || 0).toFixed(2))
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Calibraciones');
+    XLSX.writeFile(workbook, `calibracion_gauss_largo_${new Date().toISOString().split('T')[0]}.xlsx`);
+  } else {
+    // FORMATO ANCHO: Competencias en columnas
+    const empleadosMap = new Map<string, any>();
+
+    calibraciones.forEach(cal => {
+      const key = cal.nombre_completo || cal.empleado_email;
+      
+      if (!empleadosMap.has(key)) {
+        empleadosMap.set(key, {
+          'Nombre Completo': cal.nombre_completo || '',
+          'Email': cal.empleado_email,
+          'País': cal.pais,
+          'Equipo': cal.equipo,
+          'Posición': cal.posicion,
+          'Seniority': cal.seniority,
+          'Familia Cargo': cal.familia_cargo,
+        });
+      }
+
+      const empleado = empleadosMap.get(key);
+      empleado[`${cal.competencia} (Original)`] = Number(cal.score_original.toFixed(2));
+      empleado[`${cal.competencia} (Calibrado)`] = Number(cal.score_calibrado.toFixed(2));
+    });
+
+    // Calculate averages per employee
+    empleadosMap.forEach((empleado, key) => {
+      const scores: number[] = [];
+      COMPETENCIAS.forEach(comp => {
+        const calibrado = empleado[`${comp} (Calibrado)`];
+        if (calibrado !== undefined) scores.push(calibrado);
+      });
+      empleado['Promedio Calibrado'] = scores.length > 0 
+        ? Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2))
+        : 0;
+    });
+
+    const data = Array.from(empleadosMap.values());
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Calibraciones');
+    XLSX.writeFile(workbook, `calibracion_gauss_ancho_${new Date().toISOString().split('T')[0]}.xlsx`);
+  }
 };

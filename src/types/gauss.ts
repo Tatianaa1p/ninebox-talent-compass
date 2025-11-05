@@ -11,6 +11,7 @@ export interface GaussUserRole {
 export interface CalibracionGauss {
   id: string;
   empleado_email: string;
+  nombre_completo?: string;
   competencia: string;
   familia_cargo: string;
   score_original: number;
@@ -19,6 +20,7 @@ export interface CalibracionGauss {
   equipo: string;
   seniority: string;
   posicion: string;
+  tablero_id?: string;
   fecha_evaluacion: string;
   ultima_calibracion_por: string | null;
   fecha_calibracion: string | null;
