@@ -1,5 +1,55 @@
 import { CalibracionGauss, COMPETENCIAS } from '@/types/gauss';
+import { EmpleadoPromedio } from '@/utils/gaussCalculations';
 import * as XLSX from 'xlsx';
+
+export const exportEmpleadosToExcel = (empleados: EmpleadoPromedio[]) => {
+  // Formato ancho: Una fila por empleado con competencias en columnas
+  const data = empleados.map(emp => {
+    const row: any = {
+      'Nombre Completo': emp.nombre_completo || '',
+      'Email': emp.empleado_email,
+      'País': emp.pais,
+      'Equipo': emp.equipo,
+      'Posición': emp.posicion,
+      'Seniority': emp.seniority,
+      'Familia Cargo': emp.familia_cargo,
+    };
+
+    // Add competencias as columns
+    emp.competencias.forEach(comp => {
+      row[`${comp.competencia} (Original)`] = Number(comp.score_original.toFixed(2));
+      row[`${comp.competencia} (Calibrado)`] = Number(comp.score_calibrado.toFixed(2));
+    });
+
+    // Add performance score
+    row['Puntuación de Desempeño'] = Number(emp.puntuacion_desempeno.toFixed(2));
+
+    // Add position in curve
+    const score = emp.puntuacion_desempeno;
+    let posicionCurva = '';
+    if (score >= 3.5) posicionCurva = 'Alto';
+    else if (score >= 2.5) posicionCurva = 'Medio-Alto';
+    else if (score >= 2.0) posicionCurva = 'Medio';
+    else if (score >= 1.5) posicionCurva = 'Medio-Bajo';
+    else posicionCurva = 'Bajo';
+
+    row['Posición en Curva'] = posicionCurva;
+
+    return row;
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  
+  // Auto-size columns
+  const colWidths = Object.keys(data[0] || {}).map(key => ({
+    wch: Math.max(key.length, 15)
+  }));
+  worksheet['!cols'] = colWidths;
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Calibraciones');
+  XLSX.writeFile(workbook, `calibracion_gauss_${new Date().toISOString().split('T')[0]}.xlsx`);
+};
 
 export const exportCalibracionesToCSV = (calibraciones: CalibracionGauss[]) => {
   // Calculate average per employee

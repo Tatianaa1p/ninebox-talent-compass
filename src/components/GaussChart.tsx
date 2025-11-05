@@ -13,7 +13,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { CalibracionGauss } from '@/types/gauss';
+import { EmpleadoPromedio } from '@/utils/gaussCalculations';
 
 Chart.register(
   CategoryScale,
@@ -29,19 +29,19 @@ Chart.register(
 );
 
 interface GaussChartProps {
-  calibraciones: CalibracionGauss[];
+  empleados: EmpleadoPromedio[];
   media: number;
   desviacion: number;
 }
 
-export const GaussChart = ({ calibraciones, media, desviacion }: GaussChartProps) => {
+export const GaussChart = ({ empleados, media, desviacion }: GaussChartProps) => {
   const chartData = useMemo(() => {
-    // Create bins for scores
+    // Create bins for scores (using employee averages now)
     const bins = Array.from({ length: 31 }, (_, i) => 1.0 + i * 0.1); // 1.0 to 4.0 in 0.1 steps
     const counts = new Array(bins.length).fill(0);
 
-    calibraciones.forEach(cal => {
-      const binIndex = Math.floor((cal.score_calibrado - 1.0) / 0.1);
+    empleados.forEach(emp => {
+      const binIndex = Math.floor((emp.puntuacion_desempeno - 1.0) / 0.1);
       if (binIndex >= 0 && binIndex < counts.length) {
         counts[binIndex]++;
       }
@@ -50,7 +50,7 @@ export const GaussChart = ({ calibraciones, media, desviacion }: GaussChartProps
     // Generate ideal Gaussian curve
     const gaussianCurve = bins.map(x => {
       const exponent = -Math.pow(x - media, 2) / (2 * Math.pow(desviacion, 2));
-      return (calibraciones.length / (desviacion * Math.sqrt(2 * Math.PI))) * Math.exp(exponent) * 0.1;
+      return (empleados.length / (desviacion * Math.sqrt(2 * Math.PI))) * Math.exp(exponent) * 0.1;
     });
 
     return {
@@ -58,7 +58,7 @@ export const GaussChart = ({ calibraciones, media, desviacion }: GaussChartProps
       datasets: [
         {
           type: 'bar' as const,
-          label: 'Distribución Real',
+          label: 'Distribución Real (Empleados)',
           data: counts,
           backgroundColor: 'rgba(59, 130, 246, 0.6)',
           borderColor: 'rgba(59, 130, 246, 1)',
@@ -76,7 +76,7 @@ export const GaussChart = ({ calibraciones, media, desviacion }: GaussChartProps
         },
       ],
     };
-  }, [calibraciones, media, desviacion]);
+  }, [empleados, media, desviacion]);
 
   const options = {
     responsive: true,
@@ -87,20 +87,20 @@ export const GaussChart = ({ calibraciones, media, desviacion }: GaussChartProps
       },
       title: {
         display: true,
-        text: 'Distribución de Scores Calibrados vs Curva Gaussiana Ideal',
+        text: 'Distribución de Puntuación de Desempeño vs Curva Gaussiana Ideal',
       },
     },
     scales: {
       x: {
         title: {
           display: true,
-          text: 'Score',
+          text: 'Puntuación de Desempeño (Promedio)',
         },
       },
       y: {
         title: {
           display: true,
-          text: 'Frecuencia',
+          text: 'Frecuencia (Número de Empleados)',
         },
         beginAtZero: true,
       },

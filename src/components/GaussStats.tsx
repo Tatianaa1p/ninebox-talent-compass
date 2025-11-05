@@ -1,37 +1,28 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalibracionGauss } from '@/types/gauss';
+import { EmpleadoPromedio, calcularEstadisticas } from '@/utils/gaussCalculations';
 
 interface GaussStatsProps {
-  calibraciones: CalibracionGauss[];
+  empleados: EmpleadoPromedio[];
 }
 
-export const GaussStats = ({ calibraciones }: GaussStatsProps) => {
-  const totalPersonas = new Set(calibraciones.map(c => c.empleado_email)).size;
+export const GaussStats = ({ empleados }: GaussStatsProps) => {
+  const totalPersonas = empleados.length;
   
-  const mediaActual = calibraciones.length > 0
-    ? calibraciones.reduce((sum, c) => sum + c.score_calibrado, 0) / calibraciones.length
-    : 0;
+  const puntuaciones = empleados.map(e => e.puntuacion_desempeno);
+  const { media: mediaActual, desviacion: desviacionActual } = calcularEstadisticas(puntuaciones);
 
-  const desviacionActual = calibraciones.length > 0
-    ? Math.sqrt(
-        calibraciones.reduce((sum, c) => sum + Math.pow(c.score_calibrado - mediaActual, 2), 0) / calibraciones.length
-      )
-    : 0;
-
-  const ajuste = calibraciones.length > 0
-    ? calibraciones.reduce((sum, c) => sum + Math.abs(c.score_calibrado - c.score_original), 0)
-    : 0;
+  const totalCompetenciasEvaluadas = empleados.reduce((sum, e) => sum + e.competencias.length, 0);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Total Personas</CardTitle>
+          <CardTitle className="text-sm font-medium">Total Empleados</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{totalPersonas}</div>
           <p className="text-xs text-muted-foreground">
-            {calibraciones.length} evaluaciones
+            {totalCompetenciasEvaluadas} competencias evaluadas
           </p>
         </CardContent>
       </Card>
@@ -42,7 +33,7 @@ export const GaussStats = ({ calibraciones }: GaussStatsProps) => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{mediaActual.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">Score promedio calibrado</p>
+          <p className="text-xs text-muted-foreground">Puntuación promedio</p>
         </CardContent>
       </Card>
 
@@ -52,17 +43,22 @@ export const GaussStats = ({ calibraciones }: GaussStatsProps) => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{desviacionActual.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">Dispersión de scores</p>
+          <p className="text-xs text-muted-foreground">Dispersión de puntuaciones</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Ajuste Total</CardTitle>
+          <CardTitle className="text-sm font-medium">Rango</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{ajuste.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">Suma de diferencias absolutas</p>
+          <div className="text-2xl font-bold">
+            {puntuaciones.length > 0 
+              ? `${Math.min(...puntuaciones).toFixed(2)} - ${Math.max(...puntuaciones).toFixed(2)}`
+              : 'N/A'
+            }
+          </div>
+          <p className="text-xs text-muted-foreground">Mín - Máx</p>
         </CardContent>
       </Card>
     </div>

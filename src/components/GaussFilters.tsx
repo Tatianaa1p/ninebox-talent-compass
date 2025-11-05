@@ -20,7 +20,6 @@ interface GaussFiltersProps {
   onMediaChange: (value: number) => void;
   onDesviacionChange: (value: number) => void;
   onApplyFilters: () => void;
-  onForzarCurva: () => void;
 }
 
 export const GaussFilters = ({
@@ -32,7 +31,6 @@ export const GaussFilters = ({
   onMediaChange,
   onDesviacionChange,
   onApplyFilters,
-  onForzarCurva,
 }: GaussFiltersProps) => {
   const uniqueValues = (key: keyof CalibracionGauss) => {
     return Array.from(new Set(calibraciones.map(c => String(c[key])))).sort();
@@ -165,9 +163,6 @@ export const GaussFilters = ({
       <div className="flex gap-2">
         <Button onClick={onApplyFilters} variant="default">
           Aplicar Filtros
-        </Button>
-        <Button onClick={onForzarCurva} variant="outline">
-          Forzar Curva
         </Button>
       </div>
     </div>

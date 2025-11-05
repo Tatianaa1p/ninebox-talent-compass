@@ -2,15 +2,20 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, LogOut, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGaussAccess } from '@/hooks/useGaussAccess';
 import { useCalibracionGaussQuery, useDeleteAllCalibraciones } from '@/hooks/queries/useCalibracionGaussQuery';
 import { GaussUploadDialog } from '@/components/GaussUploadDialog';
 import { GaussFilters } from '@/components/GaussFilters';
 import { GaussChart } from '@/components/GaussChart';
 import { GaussCalibracionTable } from '@/components/GaussCalibracionTable';
+import { GaussEmpleadosTable } from '@/components/GaussEmpleadosTable';
 import { GaussStats } from '@/components/GaussStats';
 import { GaussTableroSelector } from '@/components/GaussTableroSelector';
-import { exportCalibracionesToExcel } from '@/utils/gaussExport';
+import { ForzarCurvaDialog } from '@/components/ForzarCurvaDialog';
+import { BorrarTablerosPaisDialog } from '@/components/BorrarTablerosPaisDialog';
+import { exportEmpleadosToExcel } from '@/utils/gaussExport';
+import { calcularPromediosPorPersona } from '@/utils/gaussCalculations';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -82,6 +87,10 @@ const CurvaGauss = () => {
     });
   }, [calibraciones, filters, selectedTablero]);
 
+  const empleadosConPromedio = useMemo(() => {
+    return calcularPromediosPorPersona(filteredCalibraciones);
+  }, [filteredCalibraciones]);
+
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
@@ -90,16 +99,13 @@ const CurvaGauss = () => {
     toast.success('Filtros aplicados');
   };
 
-  const handleForzarCurva = () => {
-    toast.info('Función "Forzar Curva" en desarrollo');
-  };
 
   const handleExportExcel = () => {
-    if (filteredCalibraciones.length === 0) {
+    if (empleadosConPromedio.length === 0) {
       toast.error('No hay datos para exportar');
       return;
     }
-    exportCalibracionesToExcel(filteredCalibraciones, 'ancho');
+    exportEmpleadosToExcel(empleadosConPromedio);
     toast.success('Reporte descargado correctamente');
   };
 
@@ -144,10 +150,16 @@ const CurvaGauss = () => {
         <div className="flex justify-between items-center">
           <GaussUploadDialog />
           <div className="flex gap-2">
+            <ForzarCurvaDialog 
+              empleados={empleadosConPromedio} 
+              mediaObjetivo={media} 
+              desviacionObjetivo={desviacion} 
+            />
             <Button onClick={handleExportExcel} variant="outline">
               <Download className="mr-2 h-4 w-4" />
               Descargar reporte en Excel
             </Button>
+            <BorrarTablerosPaisDialog />
             <Button onClick={handleDeleteAll} variant="destructive">
               <Trash2 className="mr-2 h-4 w-4" />
               Limpiar Todo
@@ -162,7 +174,7 @@ const CurvaGauss = () => {
           onTableroChange={setSelectedTablero}
         />
 
-        <GaussStats calibraciones={filteredCalibraciones} />
+        <GaussStats empleados={empleadosConPromedio} />
 
         <GaussFilters
           calibraciones={calibraciones}
@@ -173,14 +185,24 @@ const CurvaGauss = () => {
           onMediaChange={setMedia}
           onDesviacionChange={setDesviacion}
           onApplyFilters={handleApplyFilters}
-          onForzarCurva={handleForzarCurva}
         />
 
         <div className="border rounded-lg p-4 bg-card">
-          <GaussChart calibraciones={filteredCalibraciones} media={media} desviacion={desviacion} />
+          <GaussChart empleados={empleadosConPromedio} media={media} desviacion={desviacion} />
         </div>
 
-        <GaussCalibracionTable calibraciones={filteredCalibraciones} />
+        <Tabs defaultValue="empleados" className="w-full">
+          <TabsList>
+            <TabsTrigger value="empleados">Vista por Empleados</TabsTrigger>
+            <TabsTrigger value="competencias">Vista por Competencias</TabsTrigger>
+          </TabsList>
+          <TabsContent value="empleados" className="mt-4">
+            <GaussEmpleadosTable empleados={empleadosConPromedio} />
+          </TabsContent>
+          <TabsContent value="competencias" className="mt-4">
+            <GaussCalibracionTable calibraciones={filteredCalibraciones} />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
