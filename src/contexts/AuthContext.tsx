@@ -22,9 +22,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    console.log('🔐 [AuthContext] Inicializando...');
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('🔐 [AuthContext] Auth event:', event);
+        console.log('🔐 [AuthContext] Session:', session?.user?.email || 'No session');
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -38,12 +43,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔐 [AuthContext] Sesión existente:', session?.user?.email || 'No hay sesión');
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('🔐 [AuthContext] Limpiando suscripción...');
+      subscription.unsubscribe();
+    };
   }, [queryClient]);
 
   const signIn = async (email: string, password: string) => {
