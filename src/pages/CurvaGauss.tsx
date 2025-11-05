@@ -9,7 +9,8 @@ import { GaussFilters } from '@/components/GaussFilters';
 import { GaussChart } from '@/components/GaussChart';
 import { GaussCalibracionTable } from '@/components/GaussCalibracionTable';
 import { GaussStats } from '@/components/GaussStats';
-import { exportCalibracionesToCSV, exportCalibracionesToExcel } from '@/utils/gaussExport';
+import { GaussTableroSelector } from '@/components/GaussTableroSelector';
+import { exportCalibracionesToExcel } from '@/utils/gaussExport';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -40,6 +41,9 @@ const CurvaGauss = () => {
     posicion: 'all',
   });
 
+  const [selectedPaisTablero, setSelectedPaisTablero] = useState('all');
+  const [selectedTablero, setSelectedTablero] = useState('all');
+
   const [media, setMedia] = useState(3.0);
   const [desviacion, setDesviacion] = useState(0.5);
 
@@ -64,6 +68,10 @@ const CurvaGauss = () => {
 
   const filteredCalibraciones = useMemo(() => {
     return calibraciones.filter(cal => {
+      // Filter by tablero first
+      if (selectedTablero !== 'all' && cal.tablero_id !== selectedTablero) return false;
+      
+      // Then apply other filters
       if (filters.familia_cargo !== 'all' && cal.familia_cargo !== filters.familia_cargo) return false;
       if (filters.competencia !== 'all' && cal.competencia !== filters.competencia) return false;
       if (filters.pais !== 'all' && cal.pais !== filters.pais) return false;
@@ -72,7 +80,7 @@ const CurvaGauss = () => {
       if (filters.posicion !== 'all' && cal.posicion !== filters.posicion) return false;
       return true;
     });
-  }, [calibraciones, filters]);
+  }, [calibraciones, filters, selectedTablero]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -146,6 +154,13 @@ const CurvaGauss = () => {
             </Button>
           </div>
         </div>
+
+        <GaussTableroSelector
+          selectedPais={selectedPaisTablero}
+          selectedTablero={selectedTablero}
+          onPaisChange={setSelectedPaisTablero}
+          onTableroChange={setSelectedTablero}
+        />
 
         <GaussStats calibraciones={filteredCalibraciones} />
 

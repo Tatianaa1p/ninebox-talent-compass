@@ -474,7 +474,7 @@ export type Database = {
       tableros: {
         Row: {
           created_at: string | null
-          empresa_id: string
+          empresa_id: string | null
           equipo_id: string | null
           id: string
           nombre: string
@@ -482,7 +482,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          empresa_id: string
+          empresa_id?: string | null
           equipo_id?: string | null
           id?: string
           nombre: string
@@ -490,7 +490,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          empresa_id?: string
+          empresa_id?: string | null
           equipo_id?: string | null
           id?: string
           nombre?: string
