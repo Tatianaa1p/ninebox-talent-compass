@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, LogOut } from 'lucide-react';
+import { Download, LogOut, Grid3x3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useGaussAccess } from '@/hooks/useGaussAccess';
 import { useCalibracionGaussQuery } from '@/hooks/queries/useCalibracionGaussQuery';
 import { GaussUploadDialog } from '@/components/GaussUploadDialog';
@@ -126,9 +127,22 @@ const CurvaGauss = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Curva de Gauss - Calibración de Competencias</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate('/dashboard')}>
-              Volver al Dashboard
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Grid3x3 className="mr-2 h-4 w-4" />
+                  Cambiar Módulo
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                  Ninebox Talent
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/curva-gauss')}>
+                  Curva de Gauss
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="ghost" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               Salir
