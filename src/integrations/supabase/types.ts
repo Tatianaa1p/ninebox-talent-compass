@@ -653,7 +653,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "user" | "hrbp"
-      gauss_role: "hrbp" | "hrbp_cl" | "manager" | "manager_cl"
+      gauss_role:
+        | "hrbp"
+        | "hrbp_cl"
+        | "manager"
+        | "manager_cl"
+        | "hrbp_apu"
+        | "manager_apu"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -782,7 +788,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "user", "hrbp"],
-      gauss_role: ["hrbp", "hrbp_cl", "manager", "manager_cl"],
+      gauss_role: [
+        "hrbp",
+        "hrbp_cl",
+        "manager",
+        "manager_cl",
+        "hrbp_apu",
+        "manager_apu",
+      ],
     },
   },
 } as const
