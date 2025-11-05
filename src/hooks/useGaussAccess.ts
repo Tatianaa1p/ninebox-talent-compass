@@ -9,20 +9,26 @@ export const useGaussAccess = () => {
   const { data: gaussRole, isLoading } = useQuery({
     queryKey: ['gauss_access', user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!user?.id) {
+        console.log('[useGaussAccess] No user ID found');
+        return null;
+      }
+
+      console.log('[useGaussAccess] Fetching gauss role for user:', user.id);
 
       const { data, error } = await supabase
         .from('gauss_user_roles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        console.error('Error fetching gauss access:', error);
+        console.error('[useGaussAccess] Error fetching gauss access:', error);
         return null;
       }
 
-      return data as GaussUserRole;
+      console.log('[useGaussAccess] Gauss role data:', data);
+      return data as GaussUserRole | null;
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
