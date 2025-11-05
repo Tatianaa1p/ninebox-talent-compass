@@ -475,23 +475,26 @@ export type Database = {
         Row: {
           created_at: string | null
           empresa_id: string
-          equipo_id: string
+          equipo_id: string | null
           id: string
           nombre: string
+          pais: string | null
         }
         Insert: {
           created_at?: string | null
           empresa_id: string
-          equipo_id: string
+          equipo_id?: string | null
           id?: string
           nombre: string
+          pais?: string | null
         }
         Update: {
           created_at?: string | null
           empresa_id?: string
-          equipo_id?: string
+          equipo_id?: string | null
           id?: string
           nombre?: string
+          pais?: string | null
         }
         Relationships: [
           {

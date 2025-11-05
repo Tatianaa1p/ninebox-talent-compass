@@ -1,53 +1,71 @@
 import { useState } from 'react';
-import { Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, AlertCircle, CheckCircle2, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { parseGaussExcel } from '@/utils/gaussExcelParser';
 import { useBulkInsertCalibraciones } from '@/hooks/queries/useCalibracionGaussQuery';
-import { useTablerosQuery } from '@/hooks/queries/useTablerosQuery';
-import { useEquiposQuery } from '@/hooks/queries/useEquiposQuery';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+const PAISES = ['Argentina', 'Uruguay', 'Paraguay', 'Chile'] as const;
 
 export const GaussUploadDialog = () => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<{ success: number; errors: any[] } | null>(null);
-  const [selectedEquipo, setSelectedEquipo] = useState<string>('');
-  const [selectedTablero, setSelectedTablero] = useState<string>('');
+  const [selectedPais, setSelectedPais] = useState<string>('');
+  const [tableroNombre, setTableroNombre] = useState<string>('');
+  const [creatingTablero, setCreatingTablero] = useState(false);
   const bulkInsert = useBulkInsertCalibraciones();
-  const { data: equipos = [] } = useEquiposQuery();
-  const { data: tableros = [] } = useTablerosQuery(selectedEquipo);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCreateAndUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!selectedTablero) {
-      toast.error('Por favor selecciona un tablero antes de subir el archivo');
+    if (!selectedPais || !tableroNombre.trim()) {
+      toast.error('Por favor selecciona un país y escribe el nombre del tablero');
       return;
     }
 
+    setCreatingTablero(true);
     setUploading(true);
     setResult(null);
 
     try {
+      // Create tablero first
+      const { data: tablero, error: tableroError } = await supabase
+        .from('tableros')
+        .insert({
+          nombre: tableroNombre.trim(),
+          pais: selectedPais,
+          empresa_id: '00000000-0000-0000-0000-000000000000', // Placeholder for now
+        })
+        .select()
+        .single();
+
+      if (tableroError) throw tableroError;
+
+      toast.success(`Tablero "${tableroNombre}" creado para ${selectedPais}`);
+
+      // Parse and upload data
       const { validRows, errors } = await parseGaussExcel(file);
 
       if (validRows.length > 0) {
         const calibraciones = validRows.map(row => ({
           ...row,
           score_calibrado: row.score_original,
-          tablero_id: selectedTablero,
+          tablero_id: tablero.id,
           fecha_evaluacion: new Date().toISOString().split('T')[0],
           ultima_calibracion_por: null,
           fecha_calibracion: null,
         }));
 
         await bulkInsert.mutateAsync(calibraciones);
-        toast.success(`${validRows.length} evaluaciones cargadas exitosamente al tablero`);
+        toast.success(`${validRows.length} evaluaciones cargadas exitosamente`);
       }
 
       setResult({
@@ -58,14 +76,15 @@ export const GaussUploadDialog = () => {
       if (errors.length === 0 && validRows.length > 0) {
         setTimeout(() => {
           setOpen(false);
-          setSelectedEquipo('');
-          setSelectedTablero('');
+          setSelectedPais('');
+          setTableroNombre('');
         }, 2000);
       }
     } catch (error) {
       console.error('Error uploading file:', error);
       toast.error('Error al procesar el archivo');
     } finally {
+      setCreatingTablero(false);
       setUploading(false);
       event.target.value = '';
     }
@@ -90,32 +109,27 @@ export const GaussUploadDialog = () => {
         <div className="space-y-4">
           <div className="space-y-4">
             <div>
-              <Label>Seleccionar Equipo</Label>
-              <Select value={selectedEquipo} onValueChange={setSelectedEquipo}>
+              <Label>Seleccionar País</Label>
+              <Select value={selectedPais} onValueChange={setSelectedPais}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un equipo" />
+                  <SelectValue placeholder="Selecciona un país" />
                 </SelectTrigger>
                 <SelectContent>
-                  {equipos.map(eq => (
-                    <SelectItem key={eq.id} value={eq.id}>{eq.nombre}</SelectItem>
+                  {PAISES.map(pais => (
+                    <SelectItem key={pais} value={pais}>{pais}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {selectedEquipo && (
+            {selectedPais && (
               <div>
-                <Label>Seleccionar Tablero</Label>
-                <Select value={selectedTablero} onValueChange={setSelectedTablero}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un tablero" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tableros.map(t => (
-                      <SelectItem key={t.id} value={t.id}>{t.nombre}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Nombre del Tablero</Label>
+                <Input
+                  value={tableroNombre}
+                  onChange={(e) => setTableroNombre(e.target.value)}
+                  placeholder="Ej: Evaluación Q1 2024"
+                />
               </div>
             )}
           </div>
@@ -124,15 +138,20 @@ export const GaussUploadDialog = () => {
             <input
               type="file"
               accept=".xlsx,.xls,.csv"
-              onChange={handleFileUpload}
-              disabled={uploading || !selectedTablero}
+              onChange={handleCreateAndUpload}
+              disabled={uploading || !selectedPais || !tableroNombre.trim()}
               className="hidden"
               id="gauss-file-upload"
             />
-            <label htmlFor="gauss-file-upload" className={!selectedTablero ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}>
+            <label 
+              htmlFor="gauss-file-upload" 
+              className={(!selectedPais || !tableroNombre.trim()) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
+            >
               <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
               <p className="text-sm text-muted-foreground">
-                {!selectedTablero ? 'Selecciona un tablero primero' : 'Haz clic para seleccionar un archivo o arrastra aquí'}
+                {(!selectedPais || !tableroNombre.trim()) 
+                  ? 'Completa país y nombre del tablero primero' 
+                  : 'Haz clic para seleccionar un archivo o arrastra aquí'}
               </p>
             </label>
           </div>
@@ -142,13 +161,16 @@ export const GaussUploadDialog = () => {
             <AlertDescription>
               <strong>Formatos aceptados:</strong> Excel (.xlsx, .xls) y CSV<br />
               <strong>Columnas flexibles:</strong> País, Equipo, Posición, Seniority, Nombre completo, Competencias<br />
-              <em className="text-xs">El sistema normaliza automáticamente mayúsculas, tildes y espacios.</em>
+              <strong>Competencias:</strong> Acepta nombres largos (ej: "Mánager - Orientación al cliente: descripción...")<br />
+              <em className="text-xs">El sistema normaliza automáticamente mayúsculas, tildes, espacios y extrae el nombre de la competencia.</em>
             </AlertDescription>
           </Alert>
 
-          {uploading && (
+          {(uploading || creatingTablero) && (
             <div className="text-center py-4">
-              <p className="text-sm text-muted-foreground">Procesando archivo...</p>
+              <p className="text-sm text-muted-foreground">
+                {creatingTablero ? 'Creando tablero y procesando archivo...' : 'Procesando archivo...'}
+              </p>
             </div>
           )}
 

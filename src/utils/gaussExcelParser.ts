@@ -59,8 +59,27 @@ const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
+const extractCompetenciaName = (fullName: string): string | null => {
+  // Extract competencia name before the colon for long column names
+  // e.g., "Mánager - Orientación al cliente: capacidad..." -> "Orientación al cliente"
+  const match = fullName.match(/^(?:Mánager|Manager)\s*-\s*([^:]+)/i);
+  if (match) {
+    return match[1].trim();
+  }
+  // Return as-is for short names
+  return fullName.trim();
+};
+
 const validateCompetencia = (competencia: string): boolean => {
-  return COMPETENCIAS.includes(competencia as any);
+  const normalized = extractCompetenciaName(competencia);
+  if (!normalized) return false;
+  
+  // Check if it matches any known competencia (partial match)
+  return COMPETENCIAS.some(comp => {
+    const compLower = comp.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const normalizedLower = normalized.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return compLower.includes(normalizedLower) || normalizedLower.includes(compLower);
+  });
 };
 
 const validateScore = (score: number): boolean => {
@@ -113,10 +132,11 @@ export const parseGaussExcel = async (file: File): Promise<{ validRows: ParsedRo
               rowErrors.push(`Email inválido: "${empleadoEmail}"`);
             }
 
-            const competencia = competenciaCol ? row[competenciaCol] : '';
+            const competenciaRaw = competenciaCol ? row[competenciaCol] : '';
+            const competencia = extractCompetenciaName(competenciaRaw) || competenciaRaw;
             if (!competencia) {
               rowErrors.push('Se requiere columna "competencia"');
-            } else if (!validateCompetencia(competencia)) {
+            } else if (!validateCompetencia(competenciaRaw)) {
               rowErrors.push(`Competencia no válida: "${competencia}". Debe ser una de las 14 competencias estándar.`);
             }
 
@@ -186,31 +206,42 @@ export const parseGaussExcel = async (file: File): Promise<{ validRows: ParsedRo
               return;
             }
 
-            // Extract competencies from columns
-            COMPETENCIAS.forEach(competencia => {
-              const score = row[competencia];
+            // Extract competencies from columns (check all columns for competencia patterns)
+            Object.keys(row).forEach(colName => {
+              const normalizedCol = normalizeHeader(colName);
+              
+              // Skip known metadata columns
+              if (['pais', 'equipo', 'manager', 'nombre_completo', 'familia_de_cargo', 'posicion', 'seniority', 'empleado_email'].includes(normalizedCol)) {
+                return;
+              }
+              
+              const score = row[colName];
               
               if (score !== undefined && score !== null && score !== '') {
-                const rowErrors: string[] = [];
+                const competenciaName = extractCompetenciaName(colName);
                 
-                if (!validateScore(Number(score))) {
-                  rowErrors.push(`El score de "${competencia}" debe estar entre 1.0 y 4.0 (valor actual: ${score})`);
-                }
+                if (competenciaName && validateCompetencia(colName)) {
+                  const rowErrors: string[] = [];
+                  
+                  if (!validateScore(Number(score))) {
+                    rowErrors.push(`El score de "${competenciaName}" debe estar entre 1.0 y 4.0 (valor actual: ${score})`);
+                  }
 
-                if (rowErrors.length > 0) {
-                  errors.push({ row: rowNumber, errors: rowErrors });
-                } else {
-                  validRows.push({
-                    empleado_email: empleadoEmail.trim(),
-                    nombre_completo: nombreCompleto || undefined,
-                    competencia: competencia,
-                    score_original: Number(score),
-                    pais: pais.trim(),
-                    equipo: equipo.trim(),
-                    seniority: seniority.trim(),
-                    posicion: posicion.trim(),
-                    familia_cargo: getFamiliaCargo(posicion),
-                  });
+                  if (rowErrors.length > 0) {
+                    errors.push({ row: rowNumber, errors: rowErrors });
+                  } else {
+                    validRows.push({
+                      empleado_email: empleadoEmail.trim(),
+                      nombre_completo: nombreCompleto || undefined,
+                      competencia: competenciaName,
+                      score_original: Number(score),
+                      pais: pais.trim(),
+                      equipo: equipo.trim(),
+                      seniority: seniority.trim(),
+                      posicion: posicion.trim(),
+                      familia_cargo: getFamiliaCargo(posicion),
+                    });
+                  }
                 }
               }
             });
