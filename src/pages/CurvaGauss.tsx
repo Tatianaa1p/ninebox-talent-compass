@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 
 const CurvaGauss = () => {
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const { signOut, user, loading: authLoading } = useAuth();
   const { hasAccess, isLoading: accessLoading, role } = useGaussAccess();
   const { data: calibraciones = [], isLoading } = useCalibracionGaussQuery();
   const deleteAll = useDeleteAllCalibraciones();
@@ -25,9 +25,10 @@ const CurvaGauss = () => {
   console.log('========================================');
   console.log('📧 Email autenticado:', user?.email);
   console.log('🆔 User ID:', user?.id);
+  console.log('🔄 Auth loading:', authLoading);
+  console.log('🔄 Access loading:', accessLoading);
   console.log('✅ ¿Tiene acceso?:', hasAccess);
   console.log('👤 Rol asignado:', role);
-  console.log('⏳ Cargando permisos:', accessLoading);
   console.log('========================================');
 
   const [filters, setFilters] = useState({
@@ -44,16 +45,22 @@ const CurvaGauss = () => {
 
   useEffect(() => {
     console.log('[CurvaGauss useEffect] Checking access...');
+    console.log('[CurvaGauss useEffect] authLoading:', authLoading);
     console.log('[CurvaGauss useEffect] accessLoading:', accessLoading);
     console.log('[CurvaGauss useEffect] hasAccess:', hasAccess);
     
-    if (!accessLoading && !hasAccess) {
+    // CRÍTICO: Esperar a que AMBOS loading states sean false antes de verificar acceso
+    const isFullyLoaded = !authLoading && !accessLoading;
+    
+    if (isFullyLoaded && !hasAccess) {
       console.log('[CurvaGauss useEffect] ❌ REDIRECTING to /acceso-denegado - Access denied!');
       navigate('/acceso-denegado');
-    } else if (!accessLoading && hasAccess) {
+    } else if (isFullyLoaded && hasAccess) {
       console.log('[CurvaGauss useEffect] ✅ Access granted!');
+    } else if (!isFullyLoaded) {
+      console.log('[CurvaGauss useEffect] ⏳ Waiting for auth and permissions to load...');
     }
-  }, [hasAccess, accessLoading, navigate]);
+  }, [hasAccess, accessLoading, authLoading, navigate]);
 
   const filteredCalibraciones = useMemo(() => {
     return calibraciones.filter(cal => {
@@ -99,7 +106,8 @@ const CurvaGauss = () => {
     navigate('/auth');
   };
 
-  if (accessLoading || isLoading) {
+  // Mostrar loading mientras se verifica autenticación O permisos O datos
+  if (authLoading || accessLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>Cargando...</p>
