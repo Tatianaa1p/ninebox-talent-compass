@@ -15,10 +15,18 @@ import { toast } from 'sonner';
 
 const CurvaGauss = () => {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
-  const { hasAccess, isLoading: accessLoading } = useGaussAccess();
+  const { signOut, user } = useAuth();
+  const { hasAccess, isLoading: accessLoading, role } = useGaussAccess();
   const { data: calibraciones = [], isLoading } = useCalibracionGaussQuery();
   const deleteAll = useDeleteAllCalibraciones();
+
+  console.log('[CurvaGauss] === DEBUG INFO ===');
+  console.log('[CurvaGauss] 1. Current user email:', user?.email);
+  console.log('[CurvaGauss] 2. User ID:', user?.id);
+  console.log('[CurvaGauss] 3. hasAccess:', hasAccess);
+  console.log('[CurvaGauss] 4. role:', role);
+  console.log('[CurvaGauss] 5. accessLoading:', accessLoading);
+  console.log('[CurvaGauss] ====================');
 
   const [filters, setFilters] = useState({
     familia_cargo: 'all',
@@ -33,8 +41,15 @@ const CurvaGauss = () => {
   const [desviacion, setDesviacion] = useState(0.5);
 
   useEffect(() => {
+    console.log('[CurvaGauss useEffect] Checking access...');
+    console.log('[CurvaGauss useEffect] accessLoading:', accessLoading);
+    console.log('[CurvaGauss useEffect] hasAccess:', hasAccess);
+    
     if (!accessLoading && !hasAccess) {
+      console.log('[CurvaGauss useEffect] ❌ REDIRECTING to /acceso-denegado - Access denied!');
       navigate('/acceso-denegado');
+    } else if (!accessLoading && hasAccess) {
+      console.log('[CurvaGauss useEffect] ✅ Access granted!');
     }
   }, [hasAccess, accessLoading, navigate]);
 
