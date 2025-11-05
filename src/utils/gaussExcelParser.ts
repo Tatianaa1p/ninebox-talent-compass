@@ -93,10 +93,26 @@ export const parseGaussExcel = async (file: File): Promise<{ validRows: ParsedRo
     reader.onload = (e) => {
       try {
         const data = e.target?.result;
+        if (!data) {
+          reject(new Error('Archivo vacío o no se pudo leer'));
+          return;
+        }
+
         const workbook = XLSX.read(data, { type: 'binary' });
+        
+        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+          reject(new Error('El archivo no contiene ninguna hoja válida'));
+          return;
+        }
+
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        if (!jsonData || jsonData.length === 0) {
+          reject(new Error('La hoja está vacía o no contiene datos válidos'));
+          return;
+        }
 
         const validRows: ParsedRow[] = [];
         const errors: UploadError[] = [];
@@ -249,12 +265,18 @@ export const parseGaussExcel = async (file: File): Promise<{ validRows: ParsedRo
         }
 
         resolve({ validRows, errors });
-      } catch (error) {
-        reject(error);
+      } catch (error: any) {
+        console.error('Error parsing Excel:', error);
+        reject(new Error(`Error al analizar el archivo: ${error?.message || 'Error desconocido'}`));
       }
     };
 
-    reader.onerror = (error) => reject(error);
-    reader.readAsBinaryString(file);
+    reader.onerror = () => reject(new Error('Error al leer el archivo. Verifica que sea un archivo Excel válido (.xlsx, .xls) o CSV'));
+    
+    try {
+      reader.readAsBinaryString(file);
+    } catch (error) {
+      reject(new Error('No se pudo abrir el archivo. Verifica el formato'));
+    }
   });
 };

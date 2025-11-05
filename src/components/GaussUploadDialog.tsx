@@ -36,23 +36,32 @@ export const GaussUploadDialog = () => {
     setResult(null);
 
     try {
-      // Create tablero first
+      // Create tablero first (empresa_id is optional when using pais)
       const { data: tablero, error: tableroError } = await supabase
         .from('tableros')
         .insert({
           nombre: tableroNombre.trim(),
           pais: selectedPais,
-          empresa_id: '00000000-0000-0000-0000-000000000000', // Placeholder for now
+          empresa_id: null,
+          equipo_id: null,
         })
         .select()
         .single();
 
-      if (tableroError) throw tableroError;
+      if (tableroError) {
+        console.error('Error creating tablero:', tableroError);
+        toast.error(`No se pudo crear el tablero: ${tableroError.message}`);
+        throw tableroError;
+      }
 
       toast.success(`Tablero "${tableroNombre}" creado para ${selectedPais}`);
 
       // Parse and upload data
       const { validRows, errors } = await parseGaussExcel(file);
+
+      if (errors.length > 0) {
+        console.warn('Parsing errors found:', errors);
+      }
 
       if (validRows.length > 0) {
         const calibraciones = validRows.map(row => ({
@@ -65,7 +74,9 @@ export const GaussUploadDialog = () => {
         }));
 
         await bulkInsert.mutateAsync(calibraciones);
-        toast.success(`${validRows.length} evaluaciones cargadas exitosamente`);
+        toast.success(`✅ ${validRows.length} evaluaciones cargadas al tablero "${tableroNombre}"`);
+      } else if (errors.length > 0) {
+        toast.error('No se pudo cargar ningún registro. Revisa los errores a continuación.');
       }
 
       setResult({
@@ -80,9 +91,19 @@ export const GaussUploadDialog = () => {
           setTableroNombre('');
         }, 2000);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading file:', error);
-      toast.error('Error al procesar el archivo');
+      
+      // Provide specific error messages
+      if (error?.code === '42501') {
+        toast.error('❌ No tienes permisos para crear tableros. Contacta al administrador.');
+      } else if (error?.code === '23505') {
+        toast.error('❌ Ya existe un tablero con ese nombre para este país.');
+      } else if (error?.message) {
+        toast.error(`❌ Error: ${error.message}`);
+      } else {
+        toast.error('❌ Error inesperado al procesar el archivo. Revisa el formato.');
+      }
     } finally {
       setCreatingTablero(false);
       setUploading(false);
