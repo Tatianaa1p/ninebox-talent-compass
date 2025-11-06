@@ -10,12 +10,14 @@ import { parseGaussExcel } from '@/utils/gaussExcelParser';
 import { useBulkInsertCalibraciones } from '@/hooks/queries/useCalibracionGaussQuery';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface GaussUploadDialogProps {
   paisesPermitidos: string[];
+  onTableroCreado?: (tableroId: string, pais: string) => void;
 }
 
-export const GaussUploadDialog = ({ paisesPermitidos }: GaussUploadDialogProps) => {
+export const GaussUploadDialog = ({ paisesPermitidos, onTableroCreado }: GaussUploadDialogProps) => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<{ success: number; errors: any[] } | null>(null);
@@ -23,6 +25,7 @@ export const GaussUploadDialog = ({ paisesPermitidos }: GaussUploadDialogProps) 
   const [tableroNombre, setTableroNombre] = useState<string>('');
   const [creatingTablero, setCreatingTablero] = useState(false);
   const bulkInsert = useBulkInsertCalibraciones();
+  const queryClient = useQueryClient();
 
   const handleCreateAndUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -58,6 +61,14 @@ export const GaussUploadDialog = ({ paisesPermitidos }: GaussUploadDialogProps) 
       }
 
       toast.success(`Tablero "${tableroNombre}" creado para ${selectedPais}`);
+      
+      // Invalidate tableros query to show new tablero in dropdown
+      queryClient.invalidateQueries({ queryKey: ['tableros-pais'] });
+      
+      // Notify parent to select this tablero
+      if (onTableroCreado) {
+        onTableroCreado(tablero.id, selectedPais);
+      }
 
       // Parse and upload data
       const { validRows, errors } = await parseGaussExcel(file);

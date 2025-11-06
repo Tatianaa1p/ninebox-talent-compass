@@ -47,6 +47,12 @@ const CurvaGauss = () => {
   const [selectedPaisTablero, setSelectedPaisTablero] = useState('all');
   const [selectedTablero, setSelectedTablero] = useState('all');
 
+  const handleTableroCreado = (tableroId: string, pais: string) => {
+    console.log('📋 Tablero creado, seleccionando automáticamente:', { tableroId, pais });
+    setSelectedPaisTablero(pais);
+    setSelectedTablero(tableroId);
+  };
+
   const [media, setMedia] = useState(2.5); // Media objetivo por defecto
   const [desviacion, setDesviacion] = useState(0.5); // Desviación estándar por defecto
 
@@ -156,7 +162,10 @@ const CurvaGauss = () => {
 
       <main className="container mx-auto px-4 py-6 space-y-6">
         <div className="flex justify-between items-center">
-          <GaussUploadDialog paisesPermitidos={paisesAcceso} />
+          <GaussUploadDialog 
+            paisesPermitidos={paisesAcceso} 
+            onTableroCreado={handleTableroCreado}
+          />
           <Button onClick={handleExportExcel} variant="outline">
             <Download className="mr-2 h-4 w-4" />
             Descargar reporte en Excel
