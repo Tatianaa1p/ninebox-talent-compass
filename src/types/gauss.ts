@@ -5,6 +5,7 @@ export interface GaussUserRole {
   user_id: string;
   email: string;
   role: GaussRole;
+  paises_acceso: string[];
   created_at: string;
 }
 

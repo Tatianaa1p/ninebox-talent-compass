@@ -37,6 +37,7 @@ export const useGaussAccess = () => {
   return {
     hasAccess: !!gaussRole,
     role: gaussRole?.role,
+    paisesAcceso: gaussRole?.paises_acceso || [],
     isLoading,
   };
 };

@@ -11,9 +11,8 @@ interface GaussTableroSelectorProps {
   onPaisChange: (pais: string) => void;
   onTableroChange: (tablero: string) => void;
   onTableroEliminado?: () => void;
+  paisesPermitidos: string[];
 }
-
-const PAISES = ['all', 'Argentina', 'Uruguay', 'Paraguay', 'Chile'] as const;
 
 export const GaussTableroSelector = ({
   selectedPais,
@@ -21,8 +20,14 @@ export const GaussTableroSelector = ({
   onPaisChange,
   onTableroChange,
   onTableroEliminado,
+  paisesPermitidos,
 }: GaussTableroSelectorProps) => {
   const { data: tableros = [], isLoading } = useTablerosPaisQuery(selectedPais);
+  
+  // Filter countries based on user permissions
+  const paisesDisponibles = paisesPermitidos.length > 0 
+    ? ['all', ...paisesPermitidos]
+    : ['all'];
 
   const handlePaisChange = (value: string) => {
     onPaisChange(value);
@@ -51,7 +56,7 @@ export const GaussTableroSelector = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los países</SelectItem>
-                {PAISES.filter(p => p !== 'all').map(pais => (
+                {paisesPermitidos.map(pais => (
                   <SelectItem key={pais} value={pais}>{pais}</SelectItem>
                 ))}
               </SelectContent>

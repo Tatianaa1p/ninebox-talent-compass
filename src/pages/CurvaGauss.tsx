@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 const CurvaGauss = () => {
   const navigate = useNavigate();
   const { signOut, user, loading: authLoading } = useAuth();
-  const { hasAccess, isLoading: accessLoading, role } = useGaussAccess();
+  const { hasAccess, isLoading: accessLoading, role, paisesAcceso } = useGaussAccess();
   const { data: calibraciones = [], isLoading } = useCalibracionGaussQuery();
 
   console.log('========================================');
@@ -166,6 +166,7 @@ const CurvaGauss = () => {
           onPaisChange={setSelectedPaisTablero}
           onTableroChange={setSelectedTablero}
           onTableroEliminado={() => toast.success('Tablero eliminado exitosamente')}
+          paisesPermitidos={paisesAcceso}
         />
 
         <GaussStats empleados={empleadosConPromedio} />
