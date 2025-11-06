@@ -22,7 +22,14 @@ export const GaussTableroSelector = ({
   onTableroEliminado,
   paisesPermitidos,
 }: GaussTableroSelectorProps) => {
-  const { data: tableros = [], isLoading } = useTablerosPaisQuery(selectedPais);
+  const { data: allTableros = [], isLoading } = useTablerosPaisQuery(selectedPais);
+  
+  // Filter tableros by allowed countries
+  const tableros = allTableros.filter(tablero => 
+    paisesPermitidos.length === 0 || // Allow all if no restrictions (manager)
+    !tablero.pais || // Allow if no country assigned
+    paisesPermitidos.includes(tablero.pais) // Allow if country is in permitted list
+  );
   
   // Filter countries based on user permissions
   const paisesDisponibles = paisesPermitidos.length > 0 
@@ -98,13 +105,18 @@ export const GaussTableroSelector = ({
         )}
 
         {selectedTablero !== 'all' && tableroSeleccionado && (
-          <div className="flex justify-end pt-2">
-            <EliminarTableroDialog
-              tableroId={selectedTablero}
-              tableroNombre={tableroSeleccionado.nombre}
-              onTableroEliminado={handleTableroEliminado}
-            />
-          </div>
+          <>
+            {/* Only show delete button if user has access to this country */}
+            {(paisesPermitidos.includes(tableroSeleccionado.pais || '') || paisesPermitidos.length === 0) && (
+              <div className="flex justify-end pt-2">
+                <EliminarTableroDialog
+                  tableroId={selectedTablero}
+                  tableroNombre={tableroSeleccionado.nombre}
+                  onTableroEliminado={handleTableroEliminado}
+                />
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

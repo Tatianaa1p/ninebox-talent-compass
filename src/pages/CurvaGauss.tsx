@@ -71,7 +71,10 @@ const CurvaGauss = () => {
 
   const filteredCalibraciones = useMemo(() => {
     return calibraciones.filter(cal => {
-      // Filter by tablero first
+      // Filter by allowed countries first (security)
+      if (paisesAcceso.length > 0 && !paisesAcceso.includes(cal.pais)) return false;
+      
+      // Filter by tablero
       if (selectedTablero !== 'all' && cal.tablero_id !== selectedTablero) return false;
       
       // Then apply other filters
@@ -83,7 +86,7 @@ const CurvaGauss = () => {
       if (filters.posicion !== 'all' && cal.posicion !== filters.posicion) return false;
       return true;
     });
-  }, [calibraciones, filters, selectedTablero]);
+  }, [calibraciones, filters, selectedTablero, paisesAcceso]);
 
   const empleadosConPromedio = useMemo(() => {
     return calcularPromediosPorPersona(filteredCalibraciones);
@@ -153,7 +156,7 @@ const CurvaGauss = () => {
 
       <main className="container mx-auto px-4 py-6 space-y-6">
         <div className="flex justify-between items-center">
-          <GaussUploadDialog />
+          <GaussUploadDialog paisesPermitidos={paisesAcceso} />
           <Button onClick={handleExportExcel} variant="outline">
             <Download className="mr-2 h-4 w-4" />
             Descargar reporte en Excel

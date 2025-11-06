@@ -11,9 +11,11 @@ import { useBulkInsertCalibraciones } from '@/hooks/queries/useCalibracionGaussQ
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const PAISES = ['Argentina', 'Uruguay', 'Paraguay', 'Chile'] as const;
+interface GaussUploadDialogProps {
+  paisesPermitidos: string[];
+}
 
-export const GaussUploadDialog = () => {
+export const GaussUploadDialog = ({ paisesPermitidos }: GaussUploadDialogProps) => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<{ success: number; errors: any[] } | null>(null);
@@ -137,7 +139,7 @@ export const GaussUploadDialog = () => {
                   <SelectValue placeholder="Selecciona un país" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PAISES.map(pais => (
+                  {paisesPermitidos.map(pais => (
                     <SelectItem key={pais} value={pais}>{pais}</SelectItem>
                   ))}
                 </SelectContent>
