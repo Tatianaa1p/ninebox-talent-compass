@@ -377,6 +377,36 @@ export type Database = {
           },
         ]
       }
+      gauss_tableros: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          equipo: string | null
+          id: string
+          modulo_origen: string | null
+          nombre: string
+          pais: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          equipo?: string | null
+          id?: string
+          modulo_origen?: string | null
+          nombre: string
+          pais: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          equipo?: string | null
+          id?: string
+          modulo_origen?: string | null
+          nombre?: string
+          pais?: string
+        }
+        Relationships: []
+      }
       gauss_user_roles: {
         Row: {
           created_at: string | null
