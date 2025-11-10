@@ -77,8 +77,8 @@ const CurvaGauss = () => {
 
   const filteredCalibraciones = useMemo(() => {
     return calibraciones.filter(cal => {
-      // Filter by allowed countries first (security)
-      if (paisesAcceso.length > 0 && !paisesAcceso.includes(cal.pais)) return false;
+      // Filter by allowed countries first (security) - normalize to lowercase for comparison
+      if (paisesAcceso.length > 0 && !paisesAcceso.map(p => p.toLowerCase()).includes(cal.pais.toLowerCase())) return false;
       
       // Filter by tablero
       if (selectedTablero !== 'all' && cal.tablero_id !== selectedTablero) return false;
