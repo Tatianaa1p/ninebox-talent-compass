@@ -15,23 +15,44 @@ export const exportEmpleadosToExcel = (empleados: EmpleadoPromedio[]) => {
       'Familia Cargo': emp.familia_cargo,
     };
 
-    // Add competencias as columns
+    // Add competencias as columns with both original and calibrated
+    const calibradoresPorCompetencia: string[] = [];
     emp.competencias.forEach(comp => {
       row[`${comp.competencia} (Original)`] = Number(comp.score_original.toFixed(2));
       row[`${comp.competencia} (Calibrado)`] = Number(comp.score_calibrado.toFixed(2));
+      if (comp.calibrado_por) {
+        calibradoresPorCompetencia.push(comp.calibrado_por);
+      }
     });
 
-    // Add performance score
-    row['Puntuación de Desempeño'] = Number(emp.puntuacion_desempeno.toFixed(2));
+    // Calculate original performance score (average of original scores)
+    const sumOriginal = emp.competencias.reduce((acc, comp) => acc + comp.score_original, 0);
+    const puntuacionOriginal = emp.competencias.length > 0 ? sumOriginal / emp.competencias.length : 0;
+    
+    row['Puntuación de Desempeño Original'] = Number(puntuacionOriginal.toFixed(2));
+    
+    // Add calibrated performance score
+    row['Puntuación de Desempeño Calibrada'] = Number(emp.puntuacion_desempeno.toFixed(2));
 
-    // Add position in curve
-    const score = emp.puntuacion_desempeno;
-    let posicionCurva = '';
-    if (score >= 3.0) posicionCurva = 'Alto desempeño';
-    else if (score >= 2.0) posicionCurva = 'Desempeño esperado';
-    else posicionCurva = 'Bajo desempeño';
+    // Calculate position in curve for original score
+    let posicionOriginal = '';
+    if (puntuacionOriginal >= 3.0) posicionOriginal = 'Alto desempeño';
+    else if (puntuacionOriginal >= 2.0) posicionOriginal = 'Desempeño esperado';
+    else posicionOriginal = 'Bajo desempeño';
+    
+    row['Posición de Desempeño Original'] = posicionOriginal;
 
-    row['Posición en Curva'] = posicionCurva;
+    // Calculate position in curve for calibrated score
+    let posicionCalibrada = '';
+    if (emp.puntuacion_desempeno >= 3.0) posicionCalibrada = 'Alto desempeño';
+    else if (emp.puntuacion_desempeno >= 2.0) posicionCalibrada = 'Desempeño esperado';
+    else posicionCalibrada = 'Bajo desempeño';
+
+    row['Posición de Desempeño Calibrada'] = posicionCalibrada;
+    
+    // Add who calibrated (unique list)
+    const calibradoresUnicos = [...new Set(calibradoresPorCompetencia)];
+    row['Calibrado Por'] = calibradoresUnicos.join(', ') || '-';
 
     return row;
   });

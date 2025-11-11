@@ -24,11 +24,11 @@ export const GaussTableroSelector = ({
 }: GaussTableroSelectorProps) => {
   const { data: allTableros = [], isLoading } = useTablerosPaisQuery(selectedPais);
   
-  // Filter tableros by allowed countries
+  // Filter tableros by allowed countries - case insensitive comparison
   const tableros = allTableros.filter(tablero => 
     paisesPermitidos.length === 0 || // Allow all if no restrictions (manager)
     !tablero.pais || // Allow if no country assigned
-    paisesPermitidos.includes(tablero.pais) // Allow if country is in permitted list
+    paisesPermitidos.some(p => p.toLowerCase() === tablero.pais?.toLowerCase()) // Case-insensitive match
   );
   
   // Filter countries based on user permissions
@@ -106,8 +106,8 @@ export const GaussTableroSelector = ({
 
         {selectedTablero !== 'all' && tableroSeleccionado && (
           <>
-            {/* Only show delete button if user has access to this country */}
-            {(paisesPermitidos.includes(tableroSeleccionado.pais || '') || paisesPermitidos.length === 0) && (
+            {/* Only show delete button if user has access to this country - case insensitive */}
+            {(paisesPermitidos.some(p => p.toLowerCase() === tableroSeleccionado.pais?.toLowerCase()) || paisesPermitidos.length === 0) && (
               <div className="flex justify-end pt-2">
                 <EliminarTableroDialog
                   tableroId={selectedTablero}

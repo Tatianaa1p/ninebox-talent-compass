@@ -16,7 +16,8 @@ const fetchTablerosPorPais = async (pais?: string): Promise<Tablero[]> => {
     .order('created_at', { ascending: false });
   
   if (pais && pais !== 'all') {
-    query = query.eq('pais', pais);
+    // Use ilike for case-insensitive comparison
+    query = query.ilike('pais', pais);
   }
   
   const { data, error } = await query;
@@ -25,6 +26,8 @@ const fetchTablerosPorPais = async (pais?: string): Promise<Tablero[]> => {
     console.error('Error loading tableros:', error);
     throw error;
   }
+  
+  console.log('[useTablerosPaisQuery] Tableros fetched:', data?.length, 'for pais:', pais);
   
   return data || [];
 };

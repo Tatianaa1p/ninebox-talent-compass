@@ -14,6 +14,7 @@ export interface EmpleadoPromedio {
     competencia: string;
     score_original: number;
     score_calibrado: number;
+    calibrado_por?: string;
   }[];
 }
 
@@ -46,6 +47,7 @@ export const calcularPromediosPorPersona = (calibraciones: CalibracionGauss[]): 
       competencia: cal.competencia,
       score_original: cal.score_original,
       score_calibrado: cal.score_calibrado,
+      calibrado_por: cal.ultima_calibracion_por || undefined,
     });
   });
 
