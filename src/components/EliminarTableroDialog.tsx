@@ -34,14 +34,34 @@ export const EliminarTableroDialog = ({
   const handleEliminar = async () => {
     setLoading(true);
     try {
+      console.log('[EliminarTablero] Intentando eliminar tablero:', tableroId);
+      
+      // First delete associated calibraciones (child records)
+      const { error: calibError } = await supabase
+        .from('calibracion_gauss')
+        .delete()
+        .eq('tablero_id', tableroId);
+
+      if (calibError) {
+        console.error('[EliminarTablero] Error eliminando calibraciones:', calibError);
+        throw calibError;
+      }
+
+      console.log('[EliminarTablero] Calibraciones eliminadas, ahora eliminando tablero');
+
+      // Then delete the tablero
       const { error } = await supabase
         .from('tableros')
         .delete()
         .eq('id', tableroId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[EliminarTablero] Error eliminando tablero:', error);
+        throw error;
+      }
 
-      toast.success('Tablero eliminado correctamente junto a los empleados asociados');
+      console.log('[EliminarTablero] Tablero eliminado exitosamente');
+      toast.success('Tablero eliminado correctamente junto a las calibraciones asociadas');
       
       // Invalidar queries para actualizar el UI
       await queryClient.invalidateQueries({ queryKey: ['tableros-pais'] });
@@ -49,9 +69,9 @@ export const EliminarTableroDialog = ({
       
       setOpen(false);
       onTableroEliminado();
-    } catch (error) {
-      console.error('Error eliminando tablero:', error);
-      toast.error('Error al eliminar el tablero');
+    } catch (error: any) {
+      console.error('[EliminarTablero] Error completo:', error);
+      toast.error(`Error al eliminar el tablero: ${error.message || 'Error desconocido'}`);
     } finally {
       setLoading(false);
     }

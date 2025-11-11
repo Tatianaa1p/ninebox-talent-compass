@@ -18,6 +18,7 @@ export const exportEmpleadosToExcel = (empleados: EmpleadoPromedio[]) => {
     // Add competencias as columns with both original and calibrated
     const calibradoresPorCompetencia: string[] = [];
     emp.competencias.forEach(comp => {
+      // Column names with prefix for clarity
       row[`${comp.competencia} (Original)`] = Number(comp.score_original.toFixed(2));
       row[`${comp.competencia} (Calibrado)`] = Number(comp.score_calibrado.toFixed(2));
       if (comp.calibrado_por) {
@@ -29,10 +30,9 @@ export const exportEmpleadosToExcel = (empleados: EmpleadoPromedio[]) => {
     const sumOriginal = emp.competencias.reduce((acc, comp) => acc + comp.score_original, 0);
     const puntuacionOriginal = emp.competencias.length > 0 ? sumOriginal / emp.competencias.length : 0;
     
-    row['Puntuación de Desempeño Original'] = Number(puntuacionOriginal.toFixed(2));
-    
-    // Add calibrated performance score
-    row['Puntuación de Desempeño Calibrada'] = Number(emp.puntuacion_desempeno.toFixed(2));
+    // Performance scores - original and calibrated
+    row['Puntuación de Desempeño (Original)'] = Number(puntuacionOriginal.toFixed(2));
+    row['Puntuación de Desempeño (Calibrada)'] = Number(emp.puntuacion_desempeno.toFixed(2));
 
     // Calculate position in curve for original score
     let posicionOriginal = '';
@@ -40,7 +40,7 @@ export const exportEmpleadosToExcel = (empleados: EmpleadoPromedio[]) => {
     else if (puntuacionOriginal >= 2.0) posicionOriginal = 'Desempeño esperado';
     else posicionOriginal = 'Bajo desempeño';
     
-    row['Posición de Desempeño Original'] = posicionOriginal;
+    row['Posición de Desempeño (Original)'] = posicionOriginal;
 
     // Calculate position in curve for calibrated score
     let posicionCalibrada = '';
@@ -48,11 +48,11 @@ export const exportEmpleadosToExcel = (empleados: EmpleadoPromedio[]) => {
     else if (emp.puntuacion_desempeno >= 2.0) posicionCalibrada = 'Desempeño esperado';
     else posicionCalibrada = 'Bajo desempeño';
 
-    row['Posición de Desempeño Calibrada'] = posicionCalibrada;
+    row['Posición de Desempeño (Calibrada)'] = posicionCalibrada;
     
     // Add who calibrated (unique list)
     const calibradoresUnicos = [...new Set(calibradoresPorCompetencia)];
-    row['Calibrado Por'] = calibradoresUnicos.join(', ') || '-';
+    row['Usuario que Calibró'] = calibradoresUnicos.join(', ') || '-';
 
     return row;
   });

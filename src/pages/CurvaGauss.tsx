@@ -76,9 +76,19 @@ const CurvaGauss = () => {
   }, [hasAccess, accessLoading, authLoading, navigate]);
 
   const filteredCalibraciones = useMemo(() => {
-    return calibraciones.filter(cal => {
+    console.log('[CurvaGauss] Filtrando calibraciones:', {
+      total: calibraciones.length,
+      paisesAcceso,
+      selectedTablero,
+      filters
+    });
+
+    const filtered = calibraciones.filter(cal => {
       // Filter by allowed countries first (security) - normalize to lowercase for comparison
-      if (paisesAcceso.length > 0 && !paisesAcceso.map(p => p.toLowerCase()).includes(cal.pais.toLowerCase())) return false;
+      if (paisesAcceso.length > 0 && !paisesAcceso.map(p => p.toLowerCase()).includes(cal.pais.toLowerCase())) {
+        console.log('[CurvaGauss] Rechazado por país:', cal.pais, 'permitidos:', paisesAcceso);
+        return false;
+      }
       
       // Filter by tablero
       if (selectedTablero !== 'all' && cal.tablero_id !== selectedTablero) return false;
@@ -92,6 +102,9 @@ const CurvaGauss = () => {
       if (filters.posicion !== 'all' && cal.posicion !== filters.posicion) return false;
       return true;
     });
+
+    console.log('[CurvaGauss] Calibraciones después de filtro:', filtered.length);
+    return filtered;
   }, [calibraciones, filters, selectedTablero, paisesAcceso]);
 
   const empleadosConPromedio = useMemo(() => {
