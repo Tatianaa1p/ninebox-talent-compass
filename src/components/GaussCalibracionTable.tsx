@@ -41,13 +41,15 @@ export const GaussCalibracionTable = ({ calibraciones }: GaussCalibracionTablePr
           <TableHeader className="sticky top-0 bg-background z-10">
             <TableRow>
               <TableHead>Email</TableHead>
+              <TableHead>Nombre</TableHead>
               <TableHead>Competencia</TableHead>
               <TableHead>Familia Cargo</TableHead>
               <TableHead>País</TableHead>
               <TableHead>Equipo</TableHead>
-              <TableHead>Score Original</TableHead>
-              <TableHead>Score Calibrado</TableHead>
-              <TableHead>Diferencia</TableHead>
+              <TableHead>Posición</TableHead>
+              <TableHead className="text-center">Puntuación Original</TableHead>
+              <TableHead className="text-center">Puntuación Calibrada (Editable)</TableHead>
+              <TableHead className="text-center">Diferencia</TableHead>
               <TableHead>Calibrado Por</TableHead>
             </TableRow>
           </TableHeader>
@@ -58,27 +60,33 @@ export const GaussCalibracionTable = ({ calibraciones }: GaussCalibracionTablePr
               
               return (
                 <TableRow key={cal.id}>
-                  <TableCell className="font-medium">{cal.empleado_email}</TableCell>
-                  <TableCell>{cal.competencia}</TableCell>
-                  <TableCell>{cal.familia_cargo}</TableCell>
-                  <TableCell>{cal.pais}</TableCell>
-                  <TableCell>{cal.equipo}</TableCell>
-                  <TableCell>{cal.score_original.toFixed(2)}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium text-sm">{cal.empleado_email}</TableCell>
+                  <TableCell className="text-sm">{cal.nombre_completo || '-'}</TableCell>
+                  <TableCell className="text-sm">{cal.competencia}</TableCell>
+                  <TableCell className="text-sm">{cal.familia_cargo}</TableCell>
+                  <TableCell className="text-sm">{cal.pais}</TableCell>
+                  <TableCell className="text-sm">{cal.equipo}</TableCell>
+                  <TableCell className="text-sm">{cal.posicion}</TableCell>
+                  <TableCell className="text-center">
+                    <span className="font-semibold text-muted-foreground">
+                      {cal.score_original.toFixed(2)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
                     <Input
                       type="number"
-                      step="0.1"
+                      step="0.01"
                       min="1.0"
                       max="4.0"
                       value={currentScore}
                       onChange={(e) => handleScoreChange(cal.id, e.target.value)}
                       onKeyPress={(e) => handleKeyPress(e, cal.id)}
-                      className="w-20"
+                      className="w-24 text-center font-bold"
                       placeholder="1.0-4.0"
                     />
                   </TableCell>
-                  <TableCell>
-                    <span className={diferencia > 0 ? 'text-green-600' : diferencia < 0 ? 'text-red-600' : ''}>
+                  <TableCell className="text-center">
+                    <span className={`font-semibold ${diferencia > 0 ? 'text-green-600' : diferencia < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
                       {diferencia > 0 ? '+' : ''}{diferencia.toFixed(2)}
                     </span>
                   </TableCell>
