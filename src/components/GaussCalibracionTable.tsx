@@ -1,38 +1,11 @@
-import { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
 import { CalibracionGauss } from '@/types/gauss';
-import { useUpdateCalibracionGauss } from '@/hooks/queries/useCalibracionGaussQuery';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface GaussCalibracionTableProps {
   calibraciones: CalibracionGauss[];
 }
 
 export const GaussCalibracionTable = ({ calibraciones }: GaussCalibracionTableProps) => {
-  const { user } = useAuth();
-  const updateCalibracion = useUpdateCalibracionGauss();
-  const [editingScores, setEditingScores] = useState<Record<string, number>>({});
-
-  const handleScoreChange = (id: string, value: string) => {
-    const score = Number(value);
-    if (score >= 1.0 && score <= 4.0) {
-      setEditingScores(prev => ({ ...prev, [id]: score }));
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, id: string) => {
-    if (e.key === 'Enter') {
-      const score = editingScores[id];
-      if (score !== undefined) {
-        updateCalibracion.mutate({
-          id,
-          score_calibrado: score,
-          calibrador_email: user?.email || '',
-        });
-      }
-    }
-  };
 
   return (
     <div className="border rounded-lg overflow-hidden">
@@ -48,16 +21,10 @@ export const GaussCalibracionTable = ({ calibraciones }: GaussCalibracionTablePr
               <TableHead>Equipo</TableHead>
               <TableHead>Posición</TableHead>
               <TableHead className="text-center">Puntuación Original</TableHead>
-              <TableHead className="text-center">Puntuación Calibrada (Editable)</TableHead>
-              <TableHead className="text-center">Diferencia</TableHead>
-              <TableHead>Calibrado Por</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {calibraciones.map((cal) => {
-              const currentScore = editingScores[cal.id] ?? cal.score_calibrado;
-              const diferencia = currentScore - cal.score_original;
-              
+          {calibraciones.map((cal) => {
               return (
                 <TableRow key={cal.id}>
                   <TableCell className="font-medium text-sm">{cal.empleado_email}</TableCell>
@@ -71,27 +38,6 @@ export const GaussCalibracionTable = ({ calibraciones }: GaussCalibracionTablePr
                     <span className="font-semibold text-muted-foreground">
                       {cal.score_original.toFixed(2)}
                     </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="1.0"
-                      max="4.0"
-                      value={currentScore}
-                      onChange={(e) => handleScoreChange(cal.id, e.target.value)}
-                      onKeyPress={(e) => handleKeyPress(e, cal.id)}
-                      className="w-24 text-center font-bold"
-                      placeholder="1.0-4.0"
-                    />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className={`font-semibold ${diferencia > 0 ? 'text-green-600' : diferencia < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                      {diferencia > 0 ? '+' : ''}{diferencia.toFixed(2)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {cal.ultima_calibracion_por || '-'}
                   </TableCell>
                 </TableRow>
               );
