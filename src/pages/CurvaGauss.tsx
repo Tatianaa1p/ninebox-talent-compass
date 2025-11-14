@@ -34,7 +34,18 @@ const CurvaGauss = () => {
   console.log('✅ ¿Tiene acceso?:', hasAccess);
   console.log('👤 Rol asignado:', role);
   console.log('🌍 Países de acceso:', paisesAcceso);
+  console.log('📊 Países de acceso length:', paisesAcceso.length);
+  console.log('🔐 ¿Países vacíos?:', paisesAcceso.length === 0);
   console.log('========================================');
+
+  // Track when paisesAcceso changes
+  useEffect(() => {
+    console.log('🔄 [CurvaGauss] paisesAcceso ACTUALIZADO:', {
+      paisesAcceso,
+      length: paisesAcceso.length,
+      timestamp: new Date().toISOString()
+    });
+  }, [paisesAcceso]);
 
   const [filters, setFilters] = useState({
     familia_cargo: 'all',
@@ -77,17 +88,19 @@ const CurvaGauss = () => {
   }, [hasAccess, accessLoading, authLoading, navigate]);
 
   const filteredCalibraciones = useMemo(() => {
-    console.log('[CurvaGauss] Filtrando calibraciones:', {
+    console.log('🔍 [CurvaGauss] FILTRANDO CALIBRACIONES:', {
       total: calibraciones.length,
       paisesAcceso,
+      paisesAccesoLength: paisesAcceso.length,
       selectedTablero,
-      filters
+      filters,
+      timestamp: new Date().toISOString()
     });
 
     const filtered = calibraciones.filter(cal => {
       // Filter by allowed countries first (security) - normalize to lowercase for comparison
       if (paisesAcceso.length > 0 && !paisesAcceso.map(p => p.toLowerCase()).includes(cal.pais.toLowerCase())) {
-        console.log('[CurvaGauss] Rechazado por país:', cal.pais, 'permitidos:', paisesAcceso);
+        console.log('❌ [CurvaGauss] Rechazado por país:', cal.pais, 'permitidos:', paisesAcceso);
         return false;
       }
       
@@ -104,7 +117,10 @@ const CurvaGauss = () => {
       return true;
     });
 
-    console.log('[CurvaGauss] Calibraciones después de filtro:', filtered.length);
+    console.log('✅ [CurvaGauss] Calibraciones después de filtro:', {
+      filtradas: filtered.length,
+      original: calibraciones.length
+    });
     return filtered;
   }, [calibraciones, filters, selectedTablero, paisesAcceso]);
 
@@ -188,14 +204,21 @@ const CurvaGauss = () => {
 
         {/* Only show selector when permissions are loaded */}
         {!accessLoading && (
-          <GaussTableroSelector
-            selectedPais={selectedPaisTablero}
-            selectedTablero={selectedTablero}
-            onPaisChange={setSelectedPaisTablero}
-            onTableroChange={setSelectedTablero}
-            onTableroEliminado={() => toast.success('Tablero eliminado exitosamente')}
-            paisesPermitidos={paisesAcceso}
-          />
+          <>
+            {console.log('🎨 [CurvaGauss] Renderizando GaussTableroSelector con:', {
+              accessLoading,
+              paisesAcceso,
+              paisesAccesoLength: paisesAcceso.length
+            })}
+            <GaussTableroSelector
+              selectedPais={selectedPaisTablero}
+              selectedTablero={selectedTablero}
+              onPaisChange={setSelectedPaisTablero}
+              onTableroChange={setSelectedTablero}
+              onTableroEliminado={() => toast.success('Tablero eliminado exitosamente')}
+              paisesPermitidos={paisesAcceso}
+            />
+          </>
         )}
 
         <GaussStats empleados={empleadosConPromedio} />
