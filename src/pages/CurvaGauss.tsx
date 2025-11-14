@@ -33,6 +33,7 @@ const CurvaGauss = () => {
   console.log('🔄 Access loading:', accessLoading);
   console.log('✅ ¿Tiene acceso?:', hasAccess);
   console.log('👤 Rol asignado:', role);
+  console.log('🌍 Países de acceso:', paisesAcceso);
   console.log('========================================');
 
   const [filters, setFilters] = useState({
@@ -185,14 +186,17 @@ const CurvaGauss = () => {
           </Button>
         </div>
 
-        <GaussTableroSelector
-          selectedPais={selectedPaisTablero}
-          selectedTablero={selectedTablero}
-          onPaisChange={setSelectedPaisTablero}
-          onTableroChange={setSelectedTablero}
-          onTableroEliminado={() => toast.success('Tablero eliminado exitosamente')}
-          paisesPermitidos={paisesAcceso}
-        />
+        {/* Only show selector when permissions are loaded */}
+        {!accessLoading && (
+          <GaussTableroSelector
+            selectedPais={selectedPaisTablero}
+            selectedTablero={selectedTablero}
+            onPaisChange={setSelectedPaisTablero}
+            onTableroChange={setSelectedTablero}
+            onTableroEliminado={() => toast.success('Tablero eliminado exitosamente')}
+            paisesPermitidos={paisesAcceso}
+          />
+        )}
 
         <GaussStats empleados={empleadosConPromedio} />
 
