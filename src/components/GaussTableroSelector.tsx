@@ -24,12 +24,27 @@ export const GaussTableroSelector = ({
 }: GaussTableroSelectorProps) => {
   const { data: allTableros = [], isLoading } = useTablerosPaisQuery(selectedPais);
   
+  console.log('[GaussTableroSelector] Debug:', {
+    allTableros: allTableros.length,
+    paisesPermitidos,
+    selectedPais,
+    tablerosDetalle: allTableros.map(t => ({ nombre: t.nombre, pais: t.pais }))
+  });
+  
   // Filter tableros by allowed countries - case insensitive comparison
-  const tableros = allTableros.filter(tablero => 
-    paisesPermitidos.length === 0 || // Allow all if no restrictions (manager)
-    !tablero.pais || // Allow if no country assigned
-    paisesPermitidos.some(p => p.toLowerCase() === tablero.pais?.toLowerCase()) // Case-insensitive match
-  );
+  // CRITICAL: Only filter if paisesPermitidos has data (not empty during loading)
+  const tableros = allTableros.filter(tablero => {
+    // If no pais on tablero, allow it
+    if (!tablero.pais) return true;
+    
+    // If paisesPermitidos is empty, don't show anything (still loading permissions)
+    if (paisesPermitidos.length === 0) return false;
+    
+    // Case-insensitive match with user's allowed countries
+    return paisesPermitidos.some(p => p.toLowerCase() === tablero.pais?.toLowerCase());
+  });
+  
+  console.log('[GaussTableroSelector] Tableros filtrados:', tableros.length);
   
   // Filter countries based on user permissions
   const paisesDisponibles = paisesPermitidos.length > 0 
