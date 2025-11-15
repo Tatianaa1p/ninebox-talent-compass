@@ -26,65 +26,22 @@ export const GaussTableroSelector = ({
 }: GaussTableroSelectorProps) => {
   const { data: allTableros = [], isLoading } = useTablerosPaisQuery(selectedPais);
   
-  // Debug logs for permissions loading
-  console.log('🔍 [GaussTableroSelector] RENDER STATE:', {
-    timestamp: new Date().toISOString(),
-    paisesPermitidos,
-    paisesPermitidosLength: paisesPermitidos.length,
-    isLoading,
-    selectedPais,
-    allTablerosCount: allTableros.length,
-    allTablerosDetalle: allTableros.map(t => ({ nombre: t.nombre, pais: t.pais }))
-  });
-  
-  // Track when paisesPermitidos changes
-  useEffect(() => {
-    console.log('🔄 [GaussTableroSelector] paisesPermitidos CHANGED:', {
-      paisesPermitidos,
-      length: paisesPermitidos.length
-    });
-  }, [paisesPermitidos]);
-  
-  // Track when tableros data changes
-  useEffect(() => {
-    console.log('📊 [GaussTableroSelector] allTableros CHANGED:', {
-      count: allTableros.length,
-      tableros: allTableros.map(t => ({ nombre: t.nombre, pais: t.pais }))
-    });
-  }, [allTableros]);
+  if (process.env.NODE_ENV === 'development') {
+    useEffect(() => {
+      console.log('🔍 [GaussTableroSelector] Estado:', {
+        paisesPermitidos,
+        isLoading,
+        selectedPais,
+        tablerosCount: allTableros.length
+      });
+    }, [paisesPermitidos, isLoading, selectedPais, allTableros.length]);
+  }
   
   // Filter tableros by allowed countries - case insensitive comparison
-  // CRITICAL: Only filter if paisesPermitidos has data (not empty during loading)
   const tableros = allTableros.filter(tablero => {
-    const shouldInclude = (() => {
-      // If no pais on tablero, allow it
-      if (!tablero.pais) {
-        console.log('✅ [Filter] Tablero sin país permitido:', tablero.nombre);
-        return true;
-      }
-      
-      // If paisesPermitidos is empty, don't show anything (still loading permissions)
-      if (paisesPermitidos.length === 0) {
-        console.log('⏳ [Filter] Rechazando tablero (permisos vacíos):', tablero.nombre);
-        return false;
-      }
-      
-      // Case-insensitive match with user's allowed countries
-      const hasAccess = paisesPermitidos.some(p => p.toLowerCase() === tablero.pais?.toLowerCase());
-      if (hasAccess) {
-        console.log('✅ [Filter] Tablero permitido:', tablero.nombre, 'País:', tablero.pais);
-      } else {
-        console.log('❌ [Filter] Tablero rechazado:', tablero.nombre, 'País:', tablero.pais, 'Permitidos:', paisesPermitidos);
-      }
-      return hasAccess;
-    })();
-    
-    return shouldInclude;
-  });
-  
-  console.log('📋 [GaussTableroSelector] TABLEROS FILTRADOS:', {
-    total: tableros.length,
-    tableros: tableros.map(t => ({ nombre: t.nombre, pais: t.pais }))
+    if (!tablero.pais) return true;
+    if (paisesPermitidos.length === 0) return false;
+    return paisesPermitidos.some(p => p.toLowerCase() === tablero.pais?.toLowerCase());
   });
   
   // Filter countries based on user permissions
@@ -104,8 +61,8 @@ export const GaussTableroSelector = ({
 
   const tableroSeleccionado = tableros.find(t => t.id === selectedTablero);
 
-  // Show skeleton while permissions are loading (empty paisesPermitidos)
-  if (paisesPermitidos.length === 0 && !isLoading) {
+  // Show skeleton while permissions are loading
+  if (isLoading || paisesPermitidos.length === 0) {
     console.log('⏳ [GaussTableroSelector] Mostrando skeleton - permisos aún no cargados');
     return (
       <Card>

@@ -9,8 +9,8 @@ import { useCalibracionGaussQuery } from '@/hooks/queries/useCalibracionGaussQue
 import { GaussUploadDialog } from '@/components/GaussUploadDialog';
 import { GaussFilters } from '@/components/GaussFilters';
 import { GaussChart } from '@/components/GaussChart';
-import { GaussCalibracionTable } from '@/components/GaussCalibracionTable';
-import { GaussEmpleadosTable } from '@/components/GaussEmpleadosTable';
+import GaussCalibracionTableOptimized from '@/components/GaussCalibracionTableOptimized';
+import GaussEmpleadosTableOptimized from '@/components/GaussEmpleadosTableOptimized';
 import { GaussStats } from '@/components/GaussStats';
 import { GaussTableroSelector } from '@/components/GaussTableroSelector';
 import { exportEmpleadosToExcel } from '@/utils/gaussExport';
@@ -22,31 +22,7 @@ const CurvaGauss = () => {
   const navigate = useNavigate();
   const { signOut, user, loading: authLoading } = useAuth();
   const { hasAccess, isLoading: accessLoading, role, paisesAcceso } = useGaussAccess();
-  const { data: calibraciones = [], isLoading } = useCalibracionGaussQuery();
-
-  console.log('========================================');
-  console.log('🔍 CURVA GAUSS - DEBUG DE AUTENTICACIÓN');
-  console.log('========================================');
-  console.log('📧 Email autenticado:', user?.email);
-  console.log('🆔 User ID:', user?.id);
-  console.log('🔄 Auth loading:', authLoading);
-  console.log('🔄 Access loading:', accessLoading);
-  console.log('✅ ¿Tiene acceso?:', hasAccess);
-  console.log('👤 Rol asignado:', role);
-  console.log('🌍 Países de acceso:', paisesAcceso);
-  console.log('📊 Países de acceso length:', paisesAcceso.length);
-  console.log('🔐 ¿Países vacíos?:', paisesAcceso.length === 0);
-  console.log('========================================');
-
-  // Track when paisesAcceso changes
-  useEffect(() => {
-    console.log('🔄 [CurvaGauss] paisesAcceso ACTUALIZADO:', {
-      paisesAcceso,
-      length: paisesAcceso.length,
-      timestamp: new Date().toISOString()
-    });
-  }, [paisesAcceso]);
-
+  
   const [filters, setFilters] = useState({
     familia_cargo: 'all',
     competencia: 'all',
@@ -59,70 +35,54 @@ const CurvaGauss = () => {
   const [selectedPaisTablero, setSelectedPaisTablero] = useState('all');
   const [selectedTablero, setSelectedTablero] = useState('all');
 
+  // Apply backend filtering for better performance
+  const { data: calibraciones = [], isLoading } = useCalibracionGaussQuery({
+    paisesAcceso: paisesAcceso.length > 0 ? paisesAcceso : undefined,
+    tablero_id: selectedTablero,
+    pais: filters.pais,
+    equipo: filters.equipo
+  });
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 [CurvaGauss] Estado:', {
+      email: user?.email,
+      userId: user?.id,
+      hasAccess,
+      role,
+      paisesAcceso,
+      calibracionesCount: calibraciones.length
+    });
+  }
+
   const handleTableroCreado = (tableroId: string, pais: string) => {
-    console.log('📋 Tablero creado, seleccionando automáticamente:', { tableroId, pais });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📋 Tablero creado:', { tableroId, pais });
+    }
     setSelectedPaisTablero(pais);
     setSelectedTablero(tableroId);
   };
 
-  const [media, setMedia] = useState(2.5); // Media objetivo por defecto
-  const [desviacion, setDesviacion] = useState(0.5); // Desviación estándar por defecto
+  const [media, setMedia] = useState(2.5);
+  const [desviacion, setDesviacion] = useState(0.5);
 
   useEffect(() => {
-    console.log('[CurvaGauss useEffect] Checking access...');
-    console.log('[CurvaGauss useEffect] authLoading:', authLoading);
-    console.log('[CurvaGauss useEffect] accessLoading:', accessLoading);
-    console.log('[CurvaGauss useEffect] hasAccess:', hasAccess);
-    
-    // CRÍTICO: Esperar a que AMBOS loading states sean false antes de verificar acceso
     const isFullyLoaded = !authLoading && !accessLoading;
     
     if (isFullyLoaded && !hasAccess) {
-      console.log('[CurvaGauss useEffect] ❌ REDIRECTING to /acceso-denegado - Access denied!');
       navigate('/acceso-denegado');
-    } else if (isFullyLoaded && hasAccess) {
-      console.log('[CurvaGauss useEffect] ✅ Access granted!');
-    } else if (!isFullyLoaded) {
-      console.log('[CurvaGauss useEffect] ⏳ Waiting for auth and permissions to load...');
     }
   }, [hasAccess, accessLoading, authLoading, navigate]);
 
+  // Frontend filters for remaining criteria (backend already filtered by pais, tablero, equipo)
   const filteredCalibraciones = useMemo(() => {
-    console.log('🔍 [CurvaGauss] FILTRANDO CALIBRACIONES:', {
-      total: calibraciones.length,
-      paisesAcceso,
-      paisesAccesoLength: paisesAcceso.length,
-      selectedTablero,
-      filters,
-      timestamp: new Date().toISOString()
-    });
-
-    const filtered = calibraciones.filter(cal => {
-      // Filter by allowed countries first (security) - normalize to lowercase for comparison
-      if (paisesAcceso.length > 0 && !paisesAcceso.map(p => p.toLowerCase()).includes(cal.pais.toLowerCase())) {
-        console.log('❌ [CurvaGauss] Rechazado por país:', cal.pais, 'permitidos:', paisesAcceso);
-        return false;
-      }
-      
-      // Filter by tablero
-      if (selectedTablero !== 'all' && cal.tablero_id !== selectedTablero) return false;
-      
-      // Then apply other filters
+    return calibraciones.filter(cal => {
       if (filters.familia_cargo !== 'all' && cal.familia_cargo !== filters.familia_cargo) return false;
       if (filters.competencia !== 'all' && cal.competencia !== filters.competencia) return false;
-      if (filters.pais !== 'all' && cal.pais !== filters.pais) return false;
-      if (filters.equipo !== 'all' && cal.equipo !== filters.equipo) return false;
       if (filters.seniority !== 'all' && cal.seniority !== filters.seniority) return false;
       if (filters.posicion !== 'all' && cal.posicion !== filters.posicion) return false;
       return true;
     });
-
-    console.log('✅ [CurvaGauss] Calibraciones después de filtro:', {
-      filtradas: filtered.length,
-      original: calibraciones.length
-    });
-    return filtered;
-  }, [calibraciones, filters, selectedTablero, paisesAcceso]);
+  }, [calibraciones, filters]);
 
   const empleadosConPromedio = useMemo(() => {
     return calcularPromediosPorPersona(filteredCalibraciones);
@@ -244,10 +204,10 @@ const CurvaGauss = () => {
             <TabsTrigger value="competencias">Vista por Competencias</TabsTrigger>
           </TabsList>
           <TabsContent value="empleados" className="mt-4">
-            <GaussEmpleadosTable empleados={empleadosConPromedio} />
+            <GaussEmpleadosTableOptimized empleados={empleadosConPromedio} />
           </TabsContent>
           <TabsContent value="competencias" className="mt-4">
-            <GaussCalibracionTable calibraciones={filteredCalibraciones} />
+            <GaussCalibracionTableOptimized calibraciones={filteredCalibraciones} />
           </TabsContent>
         </Tabs>
       </main>
