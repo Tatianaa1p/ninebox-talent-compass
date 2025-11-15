@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,9 +33,12 @@ export const GaussFilters = ({
   onDesviacionChange,
   onApplyFilters,
 }: GaussFiltersProps) => {
-  const uniqueValues = (key: keyof CalibracionGauss) => {
-    return Array.from(new Set(calibraciones.map(c => String(c[key])))).sort();
-  };
+  // Memoize unique values calculation for better performance
+  const uniqueValues = useMemo(() => {
+    return (key: keyof CalibracionGauss) => {
+      return Array.from(new Set(calibraciones.map(c => String(c[key])))).sort();
+    };
+  }, [calibraciones]);
 
   return (
     <div className="space-y-4 p-4 border rounded-lg bg-card">

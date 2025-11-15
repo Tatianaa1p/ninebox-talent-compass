@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { Chart as ChartJS } from 'react-chartjs-2';
 import {
   Chart,
@@ -34,7 +34,15 @@ interface GaussChartProps {
   desviacion: number;
 }
 
-export const GaussChart = ({ empleados, media, desviacion }: GaussChartProps) => {
+const GaussChartComponent = ({ empleados, media, desviacion }: GaussChartProps) => {
+  // Don't render if no data
+  if (empleados.length === 0) {
+    return (
+      <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground">
+        No hay datos para mostrar en el gráfico
+      </div>
+    );
+  }
   const chartData = useMemo(() => {
     // Create bins for scores (using employee averages now)
     const bins = Array.from({ length: 31 }, (_, i) => 1.0 + i * 0.1); // 1.0 to 4.0 in 0.1 steps
@@ -113,3 +121,6 @@ export const GaussChart = ({ empleados, media, desviacion }: GaussChartProps) =>
     </div>
   );
 };
+
+// Memoize to prevent unnecessary re-renders
+export const GaussChart = memo(GaussChartComponent);

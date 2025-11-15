@@ -3,19 +3,48 @@ import { supabase } from '@/integrations/supabase/client';
 import { CalibracionGauss } from '@/types/gauss';
 import { toast } from 'sonner';
 
-export const useCalibracionGaussQuery = () => {
+interface CalibracionFilters {
+  pais?: string;
+  tablero_id?: string;
+  equipo?: string;
+  paisesAcceso?: string[];
+}
+
+export const useCalibracionGaussQuery = (filters?: CalibracionFilters) => {
   return useQuery({
-    queryKey: ['calibracion_gauss'],
+    queryKey: ['calibracion_gauss', filters],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('calibracion_gauss')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
+
+      // Apply backend filters for better performance
+      if (filters?.tablero_id && filters.tablero_id !== 'all') {
+        query = query.eq('tablero_id', filters.tablero_id);
+      }
+
+      if (filters?.equipo && filters.equipo !== 'all') {
+        query = query.eq('equipo', filters.equipo);
+      }
+
+      if (filters?.pais && filters.pais !== 'all') {
+        query = query.ilike('pais', filters.pais);
+      }
+
+      // Filter by allowed countries if provided
+      if (filters?.paisesAcceso && filters.paisesAcceso.length > 0) {
+        query = query.in('pais', filters.paisesAcceso);
+      }
+
+      query = query.order('created_at', { ascending: false });
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as CalibracionGauss[];
     },
     staleTime: 30 * 1000,
+    enabled: !filters?.paisesAcceso || filters.paisesAcceso.length > 0,
   });
 };
 
