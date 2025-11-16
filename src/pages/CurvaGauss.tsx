@@ -43,21 +43,9 @@ const CurvaGauss = () => {
     equipo: filters.equipo
   });
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 [CurvaGauss] Estado:', {
-      email: user?.email,
-      userId: user?.id,
-      hasAccess,
-      role,
-      paisesAcceso,
-      calibracionesCount: calibraciones.length
-    });
-  }
+  // Debug logs removed for production performance
 
   const handleTableroCreado = (tableroId: string, pais: string) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('📋 Tablero creado:', { tableroId, pais });
-    }
     setSelectedPaisTablero(pais);
     setSelectedTablero(tableroId);
   };
@@ -164,21 +152,14 @@ const CurvaGauss = () => {
 
         {/* Only show selector when permissions are loaded */}
         {!accessLoading && (
-          <>
-            {console.log('🎨 [CurvaGauss] Renderizando GaussTableroSelector con:', {
-              accessLoading,
-              paisesAcceso,
-              paisesAccesoLength: paisesAcceso.length
-            })}
-            <GaussTableroSelector
-              selectedPais={selectedPaisTablero}
-              selectedTablero={selectedTablero}
-              onPaisChange={setSelectedPaisTablero}
-              onTableroChange={setSelectedTablero}
-              onTableroEliminado={() => toast.success('Tablero eliminado exitosamente')}
-              paisesPermitidos={paisesAcceso}
-            />
-          </>
+          <GaussTableroSelector
+            selectedPais={selectedPaisTablero}
+            selectedTablero={selectedTablero}
+            onPaisChange={setSelectedPaisTablero}
+            onTableroChange={setSelectedTablero}
+            onTableroEliminado={() => toast.success('Tablero eliminado exitosamente')}
+            paisesPermitidos={paisesAcceso}
+          />
         )}
 
         <GaussStats empleados={empleadosConPromedio} />
