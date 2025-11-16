@@ -36,8 +36,8 @@ const CurvaGauss = () => {
   const [selectedTablero, setSelectedTablero] = useState('all');
 
   // Apply backend filtering for better performance
+  // RLS policies automatically filter by user's paisesAcceso
   const { data: calibraciones = [], isLoading } = useCalibracionGaussQuery({
-    paisesAcceso: paisesAcceso.length > 0 ? paisesAcceso : undefined,
     tablero_id: selectedTablero,
     pais: filters.pais,
     equipo: filters.equipo
