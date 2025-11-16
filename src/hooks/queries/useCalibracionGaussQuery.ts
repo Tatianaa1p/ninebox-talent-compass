@@ -7,7 +7,7 @@ interface CalibracionFilters {
   pais?: string;
   tablero_id?: string;
   equipo?: string;
-  paisesAcceso?: string[];
+  // paisesAcceso removed - filtering is now handled by RLS policies only
 }
 
 export const useCalibracionGaussQuery = (filters?: CalibracionFilters) => {
@@ -31,10 +31,9 @@ export const useCalibracionGaussQuery = (filters?: CalibracionFilters) => {
         query = query.ilike('pais', filters.pais);
       }
 
-      // Filter by allowed countries if provided
-      if (filters?.paisesAcceso && filters.paisesAcceso.length > 0) {
-        query = query.in('pais', filters.paisesAcceso);
-      }
+      // Note: paisesAcceso filtering is handled by RLS policies
+      // RLS uses lower() for case-insensitive comparison, which is more reliable
+      // Removed redundant .in() filter that was causing case-sensitivity issues
 
       query = query.order('created_at', { ascending: false });
 
@@ -44,7 +43,7 @@ export const useCalibracionGaussQuery = (filters?: CalibracionFilters) => {
       return data as CalibracionGauss[];
     },
     staleTime: 30 * 1000,
-    enabled: !filters?.paisesAcceso || filters.paisesAcceso.length > 0,
+    // RLS handles access control, no need to disable query
   });
 };
 
