@@ -25,6 +25,7 @@ interface InteractiveNineBoxGridProps {
 }
 
 const QUADRANT_LABELS: Record<string, { title: string; description: string; color: string }> = {
+  // GREEN - Talento saludable / esperado
   "Alto-Alto": { 
     title: QUADRANT_NAMES["Alto-Alto"], 
     description: QUADRANT_DESCRIPTIONS["Alto-Alto"],
@@ -38,23 +39,24 @@ const QUADRANT_LABELS: Record<string, { title: string; description: string; colo
   "Alto-Bajo": { 
     title: QUADRANT_NAMES["Alto-Bajo"], 
     description: QUADRANT_DESCRIPTIONS["Alto-Bajo"],
-    color: "bg-medium" 
+    color: "bg-high" 
   },
   "Medio-Alto": { 
     title: QUADRANT_NAMES["Medio-Alto"], 
     description: QUADRANT_DESCRIPTIONS["Medio-Alto"],
-    color: "bg-medium" 
+    color: "bg-high" 
   },
   "Medio-Medio": { 
     title: QUADRANT_NAMES["Medio-Medio"], 
     description: QUADRANT_DESCRIPTIONS["Medio-Medio"],
-    color: "bg-medium" 
+    color: "bg-high" 
   },
   "Medio-Bajo": { 
     title: QUADRANT_NAMES["Medio-Bajo"], 
     description: QUADRANT_DESCRIPTIONS["Medio-Bajo"],
-    color: "bg-medium" 
+    color: "bg-high" 
   },
+  // RED - Foco de riesgo / alerta
   "Bajo-Alto": { 
     title: QUADRANT_NAMES["Bajo-Alto"], 
     description: QUADRANT_DESCRIPTIONS["Bajo-Alto"],
