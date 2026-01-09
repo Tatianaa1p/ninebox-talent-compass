@@ -41,7 +41,7 @@ const QUADRANT_LABELS: Record<string, { title: string; description: string; colo
     description: QUADRANT_DESCRIPTIONS["Medio-Alto"],
     color: "bg-high" 
   },
-  // YELLOW - Talento intermedio / seguimiento
+  // YELLOW - Seguimiento / Intermedio
   "Alto-Bajo": { 
     title: QUADRANT_NAMES["Alto-Bajo"], 
     description: QUADRANT_DESCRIPTIONS["Alto-Bajo"],
@@ -52,15 +52,15 @@ const QUADRANT_LABELS: Record<string, { title: string; description: string; colo
     description: QUADRANT_DESCRIPTIONS["Medio-Medio"],
     color: "bg-medium" 
   },
-  "Medio-Bajo": { 
-    title: QUADRANT_NAMES["Medio-Bajo"], 
-    description: QUADRANT_DESCRIPTIONS["Medio-Bajo"],
-    color: "bg-medium" 
-  },
-  // RED - Foco de riesgo / alerta
   "Bajo-Alto": { 
     title: QUADRANT_NAMES["Bajo-Alto"], 
     description: QUADRANT_DESCRIPTIONS["Bajo-Alto"],
+    color: "bg-medium" 
+  },
+  // RED - Riesgo / Alerta
+  "Medio-Bajo": { 
+    title: QUADRANT_NAMES["Medio-Bajo"], 
+    description: QUADRANT_DESCRIPTIONS["Medio-Bajo"],
     color: "bg-low" 
   },
   "Bajo-Medio": { 

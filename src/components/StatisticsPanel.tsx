@@ -73,12 +73,6 @@ export const StatisticsPanel = ({ employees }: StatisticsPanelProps) => {
     },
     // YELLOW - Seguimiento / Intermedio
     {
-      title: "Confiable",
-      value: countByQuadrant["Bajo-Alto"] || 0,
-      icon: Award,
-      color: "text-warning",
-    },
-    {
       title: "Enigma",
       value: countByQuadrant["Alto-Bajo"] || 0,
       icon: AlertTriangle,
@@ -90,16 +84,22 @@ export const StatisticsPanel = ({ employees }: StatisticsPanelProps) => {
       icon: Users,
       color: "text-warning",
     },
+    {
+      title: "Confiable",
+      value: countByQuadrant["Bajo-Alto"] || 0,
+      icon: Award,
+      color: "text-warning",
+    },
     // RED - Riesgo / Alerta
     {
-      title: "Estancamiento",
-      value: countByQuadrant["Bajo-Medio"] || 0,
+      title: "Dilema",
+      value: countByQuadrant["Medio-Bajo"] || 0,
       icon: AlertTriangle,
       color: "text-danger",
     },
     {
-      title: "Dilema",
-      value: countByQuadrant["Medio-Bajo"] || 0,
+      title: "Estancamiento",
+      value: countByQuadrant["Bajo-Medio"] || 0,
       icon: AlertTriangle,
       color: "text-danger",
     },
