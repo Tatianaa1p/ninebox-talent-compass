@@ -52,6 +52,7 @@ export const StatisticsPanel = ({ employees }: StatisticsPanelProps) => {
       icon: Users,
       color: "text-primary",
     },
+    // GREEN - Alto desempeño / potencial
     {
       title: "Talento Estratégico",
       value: countByQuadrant["Alto-Alto"] || 0,
@@ -70,11 +71,12 @@ export const StatisticsPanel = ({ employees }: StatisticsPanelProps) => {
       icon: Target,
       color: "text-success",
     },
+    // YELLOW - Seguimiento / Intermedio
     {
       title: "Confiable",
       value: countByQuadrant["Bajo-Alto"] || 0,
       icon: Award,
-      color: "text-primary",
+      color: "text-warning",
     },
     {
       title: "Enigma",
@@ -86,13 +88,14 @@ export const StatisticsPanel = ({ employees }: StatisticsPanelProps) => {
       title: "Clave",
       value: countByQuadrant["Medio-Medio"] || 0,
       icon: Users,
-      color: "text-primary",
+      color: "text-warning",
     },
+    // RED - Riesgo / Alerta
     {
       title: "Estancamiento",
       value: countByQuadrant["Bajo-Medio"] || 0,
       icon: AlertTriangle,
-      color: "text-warning",
+      color: "text-danger",
     },
     {
       title: "Dilema",
