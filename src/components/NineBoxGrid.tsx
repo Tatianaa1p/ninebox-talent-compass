@@ -13,13 +13,14 @@ interface NineBoxGridProps {
 }
 
 const QUADRANT_LABELS: Record<string, { title: string; color: string }> = {
-  // GREEN - Talento saludable / esperado
+  // GREEN - Alto desempeño / potencial
   "Alto-Alto": { title: "Talento Estratégico", color: "bg-high" },
   "Medio-Alto": { title: "Desarrollar", color: "bg-high" },
   "Alto-Medio": { title: "Consistente", color: "bg-high" },
-  "Medio-Medio": { title: "Clave", color: "bg-high" },
-  "Medio-Bajo": { title: "Enigma", color: "bg-high" },
-  "Alto-Bajo": { title: "Confiable", color: "bg-high" },
+  // YELLOW - Talento intermedio / seguimiento
+  "Medio-Medio": { title: "Clave", color: "bg-medium" },
+  "Medio-Bajo": { title: "Enigma", color: "bg-medium" },
+  "Alto-Bajo": { title: "Confiable", color: "bg-medium" },
   // RED - Foco de riesgo / alerta
   "Bajo-Alto": { title: "Dilema", color: "bg-low" },
   "Bajo-Medio": { title: "Estancamiento", color: "bg-low" },
