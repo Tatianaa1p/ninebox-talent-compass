@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Plus, AlertCircle, Grid3x3 } from 'lucide-react';
+import { LogOut, Plus, AlertCircle, Grid3x3, Sparkles } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { InteractiveNineBoxGrid } from '@/components/InteractiveNineBoxGrid';
 import { StatisticsPanel } from '@/components/StatisticsPanel';
@@ -83,6 +83,8 @@ const Dashboard = () => {
   const [showCreateBoardDialog, setShowCreateBoardDialog] = useState(false);
   const [showCreateEmpresaDialog, setShowCreateEmpresaDialog] = useState(false);
   const [showCreateEquipoDialog, setShowCreateEquipoDialog] = useState(false);
+  const [analisisTalento, setAnalisisTalento] = useState('');
+  const [analizando, setAnalizando] = useState(false);
 
   // Use cached queries
   const { data: empresasFromQuery, isLoading: isLoadingEmpresas } = useEmpresasQuery(!permissionsLoading && !!user);
@@ -231,6 +233,69 @@ const Dashboard = () => {
       potentialScore: e.potencial,
     }));
     setEmployees(employees);
+  };
+
+  // Reset analysis when changing tablero
+  useEffect(() => {
+    setAnalisisTalento('');
+  }, [selectedTablero]);
+
+  const handleAnalizarTalento = async () => {
+    setAnalizando(true);
+    setAnalisisTalento('');
+
+    const nombresCuadrante: Record<string, string> = {
+      'Alto-Alto': 'Talento Estratégico',
+      'Alto-Medio': 'Desarrollar',
+      'Alto-Bajo': 'Enigma',
+      'Medio-Alto': 'Consistente',
+      'Medio-Medio': 'Clave',
+      'Medio-Bajo': 'Dilema',
+      'Bajo-Alto': 'Confiable',
+      'Bajo-Medio': 'Estancamiento',
+      'Bajo-Bajo': 'Riesgo',
+    };
+
+    const porCuadrante = employees.reduce((acc, emp) => {
+      const key = `${emp.potential}-${emp.performance}`;
+      const cuadrante = nombresCuadrante[key] || key;
+      if (!acc[cuadrante]) acc[cuadrante] = [];
+      acc[cuadrante].push(emp.name);
+      return acc;
+    }, {} as Record<string, string[]>);
+
+    const equipoNombre = equipos.find((e) => e.id === selectedEquipo)?.nombre || 'Equipo';
+    const tableroNombre = tableros.find((t) => t.id === selectedTablero)?.nombre || 'Tablero';
+    const empresaNombre = empresas.find((e) => e.id === selectedEmpresa)?.nombre || 'Empresa';
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analizar-tendencias-ninebox', {
+        body: {
+          modo: 'tablero',
+          empresa: empresaNombre,
+          equipo: equipoNombre,
+          tablero: tableroNombre,
+          totalEmpleados: employees.length,
+          distribucion: porCuadrante,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setAnalisisTalento(data?.analisis || 'No se pudo generar el análisis.');
+    } catch (err: unknown) {
+      console.error('Error al analizar:', err);
+      const msg = err instanceof Error ? err.message : 'No se pudo generar el análisis. Intentá nuevamente.';
+      toast({
+        title: 'Error al generar análisis',
+        description: msg,
+        variant: 'destructive',
+      });
+      setAnalisisTalento('');
+    } finally {
+      setAnalizando(false);
+    }
   };
 
   const getPerformanceLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
@@ -572,6 +637,49 @@ const Dashboard = () => {
               />
             </Card>
           </div>
+        )}
+
+        {selectedTablero && (
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+              <div>
+                <h3 className="text-lg font-semibold">Análisis de talento con IA</h3>
+                <p className="text-sm text-muted-foreground">
+                  Análisis de la distribución del equipo en este tablero
+                </p>
+              </div>
+              <Button
+                onClick={handleAnalizarTalento}
+                disabled={analizando || employees.length === 0}
+                variant="outline"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                {analizando
+                  ? 'Analizando...'
+                  : analisisTalento
+                  ? 'Regenerar análisis'
+                  : 'Analizar con IA'}
+              </Button>
+            </div>
+
+            {analizando && (
+              <div className="text-sm text-muted-foreground animate-pulse">
+                Analizando la distribución del talento del equipo...
+              </div>
+            )}
+
+            {analisisTalento && !analizando && (
+              <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
+                {analisisTalento}
+              </div>
+            )}
+
+            {employees.length === 0 && !analizando && (
+              <p className="text-sm text-muted-foreground italic">
+                Cargá empleados en el tablero para habilitar el análisis.
+              </p>
+            )}
+          </Card>
         )}
 
         {!selectedTablero && (
