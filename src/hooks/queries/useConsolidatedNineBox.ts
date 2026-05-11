@@ -46,14 +46,13 @@ const EMPTY_CUADRANTES = (): Record<string, EmpleadoConsolidado[]> => ({
 });
 
 export const useConsolidatedNineBox = (
-  empresaId: string | null,
-  pais: string | null
+  empresaId: string | null
 ) => {
   const { overrides } = useOverrides();
 
   const query = useQuery({
-    queryKey: ['consolidated-ninebox', empresaId, pais],
-    enabled: !!empresaId && !!pais,
+    queryKey: ['consolidated-ninebox', empresaId],
+    enabled: !!empresaId,
     staleTime: 2 * 60 * 1000,
     queryFn: async (): Promise<{
       tableros: Array<{ id: string; nombre: string; equipo_id: string | null; created_at: string }>;
@@ -64,7 +63,6 @@ export const useConsolidatedNineBox = (
         .from('tableros')
         .select('id, nombre, equipo_id, created_at')
         .eq('empresa_id', empresaId!)
-        .eq('pais', pais!)
         .order('created_at', { ascending: false });
       if (tErr) throw tErr;
 
