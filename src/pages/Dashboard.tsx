@@ -16,6 +16,7 @@ import { CreateEmpresaDialog } from '@/components/CreateEmpresaDialog';
 import { CreateEquipoDialog } from '@/components/CreateEquipoDialog';
 import { CalibrationExportButton } from '@/components/CalibrationExportButton';
 import { DownloadReportButton } from '@/components/DownloadReportButton';
+import { DownloadNineBoxImageButton } from '@/components/DownloadNineBoxImageButton';
 import { Employee } from '@/types/employee';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
