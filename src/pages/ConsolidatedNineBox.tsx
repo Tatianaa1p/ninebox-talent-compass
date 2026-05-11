@@ -111,6 +111,60 @@ const ConsolidatedNineBox = () => {
 
   const empresaNombre = filteredEmpresas.find((e) => e.id === selectedEmpresaId)?.nombre || '';
 
+  // Reset analysis when filter changes
+  useEffect(() => {
+    setAnalisis('');
+  }, [selectedEmpresaId]);
+
+  const handleAnalizar = async () => {
+    setAnalizando(true);
+    setAnalisis('');
+
+    const resumenPorEquipo = tablerosFuente.map((tablero) => {
+      const empleadosDelTablero = Object.values(empleadosPorCuadrante)
+        .flat()
+        .filter((e) => e.tableroId === tablero.id);
+
+      const distribucion = empleadosDelTablero.reduce((acc, emp) => {
+        acc[emp.cuadrante] = (acc[emp.cuadrante] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      return {
+        equipo: tablero.equipo_nombre,
+        tablero: tablero.nombre,
+        total: empleadosDelTablero.length,
+        distribucion,
+      };
+    });
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analizar-tendencias-ninebox', {
+        body: {
+          empresa: empresaNombre,
+          totalEmpleados,
+          resumenPorEquipo,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setAnalisis(data?.analisis || 'No se pudo generar el análisis.');
+    } catch (err: unknown) {
+      console.error('Error al analizar:', err);
+      const msg = err instanceof Error ? err.message : 'No se pudo generar el análisis. Intentá nuevamente.';
+      toast({
+        title: 'Error al generar análisis',
+        description: msg,
+        variant: 'destructive',
+      });
+      setAnalisis('');
+    } finally {
+      setAnalizando(false);
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
