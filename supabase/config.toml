@@ -2,3 +2,6 @@ project_id = "feljnpkciqvrnvtwqkkk"
 
 [functions.generate-ninebox-report]
 verify_jwt = true
+
+[functions.analizar-tendencias-ninebox]
+verify_jwt = true

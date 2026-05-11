@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import { supabase } from '@/integrations/supabase/client';
+import { Sparkles } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -67,6 +71,9 @@ const ConsolidatedNineBox = () => {
   const { permissions, loading: permissionsLoading, hasAccess } = useUserPermissions();
 
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>('');
+  const [analisis, setAnalisis] = useState('');
+  const [analizando, setAnalizando] = useState(false);
+  const { toast } = useToast();
 
   // Auth check
   useEffect(() => {
@@ -103,6 +110,60 @@ const ConsolidatedNineBox = () => {
     keys.reduce((acc, k) => acc + (empleadosPorCuadrante[k]?.length || 0), 0);
 
   const empresaNombre = filteredEmpresas.find((e) => e.id === selectedEmpresaId)?.nombre || '';
+
+  // Reset analysis when filter changes
+  useEffect(() => {
+    setAnalisis('');
+  }, [selectedEmpresaId]);
+
+  const handleAnalizar = async () => {
+    setAnalizando(true);
+    setAnalisis('');
+
+    const resumenPorEquipo = tablerosFuente.map((tablero) => {
+      const empleadosDelTablero = Object.values(empleadosPorCuadrante)
+        .flat()
+        .filter((e) => e.tableroId === tablero.id);
+
+      const distribucion = empleadosDelTablero.reduce((acc, emp) => {
+        acc[emp.cuadrante] = (acc[emp.cuadrante] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      return {
+        equipo: tablero.equipo_nombre,
+        tablero: tablero.nombre,
+        total: empleadosDelTablero.length,
+        distribucion,
+      };
+    });
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analizar-tendencias-ninebox', {
+        body: {
+          empresa: empresaNombre,
+          totalEmpleados,
+          resumenPorEquipo,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setAnalisis(data?.analisis || 'No se pudo generar el análisis.');
+    } catch (err: unknown) {
+      console.error('Error al analizar:', err);
+      const msg = err instanceof Error ? err.message : 'No se pudo generar el análisis. Intentá nuevamente.';
+      toast({
+        title: 'Error al generar análisis',
+        description: msg,
+        variant: 'destructive',
+      });
+      setAnalisis('');
+    } finally {
+      setAnalizando(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -395,6 +456,36 @@ const ConsolidatedNineBox = () => {
                     ))}
                   </ul>
                 </div>
+              </Card>
+
+              <Card className="p-6 mt-4">
+                <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+                  <div>
+                    <h3 className="text-lg font-semibold">Análisis de tendencias por equipo</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Generado por IA en base a la distribución actual del Nine Box
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleAnalizar}
+                    disabled={analizando || totalEmpleados === 0}
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    {analizando ? 'Analizando...' : 'Analizar tendencias con IA'}
+                  </Button>
+                </div>
+
+                {analizando && (
+                  <p className="text-sm text-muted-foreground italic">
+                    Analizando la distribución del talento...
+                  </p>
+                )}
+
+                {!analizando && analisis && (
+                  <div className="prose prose-sm max-w-none text-sm leading-relaxed">
+                    <ReactMarkdown>{analisis}</ReactMarkdown>
+                  </div>
+                )}
               </Card>
             </div>
           </>
