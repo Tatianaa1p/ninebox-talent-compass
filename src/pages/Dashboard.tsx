@@ -297,6 +297,8 @@ const Dashboard = () => {
       setAnalizando(false);
     }
   };
+
+  const getPerformanceLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
     console.log(`🔵 Dashboard getPerformanceLevel: score=${score}`);
     if (score >= 4) return 'Alto';
     if (score >= 3) return 'Medio';
