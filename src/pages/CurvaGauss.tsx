@@ -128,6 +128,9 @@ const CurvaGauss = () => {
                 <DropdownMenuItem onClick={() => navigate('/curva-gauss')}>
                   Curva de Gauss
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/talent-management')}>
+                  Gestión de Talento
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <Button variant="ghost" onClick={handleLogout}>

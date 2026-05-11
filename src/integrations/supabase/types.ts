@@ -549,6 +549,154 @@ export type Database = {
           },
         ]
       }
+      talent_acciones: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          descripcion: string
+          estado: string
+          fecha_limite: string | null
+          id: string
+          plan_id: string
+          responsable: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          descripcion: string
+          estado?: string
+          fecha_limite?: string | null
+          id?: string
+          plan_id: string
+          responsable?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string
+          estado?: string
+          fecha_limite?: string | null
+          id?: string
+          plan_id?: string
+          responsable?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talent_acciones_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "talent_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talent_notas: {
+        Row: {
+          autor_email: string | null
+          contenido: string
+          created_at: string
+          created_by: string | null
+          id: string
+          plan_id: string
+        }
+        Insert: {
+          autor_email?: string | null
+          contenido: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_id: string
+        }
+        Update: {
+          autor_email?: string | null
+          contenido?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talent_notas_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "talent_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talent_plans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          empleado_id: string
+          id: string
+          mentor: string | null
+          notas: string | null
+          pip_estado: string | null
+          pip_fecha_fin: string | null
+          pip_fecha_inicio: string | null
+          pip_objetivo: string | null
+          plan_carrera: string | null
+          proyectos_clave: string | null
+          tablero_id: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          empleado_id: string
+          id?: string
+          mentor?: string | null
+          notas?: string | null
+          pip_estado?: string | null
+          pip_fecha_fin?: string | null
+          pip_fecha_inicio?: string | null
+          pip_objetivo?: string | null
+          plan_carrera?: string | null
+          proyectos_clave?: string | null
+          tablero_id: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          empleado_id?: string
+          id?: string
+          mentor?: string | null
+          notas?: string | null
+          pip_estado?: string | null
+          pip_fecha_fin?: string | null
+          pip_fecha_inicio?: string | null
+          pip_objetivo?: string | null
+          plan_carrera?: string | null
+          proyectos_clave?: string | null
+          tablero_id?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talent_plans_empleado_id_fkey"
+            columns: ["empleado_id"]
+            isOneToOne: false
+            referencedRelation: "empleados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talent_plans_tablero_id_fkey"
+            columns: ["tablero_id"]
+            isOneToOne: false
+            referencedRelation: "tableros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_permissions: {
         Row: {
           created_at: string | null
