@@ -457,6 +457,36 @@ const ConsolidatedNineBox = () => {
                   </ul>
                 </div>
               </Card>
+
+              <Card className="p-6 mt-4">
+                <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+                  <div>
+                    <h3 className="text-lg font-semibold">Análisis de tendencias por equipo</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Generado por IA en base a la distribución actual del Nine Box
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleAnalizar}
+                    disabled={analizando || totalEmpleados === 0}
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    {analizando ? 'Analizando...' : 'Analizar tendencias con IA'}
+                  </Button>
+                </div>
+
+                {analizando && (
+                  <p className="text-sm text-muted-foreground italic">
+                    Analizando la distribución del talento...
+                  </p>
+                )}
+
+                {!analizando && analisis && (
+                  <div className="prose prose-sm max-w-none text-sm leading-relaxed">
+                    <ReactMarkdown>{analisis}</ReactMarkdown>
+                  </div>
+                )}
+              </Card>
             </div>
           </>
         )}
