@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Plus, AlertCircle, Grid3x3 } from 'lucide-react';
+import { LogOut, Plus, AlertCircle, Grid3x3, Sparkles } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { InteractiveNineBoxGrid } from '@/components/InteractiveNineBoxGrid';
 import { StatisticsPanel } from '@/components/StatisticsPanel';
@@ -83,6 +83,8 @@ const Dashboard = () => {
   const [showCreateBoardDialog, setShowCreateBoardDialog] = useState(false);
   const [showCreateEmpresaDialog, setShowCreateEmpresaDialog] = useState(false);
   const [showCreateEquipoDialog, setShowCreateEquipoDialog] = useState(false);
+  const [analisisTalento, setAnalisisTalento] = useState('');
+  const [analizando, setAnalizando] = useState(false);
 
   // Use cached queries
   const { data: empresasFromQuery, isLoading: isLoadingEmpresas } = useEmpresasQuery(!permissionsLoading && !!user);
