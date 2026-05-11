@@ -504,6 +504,35 @@ export type Database = {
           },
         ]
       }
+      tablero_permisos: {
+        Row: {
+          created_at: string | null
+          id: string
+          tablero_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          tablero_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          tablero_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tablero_permisos_tablero_id_fkey"
+            columns: ["tablero_id"]
+            isOneToOne: false
+            referencedRelation: "tableros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tableros: {
         Row: {
           created_at: string | null
