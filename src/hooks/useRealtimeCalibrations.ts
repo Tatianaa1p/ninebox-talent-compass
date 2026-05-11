@@ -30,10 +30,10 @@ export const useRealtimeCalibrations = (
           event: '*',
           schema: 'public',
           table: 'calibraciones',
+          filter: `tablero_id=eq.${tableroId}`,
         },
         (payload: RealtimePostgresChangesPayload<CalibracionPayload>) => {
           console.log('Calibration change detected:', payload);
-          // Trigger data reload on any calibration change
           onUpdate();
         }
       )
@@ -43,6 +43,7 @@ export const useRealtimeCalibrations = (
           event: 'UPDATE',
           schema: 'public',
           table: 'evaluaciones',
+          filter: `tablero_id=eq.${tableroId}`,
         },
         (payload) => {
           console.log('Evaluation change detected:', payload);

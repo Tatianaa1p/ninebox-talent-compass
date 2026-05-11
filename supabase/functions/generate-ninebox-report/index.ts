@@ -157,7 +157,9 @@ serve(async (req) => {
 
     // Create report as text file
     const reportText = reportLines.join('\n');
-    const fileName = `ninebox_${empresa_nombre}_${new Date().toISOString().split('T')[0]}.txt`;
+    // Path scoped por empresa para que la RLS de storage valide acceso por carpeta
+    const safeEmpresa = String(empresa_nombre).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const fileName = `${safeEmpresa}/${tablero_id}/ninebox_${new Date().toISOString().split('T')[0]}.txt`;
 
     // Upload to storage
     const { data: uploadData, error: uploadError } = await supabase
