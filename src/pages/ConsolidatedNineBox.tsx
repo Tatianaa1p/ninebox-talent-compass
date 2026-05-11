@@ -400,15 +400,15 @@ const ConsolidatedNineBox = () => {
           </>
         )}
 
-        {(!selectedEmpresaId || !selectedPais) && (
+        {!selectedEmpresaId && (
           <Card className="p-12 text-center">
             <p className="text-muted-foreground">
-              Selecciona una empresa y un país para ver la vista consolidada
+              Selecciona un país para ver la vista consolidada
             </p>
           </Card>
         )}
 
-        {loading && selectedEmpresaId && selectedPais && (
+        {loading && selectedEmpresaId && (
           <p className="text-center text-sm text-muted-foreground">Cargando datos...</p>
         )}
       </div>
