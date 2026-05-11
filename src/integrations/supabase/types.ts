@@ -826,6 +826,19 @@ export type Database = {
         Returns: boolean
       }
       is_hrb_apu_any: { Args: { _user_id: string }; Returns: boolean }
+      up_has_empresa: {
+        Args: { _empresa_nombre: string; _user_id: string }
+        Returns: boolean
+      }
+      up_has_permission: {
+        Args: { _permiso: string; _user_id: string }
+        Returns: boolean
+      }
+      up_has_role: {
+        Args: { _role: string; _user_id: string }
+        Returns: boolean
+      }
+      up_is_admin: { Args: { _user_id: string }; Returns: boolean }
       user_has_empresa_access: {
         Args: { _empresa_nombre: string; _user_id: string }
         Returns: boolean
