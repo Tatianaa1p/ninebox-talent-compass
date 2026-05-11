@@ -264,7 +264,7 @@ const ConsolidatedNineBox = () => {
                 <h2 className="text-2xl font-bold text-gray-900">
                   Nine Box Consolidado — {empresaNombre}
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">País: {selectedPais}</p>
+                <p className="text-sm text-gray-600 mt-1">Consolidando todos los tableros de {empresaNombre}</p>
               </div>
 
               <Card className="p-6">
