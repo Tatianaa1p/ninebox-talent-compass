@@ -639,6 +639,49 @@ const Dashboard = () => {
           </div>
         )}
 
+        {selectedTablero && (
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+              <div>
+                <h3 className="text-lg font-semibold">Análisis de talento con IA</h3>
+                <p className="text-sm text-muted-foreground">
+                  Análisis de la distribución del equipo en este tablero
+                </p>
+              </div>
+              <Button
+                onClick={handleAnalizarTalento}
+                disabled={analizando || employees.length === 0}
+                variant="outline"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                {analizando
+                  ? 'Analizando...'
+                  : analisisTalento
+                  ? 'Regenerar análisis'
+                  : 'Analizar con IA'}
+              </Button>
+            </div>
+
+            {analizando && (
+              <div className="text-sm text-muted-foreground animate-pulse">
+                Analizando la distribución del talento del equipo...
+              </div>
+            )}
+
+            {analisisTalento && !analizando && (
+              <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
+                {analisisTalento}
+              </div>
+            )}
+
+            {employees.length === 0 && !analizando && (
+              <p className="text-sm text-muted-foreground italic">
+                Cargá empleados en el tablero para habilitar el análisis.
+              </p>
+            )}
+          </Card>
+        )}
+
         {!selectedTablero && (
           <Card className="p-12 text-center">
             <p className="text-muted-foreground">
