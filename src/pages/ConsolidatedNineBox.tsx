@@ -67,8 +67,6 @@ const ConsolidatedNineBox = () => {
   const { permissions, loading: permissionsLoading, hasAccess } = useUserPermissions();
 
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>('');
-  const [selectedPais, setSelectedPais] = useState<string>('');
-  const [paises, setPaises] = useState<string[]>([]);
 
   // Auth check
   useEffect(() => {
@@ -98,34 +96,8 @@ const ConsolidatedNineBox = () => {
     return unique.filter((e) => hasAccess(e.nombre));
   }, [empresasData, permissions, hasAccess]);
 
-  // Load distinct paises for selected empresa
-  useEffect(() => {
-    if (!selectedEmpresaId) {
-      setPaises([]);
-      setSelectedPais('');
-      return;
-    }
-    (async () => {
-      const { data, error } = await supabase
-        .from('tableros')
-        .select('pais')
-        .eq('empresa_id', selectedEmpresaId)
-        .not('pais', 'is', null);
-      if (error) {
-        console.error('Error loading paises:', error);
-        setPaises([]);
-        return;
-      }
-      const unique = Array.from(
-        new Set((data || []).map((r: { pais: string | null }) => r.pais).filter(Boolean) as string[])
-      ).sort();
-      setPaises(unique);
-      setSelectedPais('');
-    })();
-  }, [selectedEmpresaId]);
-
   const { empleadosPorCuadrante, totalEmpleados, tablerosFuente, loading } =
-    useConsolidatedNineBox(selectedEmpresaId || null, selectedPais || null);
+    useConsolidatedNineBox(selectedEmpresaId || null);
 
   const countIn = (keys: string[]) =>
     keys.reduce((acc, k) => acc + (empleadosPorCuadrante[k]?.length || 0), 0);
