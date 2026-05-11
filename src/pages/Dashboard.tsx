@@ -235,7 +235,68 @@ const Dashboard = () => {
     setEmployees(employees);
   };
 
-  const getPerformanceLevel = (score: number): 'Bajo' | 'Medio' | 'Alto' => {
+  // Reset analysis when changing tablero
+  useEffect(() => {
+    setAnalisisTalento('');
+  }, [selectedTablero]);
+
+  const handleAnalizarTalento = async () => {
+    setAnalizando(true);
+    setAnalisisTalento('');
+
+    const nombresCuadrante: Record<string, string> = {
+      'Alto-Alto': 'Talento Estratégico',
+      'Alto-Medio': 'Desarrollar',
+      'Alto-Bajo': 'Enigma',
+      'Medio-Alto': 'Consistente',
+      'Medio-Medio': 'Clave',
+      'Medio-Bajo': 'Dilema',
+      'Bajo-Alto': 'Confiable',
+      'Bajo-Medio': 'Estancamiento',
+      'Bajo-Bajo': 'Riesgo',
+    };
+
+    const porCuadrante = employees.reduce((acc, emp) => {
+      const key = `${emp.potential}-${emp.performance}`;
+      const cuadrante = nombresCuadrante[key] || key;
+      if (!acc[cuadrante]) acc[cuadrante] = [];
+      acc[cuadrante].push(emp.name);
+      return acc;
+    }, {} as Record<string, string[]>);
+
+    const equipoNombre = equipos.find((e) => e.id === selectedEquipo)?.nombre || 'Equipo';
+    const tableroNombre = tableros.find((t) => t.id === selectedTablero)?.nombre || 'Tablero';
+    const empresaNombre = empresas.find((e) => e.id === selectedEmpresa)?.nombre || 'Empresa';
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analizar-tendencias-ninebox', {
+        body: {
+          modo: 'tablero',
+          empresa: empresaNombre,
+          equipo: equipoNombre,
+          tablero: tableroNombre,
+          totalEmpleados: employees.length,
+          distribucion: porCuadrante,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setAnalisisTalento(data?.analisis || 'No se pudo generar el análisis.');
+    } catch (err: unknown) {
+      console.error('Error al analizar:', err);
+      const msg = err instanceof Error ? err.message : 'No se pudo generar el análisis. Intentá nuevamente.';
+      toast({
+        title: 'Error al generar análisis',
+        description: msg,
+        variant: 'destructive',
+      });
+      setAnalisisTalento('');
+    } finally {
+      setAnalizando(false);
+    }
+  };
     console.log(`🔵 Dashboard getPerformanceLevel: score=${score}`);
     if (score >= 4) return 'Alto';
     if (score >= 3) return 'Medio';
