@@ -278,7 +278,7 @@ const ConsolidatedNineBox = () => {
                   </div>
                   <div className="flex gap-2" data-no-capture>
                     <DownloadNineBoxImageButton
-                      tableroNombre={selectedPais}
+                      tableroNombre={empresaNombre}
                       empresaNombre={empresaNombre}
                     />
                   </div>
