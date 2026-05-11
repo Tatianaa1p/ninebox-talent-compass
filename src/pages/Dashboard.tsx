@@ -388,6 +388,9 @@ const Dashboard = () => {
                   <DropdownMenuItem onClick={() => navigate('/talent-management')}>
                     Gestión de Talento
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/consolidated-ninebox')}>
+                    Nine Box Consolidado
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <Button variant="outline" onClick={handleSignOut}>
