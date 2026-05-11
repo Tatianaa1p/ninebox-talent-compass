@@ -189,57 +189,28 @@ const ConsolidatedNineBox = () => {
 
       <div className="container mx-auto px-4 py-6 space-y-6">
         <Card className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Empresa</label>
-              <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      filteredEmpresas.length === 0 ? 'Sin empresas' : 'Seleccionar empresa'
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredEmpresas.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">País</label>
-              <Select
-                value={selectedPais}
-                onValueChange={setSelectedPais}
-                disabled={!selectedEmpresaId}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      !selectedEmpresaId
-                        ? 'Selecciona empresa primero'
-                        : paises.length === 0
-                        ? 'Sin países con tableros'
-                        : 'Seleccionar país'
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {paises.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">País</label>
+            <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    filteredEmpresas.length === 0 ? 'Sin países disponibles' : 'Seleccionar país'
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredEmpresas.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </Card>
 
-        {selectedEmpresaId && selectedPais && (
+        {selectedEmpresaId && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card className="p-4">
