@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -67,8 +67,6 @@ const ConsolidatedNineBox = () => {
   const { permissions, loading: permissionsLoading, hasAccess } = useUserPermissions();
 
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>('');
-  const [selectedPais, setSelectedPais] = useState<string>('');
-  const [paises, setPaises] = useState<string[]>([]);
 
   // Auth check
   useEffect(() => {
@@ -98,34 +96,8 @@ const ConsolidatedNineBox = () => {
     return unique.filter((e) => hasAccess(e.nombre));
   }, [empresasData, permissions, hasAccess]);
 
-  // Load distinct paises for selected empresa
-  useEffect(() => {
-    if (!selectedEmpresaId) {
-      setPaises([]);
-      setSelectedPais('');
-      return;
-    }
-    (async () => {
-      const { data, error } = await supabase
-        .from('tableros')
-        .select('pais')
-        .eq('empresa_id', selectedEmpresaId)
-        .not('pais', 'is', null);
-      if (error) {
-        console.error('Error loading paises:', error);
-        setPaises([]);
-        return;
-      }
-      const unique = Array.from(
-        new Set((data || []).map((r: { pais: string | null }) => r.pais).filter(Boolean) as string[])
-      ).sort();
-      setPaises(unique);
-      setSelectedPais('');
-    })();
-  }, [selectedEmpresaId]);
-
   const { empleadosPorCuadrante, totalEmpleados, tablerosFuente, loading } =
-    useConsolidatedNineBox(selectedEmpresaId || null, selectedPais || null);
+    useConsolidatedNineBox(selectedEmpresaId || null);
 
   const countIn = (keys: string[]) =>
     keys.reduce((acc, k) => acc + (empleadosPorCuadrante[k]?.length || 0), 0);
@@ -217,57 +189,28 @@ const ConsolidatedNineBox = () => {
 
       <div className="container mx-auto px-4 py-6 space-y-6">
         <Card className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Empresa</label>
-              <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      filteredEmpresas.length === 0 ? 'Sin empresas' : 'Seleccionar empresa'
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredEmpresas.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">País</label>
-              <Select
-                value={selectedPais}
-                onValueChange={setSelectedPais}
-                disabled={!selectedEmpresaId}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      !selectedEmpresaId
-                        ? 'Selecciona empresa primero'
-                        : paises.length === 0
-                        ? 'Sin países con tableros'
-                        : 'Seleccionar país'
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {paises.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">País</label>
+            <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    filteredEmpresas.length === 0 ? 'Sin países disponibles' : 'Seleccionar país'
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredEmpresas.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </Card>
 
-        {selectedEmpresaId && selectedPais && (
+        {selectedEmpresaId && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card className="p-4">
@@ -321,7 +264,7 @@ const ConsolidatedNineBox = () => {
                 <h2 className="text-2xl font-bold text-gray-900">
                   Nine Box Consolidado — {empresaNombre}
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">País: {selectedPais}</p>
+                <p className="text-sm text-gray-600 mt-1">Consolidando todos los tableros de {empresaNombre}</p>
               </div>
 
               <Card className="p-6">
@@ -335,7 +278,7 @@ const ConsolidatedNineBox = () => {
                   </div>
                   <div className="flex gap-2" data-no-capture>
                     <DownloadNineBoxImageButton
-                      tableroNombre={selectedPais}
+                      tableroNombre={empresaNombre}
                       empresaNombre={empresaNombre}
                     />
                   </div>
@@ -457,15 +400,15 @@ const ConsolidatedNineBox = () => {
           </>
         )}
 
-        {(!selectedEmpresaId || !selectedPais) && (
+        {!selectedEmpresaId && (
           <Card className="p-12 text-center">
             <p className="text-muted-foreground">
-              Selecciona una empresa y un país para ver la vista consolidada
+              Selecciona un país para ver la vista consolidada
             </p>
           </Card>
         )}
 
-        {loading && selectedEmpresaId && selectedPais && (
+        {loading && selectedEmpresaId && (
           <p className="text-center text-sm text-muted-foreground">Cargando datos...</p>
         )}
       </div>
