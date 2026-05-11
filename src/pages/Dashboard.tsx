@@ -531,7 +531,15 @@ const Dashboard = () => {
         </Card>
 
         {selectedTablero && (
-          <>
+          <div id="ninebox-capture-area" className="bg-white space-y-6 p-4 rounded-lg">
+            <div className="text-center pb-2">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Nine Box Grid — {empresas.find(e => e.id === selectedEmpresa)?.nombre || ''}
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Tablero: {tableros.find(t => t.id === selectedTablero)?.nombre || ''}
+              </p>
+            </div>
             <StatisticsPanel employees={employees} />
             <Card className="p-6">
               <div className="flex items-center justify-between mb-6">
@@ -541,11 +549,15 @@ const Dashboard = () => {
                     Calibra y visualiza el talento de tu equipo
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2" data-no-capture>
                   <CalibrationExportButton tableroId={selectedTablero} />
                   <DownloadReportButton
                     tableroId={selectedTablero}
                     empresaId={selectedEmpresa}
+                    empresaNombre={empresas.find(e => e.id === selectedEmpresa)?.nombre || ''}
+                  />
+                  <DownloadNineBoxImageButton
+                    tableroNombre={tableros.find(t => t.id === selectedTablero)?.nombre || ''}
                     empresaNombre={empresas.find(e => e.id === selectedEmpresa)?.nombre || ''}
                   />
                 </div>
@@ -556,7 +568,7 @@ const Dashboard = () => {
                 onDataReload={reloadEmpleados}
               />
             </Card>
-          </>
+          </div>
         )}
 
         {!selectedTablero && (
