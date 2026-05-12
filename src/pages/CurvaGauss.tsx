@@ -112,7 +112,11 @@ const CurvaGauss = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Curva de Gauss - Calibración de Competencias</h1>
+          <div className="flex items-center gap-4">
+            <img src="/seidor-logo.png" alt="Seidor" className="h-6 md:h-8 w-auto object-contain" />
+            <div className="w-px h-8 bg-border" />
+            <h1 className="text-2xl font-bold">Curva de Gauss - Calibración de Competencias</h1>
+          </div>
           <div className="flex gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
