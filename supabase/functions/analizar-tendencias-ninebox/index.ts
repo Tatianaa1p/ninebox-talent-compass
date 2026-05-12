@@ -26,16 +26,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    const cuadrantesRef = `CUADRANTES DEL NINE BOX:
-- Talento Estratégico (Alto potencial + Alto desempeño): referentes, cuidar y retener
-- Desarrollar (Alto potencial + Medio desempeño): potencial alto sin explotar
-- Enigma (Alto potencial + Bajo desempeño): necesitan claridad y apoyo del líder
-- Consistente (Medio potencial + Alto desempeño): sólidos y confiables
-- Clave (Medio potencial + Medio desempeño): núcleo estable del equipo
-- Dilema (Medio potencial + Bajo desempeño): requieren plan de mejora
-- Confiable (Bajo potencial + Alto desempeño): expertos en su rol, motivarlos
-- Estancamiento (Bajo potencial + Medio desempeño): riesgo de desmotivación
-- Riesgo (Bajo potencial + Bajo desempeño): acción inmediata`;
+    const cuadrantesRef = `CUADRANTES:
+- ALTO POTENCIAL: Talento Estratégico, Desarrollar, Consistente
+- MEDIO: Enigma, Clave, Confiable
+- RIESGO: Dilema, Estancamiento, Riesgo`;
+
+    const jsonShape = `Respondé con este JSON exacto:
+{
+  "estado_general": "saludable" | "atención" | "crítico",
+  "resumen": "Una sola oración de máximo 20 palabras sobre el estado global",
+  "pct_alto_potencial": número entre 0 y 100,
+  "pct_riesgo": número entre 0 y 100,
+  "equipos": [
+    {
+      "nombre": "nombre del equipo",
+      "estado": "verde" | "amarillo" | "rojo",
+      "insight": "Una sola oración de máximo 15 palabras sobre este equipo"
+    }
+  ],
+  "fortalezas": ["bullet 1 de máximo 10 palabras", "bullet 2", "bullet 3"],
+  "alertas": ["alerta 1 de máximo 10 palabras", "alerta 2", "alerta 3"],
+  "recomendaciones": ["acción 1 concreta y directa", "acción 2", "acción 3"]
+}`;
 
     let prompt = "";
     if (body.modo === "tablero") {
@@ -43,36 +55,33 @@ Deno.serve(async (req) => {
         empresa: string; equipo: string; tablero: string;
         totalEmpleados: number; distribucion: Record<string, string[]>;
       };
-      const resumen = Object.entries(distribucion)
-        .map(([c, nombres]) => `${c} (${nombres.length} persona${nombres.length !== 1 ? "s" : ""}): ${nombres.join(", ")}`)
-        .join("\n");
+      const resumenPorEquipo = [{
+        equipo,
+        tablero,
+        total: totalEmpleados,
+        distribucion: Object.fromEntries(
+          Object.entries(distribucion).map(([k, v]) => [k, v.length])
+        ),
+      }];
 
-      prompt = `Sos un experto en gestión del talento y desarrollo organizacional.
-Analizá la siguiente distribución de empleados en el Nine Box Grid y generá recomendaciones accionables para RRHH.
+      prompt = `Sos un experto en gestión del talento. Analizá esta distribución del Nine Box y respondé ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin markdown, sin backticks.
 
 EMPRESA: ${empresa}
 EQUIPO: ${equipo}
 TABLERO: ${tablero}
 TOTAL DE EMPLEADOS: ${totalEmpleados}
 
-DISTRIBUCIÓN:
-${resumen}
+DISTRIBUCIÓN POR EQUIPO:
+${JSON.stringify(resumenPorEquipo, null, 2)}
 
 ${cuadrantesRef}
 
-Generá el siguiente análisis en español, tono profesional y directo:
-1. **Estado general del equipo** (2-3 oraciones)
-2. **Fortalezas** (qué está bien)
-3. **Riesgos y alertas** (qué requiere atención inmediata)
-4. **Recomendaciones para RRHH** (3 acciones concretas y priorizadas)
-
-Sé específico, mencioná los cuadrantes con más y menos personas. No uses lenguaje genérico.`;
+${jsonShape}`;
     } else {
       const { empresa, totalEmpleados, resumenPorEquipo } = body as {
         empresa: string; totalEmpleados: number; resumenPorEquipo: ResumenEquipo[];
       };
-      prompt = `Sos un experto en gestión del talento y desarrollo organizacional.
-Analizá la siguiente distribución de empleados en el Nine Box Grid por equipo y generá un análisis de tendencias.
+      prompt = `Sos un experto en gestión del talento. Analizá esta distribución del Nine Box y respondé ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin markdown, sin backticks.
 
 EMPRESA: ${empresa}
 TOTAL DE EMPLEADOS: ${totalEmpleados}
@@ -82,13 +91,7 @@ ${JSON.stringify(resumenPorEquipo, null, 2)}
 
 ${cuadrantesRef}
 
-Por favor generá:
-1. **Resumen ejecutivo** (2-3 oraciones sobre el estado general de la empresa)
-2. **Tendencias por equipo** (para cada equipo, 1-2 oraciones sobre su situación)
-3. **Equipos destacados** (cuál tiene más talento estratégico, cuál tiene más riesgo)
-4. **Recomendaciones prioritarias** (3 acciones concretas para RRHH)
-
-Usá un tono profesional, directo y accionable. Respondé en español usando markdown (negritas con **texto**).`;
+${jsonShape}`;
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

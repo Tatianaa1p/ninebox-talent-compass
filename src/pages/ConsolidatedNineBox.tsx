@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/integrations/supabase/client';
 import { Sparkles } from 'lucide-react';
+import { TalentAnalysisResult, type AnalisisData } from '@/components/TalentAnalysisResult';
 import { useToast } from '@/hooks/use-toast';
 
 import { Button } from '@/components/ui/button';
@@ -71,7 +71,7 @@ const ConsolidatedNineBox = () => {
   const { permissions, loading: permissionsLoading, hasAccess } = useUserPermissions();
 
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>('');
-  const [analisis, setAnalisis] = useState('');
+  const [analisis, setAnalisis] = useState<AnalisisData | null>(null);
   const [analizando, setAnalizando] = useState(false);
   const { toast } = useToast();
 
@@ -113,12 +113,12 @@ const ConsolidatedNineBox = () => {
 
   // Reset analysis when filter changes
   useEffect(() => {
-    setAnalisis('');
+    setAnalisis(null);
   }, [selectedEmpresaId]);
 
   const handleAnalizar = async () => {
     setAnalizando(true);
-    setAnalisis('');
+    setAnalisis(null);
 
     const resumenPorEquipo = tablerosFuente.map((tablero) => {
       const empleadosDelTablero = Object.values(empleadosPorCuadrante)
@@ -150,16 +150,20 @@ const ConsolidatedNineBox = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setAnalisis(data?.analisis || 'No se pudo generar el análisis.');
+      const texto: string = (data?.analisis ?? '').trim().replace(/^```json\s*|^```\s*|```$/g, '').trim();
+      const parsed = JSON.parse(texto) as AnalisisData;
+      setAnalisis(parsed);
     } catch (err: unknown) {
       console.error('Error al analizar:', err);
-      const msg = err instanceof Error ? err.message : 'No se pudo generar el análisis. Intentá nuevamente.';
+      const msg = err instanceof Error && !(err instanceof SyntaxError)
+        ? err.message
+        : 'No se pudo generar el análisis. Intentá nuevamente.';
       toast({
         title: 'Error al generar análisis',
         description: msg,
         variant: 'destructive',
       });
-      setAnalisis('');
+      setAnalisis(null);
     } finally {
       setAnalizando(false);
     }
@@ -482,9 +486,7 @@ const ConsolidatedNineBox = () => {
                 )}
 
                 {!analizando && analisis && (
-                  <div className="prose prose-sm max-w-none text-sm leading-relaxed">
-                    <ReactMarkdown>{analisis}</ReactMarkdown>
-                  </div>
+                  <TalentAnalysisResult data={analisis} />
                 )}
               </Card>
             </div>

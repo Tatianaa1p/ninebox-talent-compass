@@ -25,6 +25,7 @@ import { useEmpresasQuery } from '@/hooks/queries/useEmpresasQuery';
 import { useEquiposQuery } from '@/hooks/queries/useEquiposQuery';
 import { useTablerosQuery } from '@/hooks/queries/useTablerosQuery';
 import { useQueryClient } from '@tanstack/react-query';
+import { TalentAnalysisResult, type AnalisisData } from '@/components/TalentAnalysisResult';
 
 interface Empresa {
   id: string;
@@ -83,7 +84,7 @@ const Dashboard = () => {
   const [showCreateBoardDialog, setShowCreateBoardDialog] = useState(false);
   const [showCreateEmpresaDialog, setShowCreateEmpresaDialog] = useState(false);
   const [showCreateEquipoDialog, setShowCreateEquipoDialog] = useState(false);
-  const [analisisTalento, setAnalisisTalento] = useState('');
+  const [analisisTalento, setAnalisisTalento] = useState<AnalisisData | null>(null);
   const [analizando, setAnalizando] = useState(false);
 
   // Use cached queries
@@ -237,12 +238,12 @@ const Dashboard = () => {
 
   // Reset analysis when changing tablero
   useEffect(() => {
-    setAnalisisTalento('');
+    setAnalisisTalento(null);
   }, [selectedTablero]);
 
   const handleAnalizarTalento = async () => {
     setAnalizando(true);
-    setAnalisisTalento('');
+    setAnalisisTalento(null);
 
     const nombresCuadrante: Record<string, string> = {
       'Alto-Alto': 'Talento Estratégico',
@@ -283,16 +284,20 @@ const Dashboard = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setAnalisisTalento(data?.analisis || 'No se pudo generar el análisis.');
+      const texto: string = (data?.analisis ?? '').trim().replace(/^```json\s*|^```\s*|```$/g, '').trim();
+      const parsed = JSON.parse(texto) as AnalisisData;
+      setAnalisisTalento(parsed);
     } catch (err: unknown) {
       console.error('Error al analizar:', err);
-      const msg = err instanceof Error ? err.message : 'No se pudo generar el análisis. Intentá nuevamente.';
+      const msg = err instanceof Error && !(err instanceof SyntaxError)
+        ? err.message
+        : 'No se pudo generar el análisis. Intentá nuevamente.';
       toast({
         title: 'Error al generar análisis',
         description: msg,
         variant: 'destructive',
       });
-      setAnalisisTalento('');
+      setAnalisisTalento(null);
     } finally {
       setAnalizando(false);
     }
@@ -669,9 +674,7 @@ const Dashboard = () => {
             )}
 
             {analisisTalento && !analizando && (
-              <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-                {analisisTalento}
-              </div>
+              <TalentAnalysisResult data={analisisTalento} />
             )}
 
             {employees.length === 0 && !analizando && (
