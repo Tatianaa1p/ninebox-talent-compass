@@ -674,9 +674,7 @@ const Dashboard = () => {
             )}
 
             {analisisTalento && !analizando && (
-              <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-                {analisisTalento}
-              </div>
+              <TalentAnalysisResult data={analisisTalento} />
             )}
 
             {employees.length === 0 && !analizando && (
