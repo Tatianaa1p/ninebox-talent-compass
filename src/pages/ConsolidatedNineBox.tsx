@@ -71,7 +71,7 @@ const ConsolidatedNineBox = () => {
   const { permissions, loading: permissionsLoading, hasAccess } = useUserPermissions();
 
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>('');
-  const [analisis, setAnalisis] = useState('');
+  const [analisis, setAnalisis] = useState<AnalisisData | null>(null);
   const [analizando, setAnalizando] = useState(false);
   const { toast } = useToast();
 
