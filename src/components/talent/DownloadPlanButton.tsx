@@ -306,9 +306,6 @@ export const DownloadPlanButton = ({ empleado }: Props) => {
               new Paragraph({ text: getTipoLabel(), heading: HeadingLevel.HEADING_1 }),
               new Paragraph({ text: `Colaborador: ${empleado.nombre}` }),
               new Paragraph({ text: `Cuadrante: ${empleado.cuadrante}` }),
-              new Paragraph({
-                text: `Performance: ${empleado.performance.toFixed(1)} | Potencial: ${empleado.potencial.toFixed(1)}`,
-              }),
               new Paragraph({ text: '' }),
               new Paragraph({
                 text: empleado.tipo === 'desarrollo' ? 'Plan de Desarrollo' : 'Plan de Mejora (PIP)',
