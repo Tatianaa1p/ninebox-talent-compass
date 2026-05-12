@@ -73,11 +73,41 @@ Deno.serve(async (req) => {
   "recomendaciones": ["acción 1 concreta y directa", "acción 2", "acción 3"]
 }`;
 
+    const buildPromptPlanes = (planes: {
+      totalConPlanDesarrollo: number;
+      totalConPip: number;
+      pipPendiente: number;
+      pipEnCurso: number;
+      pipCompletado: number;
+    } | null | undefined) => {
+      if (!planes) return "";
+      const { totalConPlanDesarrollo, totalConPip, pipPendiente, pipEnCurso, pipCompletado } = planes;
+      if (totalConPlanDesarrollo > 0 || totalConPip > 0) {
+        return `
+PLANES DE TALENTO ACTIVOS EN ESTE EQUIPO:
+- Colaboradores con Plan de Desarrollo: ${totalConPlanDesarrollo}
+- Colaboradores con PIP (Plan de Mejora): ${totalConPip}
+${pipPendiente > 0 ? `  • PIP Pendiente: ${pipPendiente}\n` : ""}${pipEnCurso > 0 ? `  • PIP En curso: ${pipEnCurso}\n` : ""}${pipCompletado > 0 ? `  • PIP Completado: ${pipCompletado}\n` : ""}`;
+      }
+      return `
+PLANES DE TALENTO: Aún no se han cargado planes de desarrollo ni PIPs para este equipo.
+`;
+    };
+
+    const instruccionPlanes = `Si hay planes de desarrollo o PIPs activos, mencioná cuántos colaboradores tienen plan asignado y si el número es consistente con la distribución del Nine Box (ej: si hay muchos en Riesgo pero pocos con PIP, señalarlo como alerta).`;
+
     let prompt = "";
     if (body.modo === "tablero") {
-      const { empresa, equipo, tablero, totalEmpleados, distribucion } = body as {
+      const { empresa, equipo, tablero, totalEmpleados, distribucion, planes } = body as {
         empresa: string; equipo: string; tablero: string;
         totalEmpleados: number; distribucion: Record<string, string[]>;
+        planes?: {
+          totalConPlanDesarrollo: number;
+          totalConPip: number;
+          pipPendiente: number;
+          pipEnCurso: number;
+          pipCompletado: number;
+        } | null;
       };
       const resumenPorEquipo = [{
         equipo,
@@ -87,6 +117,8 @@ Deno.serve(async (req) => {
           Object.entries(distribucion).map(([k, v]) => [k, v.length])
         ),
       }];
+
+      const promptPlanes = buildPromptPlanes(planes);
 
       prompt = `Sos un experto en gestión del talento. Analizá esta distribución del Nine Box y respondé ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin markdown, sin backticks.
 
@@ -99,6 +131,8 @@ DISTRIBUCIÓN POR EQUIPO:
 ${JSON.stringify(resumenPorEquipo, null, 2)}
 
 ${cuadrantesRef}
+${promptPlanes}
+${instruccionPlanes}
 
 ${jsonShape}`;
     } else {
