@@ -238,12 +238,12 @@ const Dashboard = () => {
 
   // Reset analysis when changing tablero
   useEffect(() => {
-    setAnalisisTalento('');
+    setAnalisisTalento(null);
   }, [selectedTablero]);
 
   const handleAnalizarTalento = async () => {
     setAnalizando(true);
-    setAnalisisTalento('');
+    setAnalisisTalento(null);
 
     const nombresCuadrante: Record<string, string> = {
       'Alto-Alto': 'Talento Estratégico',
@@ -284,16 +284,20 @@ const Dashboard = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setAnalisisTalento(data?.analisis || 'No se pudo generar el análisis.');
+      const texto: string = (data?.analisis ?? '').trim().replace(/^```json\s*|^```\s*|```$/g, '').trim();
+      const parsed = JSON.parse(texto) as AnalisisData;
+      setAnalisisTalento(parsed);
     } catch (err: unknown) {
       console.error('Error al analizar:', err);
-      const msg = err instanceof Error ? err.message : 'No se pudo generar el análisis. Intentá nuevamente.';
+      const msg = err instanceof Error && !(err instanceof SyntaxError)
+        ? err.message
+        : 'No se pudo generar el análisis. Intentá nuevamente.';
       toast({
         title: 'Error al generar análisis',
         description: msg,
         variant: 'destructive',
       });
-      setAnalisisTalento('');
+      setAnalisisTalento(null);
     } finally {
       setAnalizando(false);
     }
