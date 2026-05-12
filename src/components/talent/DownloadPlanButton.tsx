@@ -40,7 +40,7 @@ export const DownloadPlanButton = ({ empleado }: Props) => {
     const lines: string[] = [];
     lines.push(getTipoLabel());
     lines.push(`Colaborador: ${empleado.nombre}`);
-    lines.push(`Cuadrante: ${empleado.cuadrante}`);
+    
     lines.push('');
 
     if (empleado.tipo === 'desarrollo') {
@@ -305,7 +305,7 @@ export const DownloadPlanButton = ({ empleado }: Props) => {
             children: [
               new Paragraph({ text: getTipoLabel(), heading: HeadingLevel.HEADING_1 }),
               new Paragraph({ text: `Colaborador: ${empleado.nombre}` }),
-              new Paragraph({ text: `Cuadrante: ${empleado.cuadrante}` }),
+              
               new Paragraph({ text: '' }),
               new Paragraph({
                 text: empleado.tipo === 'desarrollo' ? 'Plan de Desarrollo' : 'Plan de Mejora (PIP)',
