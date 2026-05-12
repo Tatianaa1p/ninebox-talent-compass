@@ -486,9 +486,7 @@ const ConsolidatedNineBox = () => {
                 )}
 
                 {!analizando && analisis && (
-                  <div className="prose prose-sm max-w-none text-sm leading-relaxed">
-                    <ReactMarkdown>{analisis}</ReactMarkdown>
-                  </div>
+                  <TalentAnalysisResult data={analisis} />
                 )}
               </Card>
             </div>
