@@ -41,9 +41,6 @@ export const DownloadPlanButton = ({ empleado }: Props) => {
     lines.push(getTipoLabel());
     lines.push(`Colaborador: ${empleado.nombre}`);
     lines.push(`Cuadrante: ${empleado.cuadrante}`);
-    lines.push(
-      `Performance: ${empleado.performance.toFixed(1)} | Potencial: ${empleado.potencial.toFixed(1)}`,
-    );
     lines.push('');
 
     if (empleado.tipo === 'desarrollo') {
