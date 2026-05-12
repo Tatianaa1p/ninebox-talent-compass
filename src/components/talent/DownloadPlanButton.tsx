@@ -41,9 +41,6 @@ export const DownloadPlanButton = ({ empleado }: Props) => {
     lines.push(getTipoLabel());
     lines.push(`Colaborador: ${empleado.nombre}`);
     lines.push(`Cuadrante: ${empleado.cuadrante}`);
-    lines.push(
-      `Performance: ${empleado.performance.toFixed(1)} | Potencial: ${empleado.potencial.toFixed(1)}`,
-    );
     lines.push('');
 
     if (empleado.tipo === 'desarrollo') {
@@ -309,9 +306,6 @@ export const DownloadPlanButton = ({ empleado }: Props) => {
               new Paragraph({ text: getTipoLabel(), heading: HeadingLevel.HEADING_1 }),
               new Paragraph({ text: `Colaborador: ${empleado.nombre}` }),
               new Paragraph({ text: `Cuadrante: ${empleado.cuadrante}` }),
-              new Paragraph({
-                text: `Performance: ${empleado.performance.toFixed(1)} | Potencial: ${empleado.potencial.toFixed(1)}`,
-              }),
               new Paragraph({ text: '' }),
               new Paragraph({
                 text: empleado.tipo === 'desarrollo' ? 'Plan de Desarrollo' : 'Plan de Mejora (PIP)',
