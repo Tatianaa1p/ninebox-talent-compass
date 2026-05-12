@@ -94,7 +94,15 @@ PLANES DE TALENTO: Aún no se han cargado planes de desarrollo ni PIPs para este
 `;
     };
 
-    const instruccionPlanes = `Si hay planes de desarrollo o PIPs activos, mencioná cuántos colaboradores tienen plan asignado y si el número es consistente con la distribución del Nine Box (ej: si hay muchos en Riesgo pero pocos con PIP, señalarlo como alerta).`;
+    const instruccionPlanes = `IMPORTANTE sobre los planes de talento:
+Debés mencionar EXPLÍCITAMENTE en el análisis:
+- Cuántos colaboradores tienen Plan de Desarrollo activo (número exacto)
+- Cuántos tienen PIP activo (número exacto) y en qué estado
+- Si ese número es suficiente o insuficiente respecto a la distribución del Nine Box
+- Si hay colaboradores en Riesgo o Dilema SIN PIP asignado, marcarlo como alerta crítica
+- Si hay colaboradores en Talento Estratégico o Desarrollar SIN plan de desarrollo, mencionarlo como oportunidad perdida
+
+Incluí estos datos en la sección de Alertas o Recomendaciones con números concretos, no de forma implícita.`;
 
     let prompt = "";
     if (body.modo === "tablero") {
