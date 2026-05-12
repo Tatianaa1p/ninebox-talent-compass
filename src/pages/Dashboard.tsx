@@ -283,7 +283,7 @@ const Dashboard = () => {
         .select('tipo, pip_estado, empleado_id')
         .eq('tablero_id', selectedTablero);
 
-      const lista = (planes || []) as Array<{ tipo: string; pip_estado: string | null }>;
+      const lista = ((planes || []) as unknown) as Array<{ tipo: string; pip_estado: string | null }>;
       planesResumen = {
         totalConPlanDesarrollo: lista.filter((p) => p.tipo === 'desarrollo').length,
         totalConPip: lista.filter((p) => p.tipo === 'riesgo').length,
