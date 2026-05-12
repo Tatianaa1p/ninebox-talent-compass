@@ -15,6 +15,7 @@ import { EmpleadoConPlan, PipEstado, PIP_ESTADO_LABELS } from '@/types/talentPla
 import { useUpsertTalentPlan } from '@/hooks/queries/useTalentPlans';
 import { AccionesSection } from './AccionesSection';
 import { NotasSection } from './NotasSection';
+import { DownloadPlanButton } from './DownloadPlanButton';
 import { cn } from '@/lib/utils';
 
 interface Props {
