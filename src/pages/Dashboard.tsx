@@ -25,6 +25,7 @@ import { useEmpresasQuery } from '@/hooks/queries/useEmpresasQuery';
 import { useEquiposQuery } from '@/hooks/queries/useEquiposQuery';
 import { useTablerosQuery } from '@/hooks/queries/useTablerosQuery';
 import { useQueryClient } from '@tanstack/react-query';
+import { TalentAnalysisResult, type AnalisisData } from '@/components/TalentAnalysisResult';
 
 interface Empresa {
   id: string;
