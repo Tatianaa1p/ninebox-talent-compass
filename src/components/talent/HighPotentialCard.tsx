@@ -9,6 +9,7 @@ import { EmpleadoConPlan } from '@/types/talentPlan';
 import { useUpsertTalentPlan } from '@/hooks/queries/useTalentPlans';
 import { AccionesSection } from './AccionesSection';
 import { NotasSection } from './NotasSection';
+import { DownloadPlanButton } from './DownloadPlanButton';
 import { cn } from '@/lib/utils';
 
 interface Props {
