@@ -449,8 +449,11 @@ const Dashboard = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Nine Box Grid - Gestión Talento Seidor</h1>
+            <div className="flex items-center gap-4">
+              <img src="/seidor-logo.png" alt="Seidor" className="h-6 md:h-8 w-auto object-contain" />
+              <div className="w-px h-8 bg-border" />
+              <div>
+                <h1 className="text-2xl font-bold">Nine Box Grid - Gestión Talento Seidor</h1>
               <div className="flex items-center gap-3 mt-2">
                 <span className="inline-flex items-center gap-2 px-2 py-1 bg-green-500/10 text-green-600 rounded-md text-sm">
                   ✓ {getUserDisplayName()}
