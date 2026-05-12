@@ -269,6 +269,32 @@ const Dashboard = () => {
     const tableroNombre = tableros.find((t) => t.id === selectedTablero)?.nombre || 'Tablero';
     const empresaNombre = empresas.find((e) => e.id === selectedEmpresa)?.nombre || 'Empresa';
 
+    // Traer planes de talento del tablero actual (solo lectura, opcional)
+    let planesResumen: {
+      totalConPlanDesarrollo: number;
+      totalConPip: number;
+      pipPendiente: number;
+      pipEnCurso: number;
+      pipCompletado: number;
+    } | null = null;
+    try {
+      const { data: planes } = await supabase
+        .from('talent_plans' as any)
+        .select('tipo, pip_estado, empleado_id')
+        .eq('tablero_id', selectedTablero);
+
+      const lista = ((planes || []) as unknown) as Array<{ tipo: string; pip_estado: string | null }>;
+      planesResumen = {
+        totalConPlanDesarrollo: lista.filter((p) => p.tipo === 'desarrollo').length,
+        totalConPip: lista.filter((p) => p.tipo === 'riesgo').length,
+        pipPendiente: lista.filter((p) => p.tipo === 'riesgo' && p.pip_estado === 'pendiente').length,
+        pipEnCurso: lista.filter((p) => p.tipo === 'riesgo' && p.pip_estado === 'en_curso').length,
+        pipCompletado: lista.filter((p) => p.tipo === 'riesgo' && p.pip_estado === 'completado').length,
+      };
+    } catch (e) {
+      console.warn('No se pudieron traer los planes de talento:', e);
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke('analizar-tendencias-ninebox', {
         body: {
@@ -278,6 +304,7 @@ const Dashboard = () => {
           tablero: tableroNombre,
           totalEmpleados: employees.length,
           distribucion: porCuadrante,
+          planes: planesResumen,
         },
       });
 
