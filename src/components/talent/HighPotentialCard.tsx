@@ -9,6 +9,7 @@ import { EmpleadoConPlan } from '@/types/talentPlan';
 import { useUpsertTalentPlan } from '@/hooks/queries/useTalentPlans';
 import { AccionesSection } from './AccionesSection';
 import { NotasSection } from './NotasSection';
+import { DownloadPlanButton } from './DownloadPlanButton';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -70,11 +71,14 @@ export const HighPotentialCard = ({ emp, tableroId }: Props) => {
           <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold">Plan de desarrollo</h4>
-              {!editing && (
-                <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
-                  <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
-                </Button>
-              )}
+              <div className="flex items-center gap-1">
+                <DownloadPlanButton empleado={emp} />
+                {!editing && (
+                  <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
+                    <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+                  </Button>
+                )}
+              </div>
             </div>
 
             {editing ? (
