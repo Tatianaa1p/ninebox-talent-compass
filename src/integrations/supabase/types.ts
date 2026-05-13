@@ -578,6 +578,7 @@ export type Database = {
           modulo_origen: string
           nombre: string
           pais: string | null
+          periodo: number
         }
         Insert: {
           created_at?: string | null
@@ -587,6 +588,7 @@ export type Database = {
           modulo_origen?: string
           nombre: string
           pais?: string | null
+          periodo?: number
         }
         Update: {
           created_at?: string | null
@@ -596,6 +598,7 @@ export type Database = {
           modulo_origen?: string
           nombre?: string
           pais?: string | null
+          periodo?: number
         }
         Relationships: [
           {
