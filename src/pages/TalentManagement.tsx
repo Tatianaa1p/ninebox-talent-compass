@@ -31,6 +31,8 @@ import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { useEmpresasQuery } from '@/hooks/queries/useEmpresasQuery';
 import { useEquiposQuery } from '@/hooks/queries/useEquiposQuery';
 import { useTablerosQuery } from '@/hooks/queries/useTablerosQuery';
+import { usePeriodosQuery } from '@/hooks/queries/usePeriodosQuery';
+import { PeriodoSelector } from '@/components/PeriodoSelector';
 import { useTalentPlans } from '@/hooks/queries/useTalentPlans';
 import { HighPotentialCard } from '@/components/talent/HighPotentialCard';
 import { FollowUpRow } from '@/components/talent/FollowUpRow';
@@ -41,6 +43,7 @@ const TalentManagement = () => {
   const { permissions, loading: permissionsLoading, hasAccess } = useUserPermissions();
 
   const [selectedEmpresa, setSelectedEmpresa] = useState('');
+  const [selectedPeriodo, setSelectedPeriodo] = useState<number>(new Date().getFullYear());
   const [selectedEquipo, setSelectedEquipo] = useState('');
   const [selectedTablero, setSelectedTablero] = useState('');
 
@@ -48,7 +51,14 @@ const TalentManagement = () => {
     !permissionsLoading && !!user,
   );
   const { data: equipos = [] } = useEquiposQuery(selectedEmpresa);
-  const { data: tableros = [] } = useTablerosQuery(selectedEquipo);
+  const { data: periodosDisponibles = [] } = usePeriodosQuery(selectedEmpresa);
+  const { data: tableros = [] } = useTablerosQuery(selectedEquipo, selectedPeriodo);
+
+  useEffect(() => {
+    if (periodosDisponibles.length > 0 && !periodosDisponibles.includes(selectedPeriodo)) {
+      setSelectedPeriodo(periodosDisponibles[0]);
+    }
+  }, [periodosDisponibles, selectedPeriodo]);
 
   const filteredEmpresas = useMemo(() => {
     if (!permissions) return [];
@@ -185,7 +195,15 @@ const TalentManagement = () => {
 
       <div className="container mx-auto px-4 py-6 space-y-6">
         <Card className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <PeriodoSelector
+              value={selectedPeriodo}
+              onChange={(p) => {
+                setSelectedPeriodo(p);
+                setSelectedTablero('');
+              }}
+              periodos={periodosDisponibles.length > 0 ? periodosDisponibles : [selectedPeriodo]}
+            />
             <div>
               <label className="text-sm font-medium mb-2 block">Empresa</label>
               <Select value={selectedEmpresa} onValueChange={setSelectedEmpresa}>
