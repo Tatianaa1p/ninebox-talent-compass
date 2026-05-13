@@ -71,13 +71,10 @@ const GaussEmpleadosTableOptimized = ({ empleados }: GaussEmpleadosTableProps) =
               <TableRow>
                 <TableHead>Ranking</TableHead>
                 <TableHead>Nombre</TableHead>
-                <TableHead>Email</TableHead>
                 <TableHead>País</TableHead>
                 <TableHead>Equipo</TableHead>
-                <TableHead>Posición</TableHead>
                 <TableHead>Puntuación Desempeño</TableHead>
                 <TableHead>Posición en Curva</TableHead>
-                <TableHead>Competencias</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -89,10 +86,8 @@ const GaussEmpleadosTableOptimized = ({ empleados }: GaussEmpleadosTableProps) =
                   <TableRow key={`${empleado.empleado_email}_${empleado.tablero_id}`}>
                     <TableCell className="font-bold">{globalIndex + 1}</TableCell>
                     <TableCell className="font-medium">{empleado.nombre_completo || '-'}</TableCell>
-                    <TableCell>{empleado.empleado_email}</TableCell>
                     <TableCell>{empleado.pais}</TableCell>
                     <TableCell>{empleado.equipo}</TableCell>
-                    <TableCell>{empleado.posicion}</TableCell>
                     <TableCell>
                       <span className="text-lg font-bold">
                         {empleado.puntuacion_desempeno.toFixed(2)}
@@ -100,9 +95,6 @@ const GaussEmpleadosTableOptimized = ({ empleados }: GaussEmpleadosTableProps) =
                     </TableCell>
                     <TableCell>
                       <Badge className={color}>{label}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {empleado.competencias.length} competencias
                     </TableCell>
                   </TableRow>
                 );
