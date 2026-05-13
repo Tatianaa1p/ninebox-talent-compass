@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmpleadoPromedio } from '@/utils/gaussCalculations';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useCuadranteNineboxMap, CUADRANTE_COLORS, cuadranteKey } from '@/hooks/queries/useCuadranteNineboxMap';
 
 interface GaussEmpleadosTableProps {
   empleados: EmpleadoPromedio[];
@@ -24,6 +25,12 @@ const GaussEmpleadosTableOptimized = ({ empleados }: GaussEmpleadosTableProps) =
     [...empleados].sort((a, b) => b.puntuacion_desempeno - a.puntuacion_desempeno),
     [empleados]
   );
+
+  const tableroIds = useMemo(
+    () => Array.from(new Set(empleados.map(e => e.tablero_id).filter(Boolean) as string[])),
+    [empleados]
+  );
+  const { data: cuadranteMap } = useCuadranteNineboxMap(tableroIds);
 
   const totalPages = Math.ceil(sortedEmpleados.length / ITEMS_PER_PAGE);
   const startIndex = currentPage * ITEMS_PER_PAGE;
@@ -75,12 +82,14 @@ const GaussEmpleadosTableOptimized = ({ empleados }: GaussEmpleadosTableProps) =
                 <TableHead>Equipo</TableHead>
                 <TableHead>Puntuación Desempeño</TableHead>
                 <TableHead>Posición en Curva</TableHead>
+                <TableHead>Cuadrante Nine Box</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentEmpleados.map((empleado, index) => {
                 const globalIndex = startIndex + index;
                 const { label, color } = getCurvePosition(empleado.puntuacion_desempeno);
+                const cuadrante = cuadranteMap?.get(cuadranteKey(empleado.tablero_id, empleado.nombre_completo));
                 
                 return (
                   <TableRow key={`${empleado.empleado_email}_${empleado.tablero_id}`}>
@@ -95,6 +104,15 @@ const GaussEmpleadosTableOptimized = ({ empleados }: GaussEmpleadosTableProps) =
                     </TableCell>
                     <TableCell>
                       <Badge className={color}>{label}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {cuadrante ? (
+                        <span className={`text-xs px-2 py-1 rounded-full border font-medium ${CUADRANTE_COLORS[cuadrante] || 'bg-gray-100 text-gray-700'}`}>
+                          {cuadrante}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">Sin datos</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
