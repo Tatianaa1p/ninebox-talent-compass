@@ -608,18 +608,30 @@ const Dashboard = () => {
 
             <div>
               <label className="text-sm font-medium mb-2 block">Equipo</label>
-              <Select value={selectedEquipo} onValueChange={setSelectedEquipo} disabled={!selectedEmpresa}>
-                <SelectTrigger>
-                  <SelectValue placeholder={!selectedEmpresa ? "Selecciona empresa primero" : equipos.length === 0 ? "Sin equipos" : "Seleccionar equipo"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {equipos.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.nombre}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-1">
+                <Select value={selectedEquipo} onValueChange={setSelectedEquipo} disabled={!selectedEmpresa}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={!selectedEmpresa ? "Selecciona empresa primero" : equipos.length === 0 ? "Sin equipos" : "Seleccionar equipo"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {equipos.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedEmpresa && (permissions?.role === 'manager' || permissions?.role === 'hrbp' || permissions?.role === 'admin') && (
+                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => setShowCrearEquipoDialog(true)}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )}
+                {selectedEquipo && (permissions?.role === 'manager' || permissions?.role === 'hrbp' || permissions?.role === 'admin') && (
+                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setShowDeleteEquipoDialog(true)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div>
