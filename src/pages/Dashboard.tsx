@@ -5,7 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Plus, AlertCircle, Grid3x3, Sparkles } from 'lucide-react';
+import { LogOut, Plus, AlertCircle, Grid3x3, Sparkles, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Dialog as ConfirmDialog, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { InteractiveNineBoxGrid } from '@/components/InteractiveNineBoxGrid';
 import { StatisticsPanel } from '@/components/StatisticsPanel';
