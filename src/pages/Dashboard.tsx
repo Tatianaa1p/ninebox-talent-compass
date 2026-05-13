@@ -488,6 +488,8 @@ const Dashboard = () => {
       setDeletingEquipo(false);
     }
   };
+
+  const getUserDisplayName = () => {
     if (user?.email) {
       const name = user.email.split('@')[0];
       return name.split('.').map(part => 
