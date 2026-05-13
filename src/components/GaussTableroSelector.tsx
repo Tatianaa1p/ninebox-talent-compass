@@ -128,6 +128,9 @@ export const GaussTableroSelector = ({
                   tableros.map(tablero => (
                     <SelectItem key={tablero.id} value={tablero.id}>
                       {tablero.nombre} {tablero.pais && `(${tablero.pais})`}
+                      {(tablero as any).es_espejo && (
+                        <span className="text-xs text-muted-foreground ml-1">(Ninebox)</span>
+                      )}
                     </SelectItem>
                   ))
                 )}
