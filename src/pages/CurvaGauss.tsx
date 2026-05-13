@@ -187,18 +187,7 @@ const CurvaGauss = () => {
           <GaussChart empleados={empleadosConPromedio} media={media} desviacion={desviacion} />
         </div>
 
-        <Tabs defaultValue="empleados" className="w-full">
-          <TabsList>
-            <TabsTrigger value="empleados">Vista por Empleados</TabsTrigger>
-            <TabsTrigger value="competencias">Vista por Competencias</TabsTrigger>
-          </TabsList>
-          <TabsContent value="empleados" className="mt-4">
-            <GaussEmpleadosTableOptimized empleados={empleadosConPromedio} />
-          </TabsContent>
-          <TabsContent value="competencias" className="mt-4">
-            <GaussCalibracionTableOptimized calibraciones={filteredCalibraciones} />
-          </TabsContent>
-        </Tabs>
+        <GaussEmpleadosTableOptimized empleados={empleadosConPromedio} />
       </main>
     </div>
   );
