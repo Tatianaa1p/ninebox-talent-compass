@@ -875,6 +875,64 @@ const Dashboard = () => {
           setShowCreateEquipoDialog(false);
         }}
       />
+
+      <Dialog open={showCrearEquipoDialog} onOpenChange={setShowCrearEquipoDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Crear nuevo equipo</DialogTitle>
+            <DialogDescription>
+              El equipo se creará dentro de{' '}
+              <strong>{empresas.find(e => e.id === selectedEmpresa)?.nombre}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Nombre del equipo</label>
+              <Input
+                value={nuevoEquipoNombre}
+                onChange={(e) => setNuevoEquipoNombre(e.target.value)}
+                placeholder="Ej: Capital Humano, IT, Finanzas..."
+                onKeyDown={(e) => e.key === 'Enter' && handleCrearEquipo()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCrearEquipoDialog(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCrearEquipo}
+              disabled={!nuevoEquipoNombre.trim() || creandoEquipo}
+            >
+              {creandoEquipo ? 'Creando...' : 'Crear equipo'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showDeleteEquipoDialog} onOpenChange={setShowDeleteEquipoDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este equipo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente el equipo
+              <strong> "{equipos.find(e => e.id === selectedEquipo)?.nombre}"</strong>
+              {' '}y <strong>todos sus tableros, empleados y calibraciones</strong>.
+              No se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={handleDeleteEquipo}
+              disabled={deletingEquipo}
+            >
+              {deletingEquipo ? 'Eliminando...' : 'Sí, eliminar todo'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
