@@ -99,6 +99,11 @@ const Dashboard = () => {
   const [showCreateBoardDialog, setShowCreateBoardDialog] = useState(false);
   const [showCreateEmpresaDialog, setShowCreateEmpresaDialog] = useState(false);
   const [showCreateEquipoDialog, setShowCreateEquipoDialog] = useState(false);
+  const [showCrearEquipoDialog, setShowCrearEquipoDialog] = useState(false);
+  const [nuevoEquipoNombre, setNuevoEquipoNombre] = useState('');
+  const [creandoEquipo, setCreandoEquipo] = useState(false);
+  const [showDeleteEquipoDialog, setShowDeleteEquipoDialog] = useState(false);
+  const [deletingEquipo, setDeletingEquipo] = useState(false);
   const [analisisTalento, setAnalisisTalento] = useState<AnalisisData | null>(null);
   const [analizando, setAnalizando] = useState(false);
 
