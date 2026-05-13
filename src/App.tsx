@@ -10,23 +10,26 @@ import CurvaGauss from "./pages/CurvaGauss";
 import TalentManagement from "./pages/TalentManagement";
 import AccesoDenegado from "./pages/AccesoDenegado";
 import ConsolidatedNineBox from "./pages/ConsolidatedNineBox";
+import MfaSetup from "./pages/MfaSetup";
+import MfaVerify from "./pages/MfaVerify";
 import NotFound from "./pages/NotFound";
+import { MfaGuard } from "./components/MfaGuard";
 
 const App = () => (
   <TooltipProvider>
     <Toaster />
     <Sonner />
     <Routes>
-      {/* Redirect root to dashboard */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/auth" element={<Auth />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/hrbp" element={<HRBPDashboard />} />
-      <Route path="/curva-gauss" element={<CurvaGauss />} />
-      <Route path="/talent-management" element={<TalentManagement />} />
+      <Route path="/mfa-setup" element={<MfaSetup />} />
+      <Route path="/mfa-verify" element={<MfaVerify />} />
+      <Route path="/dashboard" element={<MfaGuard><Dashboard /></MfaGuard>} />
+      <Route path="/hrbp" element={<MfaGuard><HRBPDashboard /></MfaGuard>} />
+      <Route path="/curva-gauss" element={<MfaGuard><CurvaGauss /></MfaGuard>} />
+      <Route path="/talent-management" element={<MfaGuard><TalentManagement /></MfaGuard>} />
       <Route path="/acceso-denegado" element={<AccesoDenegado />} />
-      <Route path="/consolidated-ninebox" element={<ConsolidatedNineBox />} />
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+      <Route path="/consolidated-ninebox" element={<MfaGuard><ConsolidatedNineBox /></MfaGuard>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   </TooltipProvider>
