@@ -6,6 +6,7 @@ interface Tablero {
   nombre: string;
   pais: string | null;
   created_at: string | null;
+  es_espejo?: boolean;
 }
 
 const fetchTablerosPorPais = async (pais?: string): Promise<Tablero[]> => {
@@ -16,7 +17,6 @@ const fetchTablerosPorPais = async (pais?: string): Promise<Tablero[]> => {
     .order('created_at', { ascending: false });
   
   if (pais && pais !== 'all') {
-    // Use ilike for case-insensitive comparison
     query = query.ilike('pais', pais);
   }
   
@@ -26,10 +26,21 @@ const fetchTablerosPorPais = async (pais?: string): Promise<Tablero[]> => {
     console.error('Error loading tableros:', error);
     throw error;
   }
-  
-  console.log('[useTablerosPaisQuery] Tableros fetched:', data?.length, 'for pais:', pais);
-  
-  return data || [];
+
+  // Marcar tableros que tienen un origen Ninebox (espejo automático)
+  const ids = (data || []).map((t: any) => t.id);
+  let espejoSet = new Set<string>();
+  if (ids.length > 0) {
+    const { data: espejos } = await supabase
+      .from('tablero_espejo' as any)
+      .select('tablero_gauss_id')
+      .in('tablero_gauss_id', ids);
+    espejoSet = new Set(((espejos as any[]) || []).map(e => e.tablero_gauss_id));
+  }
+
+  const result = (data || []).map((t: any) => ({ ...t, es_espejo: espejoSet.has(t.id) }));
+  console.log('[useTablerosPaisQuery] Tableros fetched:', result.length, 'for pais:', pais);
+  return result;
 };
 
 export const useTablerosPaisQuery = (pais?: string) => {
