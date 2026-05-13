@@ -8,12 +8,8 @@ import { CalibracionGauss } from '@/types/gauss';
 interface GaussFiltersProps {
   calibraciones: CalibracionGauss[];
   filters: {
-    familia_cargo: string;
-    competencia: string;
     pais: string;
     equipo: string;
-    seniority: string;
-    posicion: string;
   };
   onFilterChange: (key: string, value: string) => void;
   media: number;
