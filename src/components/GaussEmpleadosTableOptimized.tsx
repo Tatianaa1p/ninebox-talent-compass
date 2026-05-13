@@ -5,20 +5,17 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { EmpleadoGauss } from '@/hooks/queries/useGaussData';
 import { CUADRANTE_COLORS } from '@/hooks/queries/useCuadranteNineboxMap';
+import { getPosicionPorPercentil } from '@/utils/gaussPercentiles';
 
 interface GaussEmpleadosTableProps {
   empleados: EmpleadoGauss[];
+  umbralBajo: number;
+  umbralAlto: number;
 }
 
 const ITEMS_PER_PAGE = 50;
 
-const getCurvePosition = (score: number): { label: string; color: string } => {
-  if (score >= 4) return { label: 'Alto desempeño', color: 'bg-green-500' };
-  if (score >= 3) return { label: 'Desempeño esperado', color: 'bg-blue-500' };
-  return { label: 'Bajo desempeño', color: 'bg-red-500' };
-};
-
-const GaussEmpleadosTableOptimized = ({ empleados }: GaussEmpleadosTableProps) => {
+const GaussEmpleadosTableOptimized = ({ empleados, umbralBajo, umbralAlto }: GaussEmpleadosTableProps) => {
   const [currentPage, setCurrentPage] = useState(0);
 
   const sortedEmpleados = useMemo(
@@ -78,7 +75,7 @@ const GaussEmpleadosTableOptimized = ({ empleados }: GaussEmpleadosTableProps) =
             <TableBody>
               {currentEmpleados.map((empleado, index) => {
                 const globalIndex = startIndex + index;
-                const { label, color } = getCurvePosition(empleado.performance);
+                const { label, badgeClass } = getPosicionPorPercentil(empleado.performance, umbralBajo, umbralAlto);
                 const cuadrante = empleado.cuadrante;
                 return (
                   <TableRow key={empleado.id}>
@@ -90,7 +87,7 @@ const GaussEmpleadosTableOptimized = ({ empleados }: GaussEmpleadosTableProps) =
                       <span className="text-lg font-bold">{empleado.performance.toFixed(2)}</span>
                     </TableCell>
                     <TableCell>
-                      <Badge className={color}>{label}</Badge>
+                      <Badge variant="outline" className={badgeClass}>{label}</Badge>
                     </TableCell>
                     <TableCell>
                       {cuadrante && cuadrante !== 'Sin datos' ? (
