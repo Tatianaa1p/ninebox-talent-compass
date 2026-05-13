@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, LogOut, Grid3x3 } from 'lucide-react';
+import { Download, LogOut, Grid3x3, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,37 +15,28 @@ import { useGaussData, EmpleadoGauss } from '@/hooks/queries/useGaussData';
 import { GaussChart } from '@/components/GaussChart';
 import GaussEmpleadosTableOptimized from '@/components/GaussEmpleadosTableOptimized';
 import { GaussStats } from '@/components/GaussStats';
-import { EmpleadoPromedio } from '@/utils/gaussCalculations';
+import { calcularUmbrales, getPosicionPorPercentil } from '@/utils/gaussPercentiles';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
-const toEmpleadoPromedio = (e: EmpleadoGauss): EmpleadoPromedio => ({
-  empleado_email: e.id,
-  nombre_completo: e.nombre,
-  pais: e.empresaNombre,
-  equipo: e.equipoNombre,
-  posicion: '',
-  seniority: '',
-  familia_cargo: '',
-  tablero_id: e.tableroId,
-  puntuacion_desempeno: e.performance,
-  competencias: [],
-});
-
-const exportGaussExcel = (empleados: EmpleadoGauss[]) => {
+const exportGaussExcel = (
+  empleados: EmpleadoGauss[],
+  umbralBajo: number,
+  umbralAlto: number
+) => {
   const data = empleados.map((e) => {
-    let posicion = 'Bajo desempeño';
-    if (e.performance >= 4) posicion = 'Alto desempeño';
-    else if (e.performance >= 3) posicion = 'Desempeño esperado';
+    const { label } = getPosicionPorPercentil(e.performance, umbralBajo, umbralAlto);
     return {
       Nombre: e.nombre,
       Empresa: e.empresaNombre,
       Equipo: e.equipoNombre,
       Tablero: e.tableroNombre,
       'Puntuación Desempeño': Number(e.performance.toFixed(2)),
-      'Potencial': Number(e.potencial.toFixed(2)),
-      'Posición en Curva': posicion,
+      Potencial: Number(e.potencial.toFixed(2)),
+      'Posición en Curva': label,
+      'Umbral Bajo (P15)': Number(umbralBajo.toFixed(2)),
+      'Umbral Alto (P85)': Number(umbralAlto.toFixed(2)),
       'Cuadrante Nine Box': e.cuadrante,
     };
   });
@@ -63,15 +54,12 @@ const CurvaGauss = () => {
 
   const [selectedEmpresa, setSelectedEmpresa] = useState<string>('');
   const [selectedEquipo, setSelectedEquipo] = useState<string>('todos');
-  const [media, setMedia] = useState(2.5);
-  const [desviacion, setDesviacion] = useState(0.5);
 
   const { data: empresas = [] } = useEmpresasQuery(hasAccess);
   const { data: empleadosRaw = [], isLoading } = useGaussData(selectedEmpresa || null);
 
   const equiposDisponibles = useMemo(
-    () =>
-      Array.from(new Set(empleadosRaw.map((e) => e.equipoNombre).filter(Boolean))).sort(),
+    () => Array.from(new Set(empleadosRaw.map((e) => e.equipoNombre).filter(Boolean))).sort(),
     [empleadosRaw]
   );
 
@@ -83,7 +71,19 @@ const CurvaGauss = () => {
     [empleadosRaw, selectedEquipo]
   );
 
-  const empleadosAdaptados = useMemo(() => empleados.map(toEmpleadoPromedio), [empleados]);
+  const scores = useMemo(() => empleados.map((e) => e.performance), [empleados]);
+  const umbrales = useMemo(() => calcularUmbrales(scores), [scores]);
+
+  const counts = useMemo(() => {
+    const { umbralBajo, umbralAlto } = umbrales;
+    let bajo = 0, esperado = 0, alto = 0;
+    empleados.forEach((e) => {
+      if (e.performance <= umbralBajo) bajo++;
+      else if (e.performance >= umbralAlto) alto++;
+      else esperado++;
+    });
+    return { bajo, esperado, alto };
+  }, [empleados, umbrales]);
 
   useEffect(() => {
     const isFullyLoaded = !authLoading && !accessLoading;
@@ -95,7 +95,7 @@ const CurvaGauss = () => {
       toast.error('No hay datos para exportar');
       return;
     }
-    exportGaussExcel(empleados);
+    exportGaussExcel(empleados, umbrales.umbralBajo, umbrales.umbralAlto);
     toast.success('Reporte descargado correctamente');
   };
 
@@ -196,36 +196,29 @@ const CurvaGauss = () => {
           </div>
         ) : (
           <>
-            <GaussStats empleados={empleadosAdaptados} />
+            {empleados.length > 0 && empleados.length < 10 && (
+              <div className="flex items-start gap-2 border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-900 rounded-lg p-3 text-sm text-yellow-800 dark:text-yellow-200">
+                <AlertTriangle className="h-4 w-4 mt-0.5" />
+                <span>Se necesitan más datos para una curva estadísticamente significativa (mínimo 10 empleados).</span>
+              </div>
+            )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Media de la curva ideal</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={media}
-                  onChange={(e) => setMedia(parseFloat(e.target.value) || 0)}
-                  className="w-full border rounded-md px-3 py-2 bg-background"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">Desviación estándar</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={desviacion}
-                  onChange={(e) => setDesviacion(parseFloat(e.target.value) || 0.1)}
-                  className="w-full border rounded-md px-3 py-2 bg-background"
-                />
-              </div>
-            </div>
+            <GaussStats
+              umbrales={umbrales}
+              countBajo={counts.bajo}
+              countEsperado={counts.esperado}
+              countAlto={counts.alto}
+            />
 
             <div className="border rounded-lg p-4 bg-card">
-              <GaussChart empleados={empleadosAdaptados} media={media} desviacion={desviacion} />
+              <GaussChart scores={scores} umbrales={umbrales} />
             </div>
 
-            <GaussEmpleadosTableOptimized empleados={empleados} />
+            <GaussEmpleadosTableOptimized
+              empleados={empleados}
+              umbralBajo={umbrales.umbralBajo}
+              umbralAlto={umbrales.umbralAlto}
+            />
           </>
         )}
       </main>
