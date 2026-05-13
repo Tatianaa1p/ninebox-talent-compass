@@ -704,6 +704,22 @@ const Dashboard = () => {
                 <Plus className="mr-2 h-4 w-4" />
                 Crear Tablero
               </Button>
+              {selectedEmpresa && (permissions?.role === 'manager' || permissions?.role === 'hrbp' || permissions?.role === 'admin') && (
+                <Button variant="outline" onClick={() => setShowCrearEquipoDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Equipo
+                </Button>
+              )}
+              {selectedEquipo && (permissions?.role === 'manager' || permissions?.role === 'hrbp' || permissions?.role === 'admin') && (
+                <Button
+                  variant="outline"
+                  className="text-destructive border-destructive hover:bg-destructive hover:text-white"
+                  onClick={() => setShowDeleteEquipoDialog(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Eliminar Equipo
+                </Button>
+              )}
               <Button
                 onClick={() => setShowFileUploadDialog(true)}
                 disabled={!selectedTablero || !canCalibrateTableros()}
