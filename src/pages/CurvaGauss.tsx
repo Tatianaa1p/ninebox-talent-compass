@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, LogOut, Grid3x3, AlertTriangle } from 'lucide-react';
+import { Download, LogOut, Grid3x3, AlertTriangle, Sparkles, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +16,10 @@ import { useGaussData, EmpleadoGauss } from '@/hooks/queries/useGaussData';
 import { GaussChart } from '@/components/GaussChart';
 import GaussEmpleadosTableOptimized from '@/components/GaussEmpleadosTableOptimized';
 import { GaussStats } from '@/components/GaussStats';
+import { TalentAnalysisResult, type AnalisisData } from '@/components/TalentAnalysisResult';
+import { calcularUmbrales, getPosicionPorPercentil } from '@/utils/gaussPercentiles';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { calcularUmbrales, getPosicionPorPercentil } from '@/utils/gaussPercentiles';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
