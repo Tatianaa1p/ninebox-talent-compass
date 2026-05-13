@@ -504,6 +504,42 @@ export type Database = {
           },
         ]
       }
+      tablero_espejo: {
+        Row: {
+          created_at: string | null
+          id: string
+          tablero_gauss_id: string
+          tablero_ninebox_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          tablero_gauss_id: string
+          tablero_ninebox_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          tablero_gauss_id?: string
+          tablero_ninebox_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tablero_espejo_tablero_gauss_id_fkey"
+            columns: ["tablero_gauss_id"]
+            isOneToOne: false
+            referencedRelation: "tableros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tablero_espejo_tablero_ninebox_id_fkey"
+            columns: ["tablero_ninebox_id"]
+            isOneToOne: true
+            referencedRelation: "tableros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tablero_permisos: {
         Row: {
           created_at: string | null
@@ -855,6 +891,10 @@ export type Database = {
         Returns: boolean
       }
       is_hrb_apu_any: { Args: { _user_id: string }; Returns: boolean }
+      sincronizar_empleados_a_gauss: {
+        Args: { p_tablero_ninebox_id: string }
+        Returns: undefined
+      }
       up_has_empresa: {
         Args: { _empresa_nombre: string; _user_id: string }
         Returns: boolean
