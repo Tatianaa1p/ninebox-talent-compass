@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useGaussAccess } from '@/hooks/useGaussAccess';
 import { useEmpresasQuery } from '@/hooks/queries/useEmpresasQuery';
 import { useGaussData, EmpleadoGauss } from '@/hooks/queries/useGaussData';
+import { usePeriodosQuery } from '@/hooks/queries/usePeriodosQuery';
+import { PeriodoSelector } from '@/components/PeriodoSelector';
 import { GaussChart } from '@/components/GaussChart';
 import GaussEmpleadosTableOptimized from '@/components/GaussEmpleadosTableOptimized';
 import { GaussStats } from '@/components/GaussStats';
@@ -56,10 +58,18 @@ const CurvaGauss = () => {
   const { hasAccess, isLoading: accessLoading } = useGaussAccess();
 
   const [selectedEmpresa, setSelectedEmpresa] = useState<string>('');
+  const [selectedPeriodo, setSelectedPeriodo] = useState<number>(new Date().getFullYear());
   const [selectedEquipo, setSelectedEquipo] = useState<string>('todos');
 
   const { data: empresas = [] } = useEmpresasQuery(hasAccess);
-  const { data: empleadosRaw = [], isLoading } = useGaussData(selectedEmpresa || null);
+  const { data: periodosDisponibles = [] } = usePeriodosQuery(selectedEmpresa);
+  const { data: empleadosRaw = [], isLoading } = useGaussData(selectedEmpresa || null, selectedPeriodo);
+
+  useEffect(() => {
+    if (periodosDisponibles.length > 0 && !periodosDisponibles.includes(selectedPeriodo)) {
+      setSelectedPeriodo(periodosDisponibles[0]);
+    }
+  }, [periodosDisponibles, selectedPeriodo]);
 
   const equiposDisponibles = useMemo(
     () => Array.from(new Set(empleadosRaw.map((e) => e.equipoNombre).filter(Boolean))).sort(),
@@ -208,7 +218,12 @@ const CurvaGauss = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <PeriodoSelector
+            value={selectedPeriodo}
+            onChange={setSelectedPeriodo}
+            periodos={periodosDisponibles.length > 0 ? periodosDisponibles : [selectedPeriodo]}
+          />
           <div>
             <label className="text-sm font-medium mb-2 block">Empresa / País</label>
             <Select value={selectedEmpresa} onValueChange={(v) => { setSelectedEmpresa(v); setSelectedEquipo('todos'); }}>
