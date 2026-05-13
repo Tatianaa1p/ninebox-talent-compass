@@ -581,7 +581,7 @@ const Dashboard = () => {
 
       <div className="container mx-auto px-4 py-6 space-y-6">
         <Card className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <PeriodoSelector
               value={selectedPeriodo}
               onChange={(p) => {
@@ -622,21 +622,23 @@ const Dashboard = () => {
                   </SelectContent>
                 </Select>
                 {selectedEmpresa && (permissions?.role === 'manager' || permissions?.role === 'hrbp' || permissions?.role === 'admin') && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => setShowCrearEquipoDialog(true)}>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => setShowCrearEquipoDialog(true)}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 )}
                 {selectedEquipo && (permissions?.role === 'manager' || permissions?.role === 'hrbp' || permissions?.role === 'admin') && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setShowDeleteEquipoDialog(true)}>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setShowDeleteEquipoDialog(true)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
               </div>
             </div>
+          </div>
 
-            <div>
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
               <label className="text-sm font-medium mb-2 block">Tablero</label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-1">
                 <Select value={selectedTablero} onValueChange={setSelectedTablero} disabled={!selectedEquipo}>
                   <SelectTrigger>
                     <SelectValue placeholder={tableros.length === 0 ? "No hay tableros creados" : "Seleccionar tablero"} />
@@ -651,8 +653,9 @@ const Dashboard = () => {
                 </Select>
                 {selectedTablero && (
                   <Button
-                    variant="destructive"
+                    variant="ghost"
                     size="icon"
+                    className="h-9 w-9 flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                     onClick={async () => {
                       if (confirm('¿Estás seguro de que deseas eliminar este tablero y todos sus empleados?')) {
                         const { error: empleadosError } = await supabase
@@ -687,7 +690,7 @@ const Dashboard = () => {
                           .from('tableros')
                           .select('*')
                           .eq('equipo_id', selectedEquipo);
-                        
+
                         setTableros(data || []);
                         setSelectedTablero('');
                         setEmpleados([]);
@@ -700,33 +703,30 @@ const Dashboard = () => {
                       }
                     }}
                   >
-                    🗑️
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
               </div>
             </div>
-
-            <div className="flex items-end gap-2">
-              <Button
-                onClick={() => setShowCreateBoardDialog(true)}
-                disabled={!selectedEquipo || !canCreateTableros()}
-                className={canCreateTableros() ? "border-2 border-green-500/50" : ""}
-                title={!canCreateTableros() ? "No tienes permisos para crear tableros" : ""}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Crear Tablero
-              </Button>
-              <Button
-                onClick={() => setShowFileUploadDialog(true)}
-                disabled={!selectedTablero || !canCalibrateTableros()}
-                variant="secondary"
-                className={canCalibrateTableros() ? "border-2 border-blue-500/50" : ""}
-                title={!canCalibrateTableros() ? "No tienes permisos para calibrar tableros" : ""}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Evaluación
-              </Button>
-            </div>
+            <Button
+              onClick={() => setShowCreateBoardDialog(true)}
+              disabled={!selectedEquipo || !canCreateTableros()}
+              className={canCreateTableros() ? "border-2 border-green-500/50" : ""}
+              title={!canCreateTableros() ? "No tienes permisos para crear tableros" : ""}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Crear Tablero
+            </Button>
+            <Button
+              onClick={() => setShowFileUploadDialog(true)}
+              disabled={!selectedTablero || !canCalibrateTableros()}
+              variant="secondary"
+              className={canCalibrateTableros() ? "border-2 border-blue-500/50" : ""}
+              title={!canCalibrateTableros() ? "No tienes permisos para calibrar tableros" : ""}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Evaluación
+            </Button>
           </div>
         </Card>
 
