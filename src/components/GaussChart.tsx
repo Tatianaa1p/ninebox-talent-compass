@@ -13,7 +13,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { EmpleadoPromedio } from '@/utils/gaussCalculations';
+import { UmbralesGauss } from '@/utils/gaussPercentiles';
 
 Chart.register(
   CategoryScale,
@@ -29,44 +29,112 @@ Chart.register(
 );
 
 interface GaussChartProps {
-  empleados: EmpleadoPromedio[];
-  media: number;
-  desviacion: number;
+  scores: number[];
+  umbrales: UmbralesGauss;
 }
 
-const GaussChartComponent = ({ empleados, media, desviacion }: GaussChartProps) => {
-  // Don't render if no data
-  if (empleados.length === 0) {
+const BIN_WIDTH = 0.1;
+
+const zonesPlugin = {
+  id: 'gaussZones',
+  beforeDatasetsDraw(chart: any, _args: any, pluginOptions: any) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    const { umbralBajo, umbralAlto, minScore, maxScore } = pluginOptions || {};
+    if (umbralBajo == null) return;
+    const xScale = scales.x;
+
+    const xToPixel = (val: number) => {
+      const labels: string[] = chart.data.labels || [];
+      // Find nearest label index
+      let nearestIdx = 0;
+      let nearestDiff = Infinity;
+      labels.forEach((l, i) => {
+        const diff = Math.abs(parseFloat(l) - val);
+        if (diff < nearestDiff) {
+          nearestDiff = diff;
+          nearestIdx = i;
+        }
+      });
+      return xScale.getPixelForValue(nearestIdx);
+    };
+
+    const xMin = xToPixel(minScore);
+    const xLow = xToPixel(umbralBajo);
+    const xHigh = xToPixel(umbralAlto);
+    const xMax = xToPixel(maxScore);
+
+    ctx.save();
+    // Bajo zone
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.10)';
+    ctx.fillRect(xMin, chartArea.top, xLow - xMin, chartArea.bottom - chartArea.top);
+    // Esperado zone
+    ctx.fillStyle = 'rgba(59, 130, 246, 0.06)';
+    ctx.fillRect(xLow, chartArea.top, xHigh - xLow, chartArea.bottom - chartArea.top);
+    // Alto zone
+    ctx.fillStyle = 'rgba(34, 197, 94, 0.10)';
+    ctx.fillRect(xHigh, chartArea.top, xMax - xHigh, chartArea.bottom - chartArea.top);
+
+    // Vertical lines + labels
+    const drawLine = (x: number, color: string, label: string) => {
+      ctx.strokeStyle = color;
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x, chartArea.top);
+      ctx.lineTo(x, chartArea.bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = color;
+      ctx.font = '11px sans-serif';
+      ctx.fillText(label, x + 4, chartArea.top + 12);
+    };
+    drawLine(xLow, '#ef4444', `P15: ${umbralBajo.toFixed(2)}`);
+    drawLine(xHigh, '#22c55e', `P85: ${umbralAlto.toFixed(2)}`);
+    ctx.restore();
+  },
+};
+
+Chart.register(zonesPlugin as any);
+
+const gaussianPDF = (x: number, mean: number, std: number) => {
+  if (std <= 0) return 0;
+  const coefficient = 1 / (std * Math.sqrt(2 * Math.PI));
+  const exponent = -Math.pow(x - mean, 2) / (2 * Math.pow(std, 2));
+  return coefficient * Math.exp(exponent);
+};
+
+const GaussChartComponent = ({ scores, umbrales }: GaussChartProps) => {
+  if (scores.length === 0) {
     return (
       <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground">
         No hay datos para mostrar en el gráfico
       </div>
     );
   }
+
+  const { mean, stdDev, umbralBajo, umbralAlto, minScore, maxScore, n } = umbrales;
+
   const chartData = useMemo(() => {
-    // Create bins for scores (using employee averages now)
-    const bins = Array.from({ length: 31 }, (_, i) => 1.0 + i * 0.1); // 1.0 to 4.0 in 0.1 steps
+    const start = Math.floor(Math.min(1, minScore) / BIN_WIDTH) * BIN_WIDTH;
+    const end = Math.ceil(Math.max(4, maxScore) / BIN_WIDTH) * BIN_WIDTH;
+    const bins: number[] = [];
+    for (let v = start; v <= end + 1e-9; v += BIN_WIDTH) bins.push(parseFloat(v.toFixed(2)));
+
     const counts = new Array(bins.length).fill(0);
-
-    empleados.forEach(emp => {
-      const binIndex = Math.floor((emp.puntuacion_desempeno - 1.0) / 0.1);
-      if (binIndex >= 0 && binIndex < counts.length) {
-        counts[binIndex]++;
-      }
+    scores.forEach((s) => {
+      const idx = Math.floor((s - start) / BIN_WIDTH);
+      if (idx >= 0 && idx < counts.length) counts[idx]++;
     });
 
-    // Generate ideal Gaussian curve
-    const gaussianCurve = bins.map(x => {
-      const exponent = -Math.pow(x - media, 2) / (2 * Math.pow(desviacion, 2));
-      return (empleados.length / (desviacion * Math.sqrt(2 * Math.PI))) * Math.exp(exponent) * 0.1;
-    });
+    const curva = bins.map((x) => gaussianPDF(x, mean, stdDev) * n * BIN_WIDTH);
 
     return {
-      labels: bins.map(b => b.toFixed(1)),
+      labels: bins.map((b) => b.toFixed(1)),
       datasets: [
         {
           type: 'bar' as const,
-          label: 'Distribución Real (Empleados)',
+          label: 'Distribución Real',
           data: counts,
           backgroundColor: 'rgba(59, 130, 246, 0.6)',
           borderColor: 'rgba(59, 130, 246, 1)',
@@ -74,53 +142,41 @@ const GaussChartComponent = ({ empleados, media, desviacion }: GaussChartProps) 
         },
         {
           type: 'line' as const,
-          label: 'Curva Ideal',
-          data: gaussianCurve,
+          label: `Curva Ideal (μ=${mean.toFixed(2)}, σ=${stdDev.toFixed(2)})`,
+          data: curva,
           borderColor: 'rgba(239, 68, 68, 1)',
           backgroundColor: 'rgba(239, 68, 68, 0.1)',
           borderWidth: 2,
           fill: false,
           tension: 0.4,
+          pointRadius: 0,
         },
       ],
     };
-  }, [empleados, media, desviacion]);
+  }, [scores, mean, stdDev, minScore, maxScore, n]);
 
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: 'top' as const,
-      },
+      legend: { position: 'top' as const },
       title: {
         display: true,
-        text: 'Distribución de Puntuación de Desempeño vs Curva Gaussiana Ideal (15% Bajo | 75% Esperado | 10% Alto)',
+        text: 'Distribución real vs Curva Gaussiana basada en datos (15% bajo | 70% esperado | 15% alto)',
       },
+      gaussZones: { umbralBajo, umbralAlto, minScore, maxScore },
     },
     scales: {
-      x: {
-        title: {
-          display: true,
-          text: 'Puntuación de Desempeño (Promedio)',
-        },
-      },
-      y: {
-        title: {
-          display: true,
-          text: 'Frecuencia (Número de Empleados)',
-        },
-        beginAtZero: true,
-      },
+      x: { title: { display: true, text: 'Puntuación de Desempeño' } },
+      y: { title: { display: true, text: 'Frecuencia (Empleados)' }, beginAtZero: true },
     },
   };
 
   return (
     <div className="h-[400px] w-full">
-      <ChartJS type="bar" data={chartData as any} options={options} />
+      <ChartJS type="bar" data={chartData as any} options={options as any} />
     </div>
   );
 };
 
-// Memoize to prevent unnecessary re-renders
 export const GaussChart = memo(GaussChartComponent);
