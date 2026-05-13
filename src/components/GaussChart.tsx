@@ -33,7 +33,8 @@ interface GaussChartProps {
   umbrales: UmbralesGauss;
 }
 
-const BIN_WIDTH = 0.1;
+const BIN_WIDTH = 0.25;
+const roundToBin = (v: number) => Math.round(v / BIN_WIDTH) * BIN_WIDTH;
 
 const zonesPlugin = {
   id: 'gaussZones',
@@ -116,21 +117,24 @@ const GaussChartComponent = ({ scores, umbrales }: GaussChartProps) => {
   const { mean, stdDev, umbralBajo, umbralAlto, minScore, maxScore, n } = umbrales;
 
   const chartData = useMemo(() => {
-    const start = Math.floor(Math.min(1, minScore) / BIN_WIDTH) * BIN_WIDTH;
-    const end = Math.ceil(Math.max(4, maxScore) / BIN_WIDTH) * BIN_WIDTH;
+    const dataMin = Math.min(...scores);
+    const dataMax = Math.max(...scores);
+    const start = Math.max(1, Math.floor((dataMin - BIN_WIDTH) / BIN_WIDTH) * BIN_WIDTH);
+    const end = Math.min(5, Math.ceil((dataMax + BIN_WIDTH) / BIN_WIDTH) * BIN_WIDTH);
+
     const bins: number[] = [];
     for (let v = start; v <= end + 1e-9; v += BIN_WIDTH) bins.push(parseFloat(v.toFixed(2)));
 
     const counts = new Array(bins.length).fill(0);
     scores.forEach((s) => {
-      const idx = Math.floor((s - start) / BIN_WIDTH);
+      const idx = Math.round((s - start) / BIN_WIDTH);
       if (idx >= 0 && idx < counts.length) counts[idx]++;
     });
 
     const curva = bins.map((x) => gaussianPDF(x, mean, stdDev) * n * BIN_WIDTH);
 
     return {
-      labels: bins.map((b) => b.toFixed(1)),
+      labels: bins.map((b) => b.toFixed(2)),
       datasets: [
         {
           type: 'bar' as const,
@@ -162,12 +166,22 @@ const GaussChartComponent = ({ scores, umbrales }: GaussChartProps) => {
       legend: { position: 'top' as const },
       title: {
         display: true,
-        text: 'Distribución real vs Curva Gaussiana basada en datos (15% bajo | 70% esperado | 15% alto)',
+        text: 'Distribución real vs Curva Gaussiana (agrupado cada 0.25 puntos)',
       },
       gaussZones: { umbralBajo, umbralAlto, minScore, maxScore },
     },
     scales: {
-      x: { title: { display: true, text: 'Puntuación de Desempeño' } },
+      x: {
+        title: { display: true, text: 'Puntuación de Desempeño' },
+        ticks: {
+          callback: function (this: any, _val: any, index: number) {
+            const label = this.getLabelForValue(index);
+            const num = parseFloat(label);
+            // Show only every other tick (every 0.5)
+            return Math.round(num * 100) % 50 === 0 ? num.toFixed(2) : '';
+          },
+        },
+      },
       y: { title: { display: true, text: 'Frecuencia (Empleados)' }, beginAtZero: true },
     },
   };
