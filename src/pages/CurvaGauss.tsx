@@ -88,10 +88,63 @@ const CurvaGauss = () => {
     return { bajo, esperado, alto };
   }, [empleados, umbrales]);
 
+  const [analisisGauss, setAnalisisGauss] = useState<AnalisisData | null>(null);
+  const [analizando, setAnalizando] = useState(false);
+
+  useEffect(() => {
+    setAnalisisGauss(null);
+  }, [selectedEmpresa, selectedEquipo]);
+
   useEffect(() => {
     const isFullyLoaded = !authLoading && !accessLoading;
     if (isFullyLoaded && !hasAccess) navigate('/acceso-denegado');
   }, [hasAccess, accessLoading, authLoading, navigate]);
+
+  const handleAnalizarGauss = async () => {
+    if (empleados.length < 10) return;
+    setAnalizando(true);
+    setAnalisisGauss(null);
+    try {
+      const { umbralBajo: p15, umbralAlto: p85, mean } = umbrales;
+      const total = empleados.length;
+      const bajoPct = ((counts.bajo / total) * 100).toFixed(1);
+      const altoPct = ((counts.alto / total) * 100).toFixed(1);
+      const esperadoPct = (100 - parseFloat(bajoPct) - parseFloat(altoPct)).toFixed(1);
+
+      const porEquipo = empleados.reduce((acc, emp) => {
+        const k = emp.equipoNombre || 'Sin equipo';
+        if (!acc[k]) acc[k] = { total: 0, alto: 0, bajo: 0, scores: [] as number[] };
+        acc[k].total++;
+        acc[k].scores.push(emp.performance);
+        if (emp.performance >= p85) acc[k].alto++;
+        if (emp.performance <= p15) acc[k].bajo++;
+        return acc;
+      }, {} as Record<string, { total: number; alto: number; bajo: number; scores: number[] }>);
+
+      const resumenEquipos = Object.entries(porEquipo).map(([equipo, d]) => ({
+        equipo,
+        total: d.total,
+        pct_alto: ((d.alto / d.total) * 100).toFixed(0),
+        pct_bajo: ((d.bajo / d.total) * 100).toFixed(0),
+        promedio: (d.scores.reduce((a, b) => a + b, 0) / d.scores.length).toFixed(2),
+      }));
+
+      const empresaNombre = empresas.find((e) => e.id === selectedEmpresa)?.nombre || '';
+
+      const { data, error } = await supabase.functions.invoke('analizar-curva-gauss', {
+        body: { empresa: empresaNombre, total, mean, p15, p85, bajoPct, esperadoPct, altoPct, resumenEquipos },
+      });
+      if (error) throw error;
+      const texto = (data?.analisis ?? '').trim().replace(/^```json\s*/i, '').replace(/```$/, '').trim();
+      const parsed = JSON.parse(texto) as AnalisisData;
+      setAnalisisGauss(parsed);
+    } catch (err) {
+      console.error('Error al analizar:', err);
+      toast.error('No se pudo generar el análisis');
+    } finally {
+      setAnalizando(false);
+    }
+  };
 
   const handleExportExcel = () => {
     if (empleados.length === 0) {
