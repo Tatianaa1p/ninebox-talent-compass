@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, LogOut, Grid3x3, AlertTriangle } from 'lucide-react';
+import { Download, LogOut, Grid3x3, AlertTriangle, Sparkles, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,8 +16,10 @@ import { useGaussData, EmpleadoGauss } from '@/hooks/queries/useGaussData';
 import { GaussChart } from '@/components/GaussChart';
 import GaussEmpleadosTableOptimized from '@/components/GaussEmpleadosTableOptimized';
 import { GaussStats } from '@/components/GaussStats';
+import { TalentAnalysisResult, type AnalisisData } from '@/components/TalentAnalysisResult';
 import { calcularUmbrales, getPosicionPorPercentil } from '@/utils/gaussPercentiles';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
@@ -85,10 +88,63 @@ const CurvaGauss = () => {
     return { bajo, esperado, alto };
   }, [empleados, umbrales]);
 
+  const [analisisGauss, setAnalisisGauss] = useState<AnalisisData | null>(null);
+  const [analizando, setAnalizando] = useState(false);
+
+  useEffect(() => {
+    setAnalisisGauss(null);
+  }, [selectedEmpresa, selectedEquipo]);
+
   useEffect(() => {
     const isFullyLoaded = !authLoading && !accessLoading;
     if (isFullyLoaded && !hasAccess) navigate('/acceso-denegado');
   }, [hasAccess, accessLoading, authLoading, navigate]);
+
+  const handleAnalizarGauss = async () => {
+    if (empleados.length < 10) return;
+    setAnalizando(true);
+    setAnalisisGauss(null);
+    try {
+      const { umbralBajo: p15, umbralAlto: p85, mean } = umbrales;
+      const total = empleados.length;
+      const bajoPct = ((counts.bajo / total) * 100).toFixed(1);
+      const altoPct = ((counts.alto / total) * 100).toFixed(1);
+      const esperadoPct = (100 - parseFloat(bajoPct) - parseFloat(altoPct)).toFixed(1);
+
+      const porEquipo = empleados.reduce((acc, emp) => {
+        const k = emp.equipoNombre || 'Sin equipo';
+        if (!acc[k]) acc[k] = { total: 0, alto: 0, bajo: 0, scores: [] as number[] };
+        acc[k].total++;
+        acc[k].scores.push(emp.performance);
+        if (emp.performance >= p85) acc[k].alto++;
+        if (emp.performance <= p15) acc[k].bajo++;
+        return acc;
+      }, {} as Record<string, { total: number; alto: number; bajo: number; scores: number[] }>);
+
+      const resumenEquipos = Object.entries(porEquipo).map(([equipo, d]) => ({
+        equipo,
+        total: d.total,
+        pct_alto: ((d.alto / d.total) * 100).toFixed(0),
+        pct_bajo: ((d.bajo / d.total) * 100).toFixed(0),
+        promedio: (d.scores.reduce((a, b) => a + b, 0) / d.scores.length).toFixed(2),
+      }));
+
+      const empresaNombre = empresas.find((e) => e.id === selectedEmpresa)?.nombre || '';
+
+      const { data, error } = await supabase.functions.invoke('analizar-curva-gauss', {
+        body: { empresa: empresaNombre, total, mean, p15, p85, bajoPct, esperadoPct, altoPct, resumenEquipos },
+      });
+      if (error) throw error;
+      const texto = (data?.analisis ?? '').trim().replace(/^```json\s*/i, '').replace(/```$/, '').trim();
+      const parsed = JSON.parse(texto) as AnalisisData;
+      setAnalisisGauss(parsed);
+    } catch (err) {
+      console.error('Error al analizar:', err);
+      toast.error('No se pudo generar el análisis');
+    } finally {
+      setAnalizando(false);
+    }
+  };
 
   const handleExportExcel = () => {
     if (empleados.length === 0) {
@@ -213,6 +269,45 @@ const CurvaGauss = () => {
             <div className="border rounded-lg p-4 bg-card">
               <GaussChart scores={scores} umbrales={umbrales} />
             </div>
+
+            <Card className="p-6 space-y-4">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <h3 className="text-lg font-semibold">Análisis de distribución con IA</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Diagnóstico de la curva de desempeño y recomendaciones para RRHH
+                  </p>
+                </div>
+                <Button
+                  onClick={handleAnalizarGauss}
+                  disabled={analizando || empleados.length < 10}
+                  variant={analisisGauss ? 'outline' : 'default'}
+                >
+                  {analizando ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Analizando...</>
+                  ) : analisisGauss ? (
+                    <><RefreshCw className="mr-2 h-4 w-4" />Regenerar análisis</>
+                  ) : (
+                    <><Sparkles className="mr-2 h-4 w-4" />Analizar distribución con IA</>
+                  )}
+                </Button>
+              </div>
+
+              {empleados.length === 0 && (
+                <p className="text-sm text-muted-foreground">Seleccioná una empresa para habilitar el análisis.</p>
+              )}
+              {empleados.length > 0 && empleados.length < 10 && (
+                <p className="text-sm text-muted-foreground">Se necesitan más datos para el análisis (mínimo 10 empleados).</p>
+              )}
+              {analizando && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Analizando la distribución del desempeño...
+                </div>
+              )}
+              {analisisGauss && !analizando && <TalentAnalysisResult data={analisisGauss} />}
+            </Card>
+
 
             <GaussEmpleadosTableOptimized
               empleados={empleados}
