@@ -2,14 +2,12 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, LogOut, Grid3x3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useGaussAccess } from '@/hooks/useGaussAccess';
 import { useCalibracionGaussQuery } from '@/hooks/queries/useCalibracionGaussQuery';
 import { GaussUploadDialog } from '@/components/GaussUploadDialog';
 import { GaussFilters } from '@/components/GaussFilters';
 import { GaussChart } from '@/components/GaussChart';
-import GaussCalibracionTableOptimized from '@/components/GaussCalibracionTableOptimized';
 import GaussEmpleadosTableOptimized from '@/components/GaussEmpleadosTableOptimized';
 import { GaussStats } from '@/components/GaussStats';
 import { GaussTableroSelector } from '@/components/GaussTableroSelector';
@@ -24,26 +22,18 @@ const CurvaGauss = () => {
   const { hasAccess, isLoading: accessLoading, role, paisesAcceso } = useGaussAccess();
   
   const [filters, setFilters] = useState({
-    familia_cargo: 'all',
-    competencia: 'all',
     pais: 'all',
     equipo: 'all',
-    seniority: 'all',
-    posicion: 'all',
   });
 
   const [selectedPaisTablero, setSelectedPaisTablero] = useState('all');
   const [selectedTablero, setSelectedTablero] = useState('all');
 
-  // Apply backend filtering for better performance
-  // RLS policies automatically filter by user's paisesAcceso
   const { data: calibraciones = [], isLoading } = useCalibracionGaussQuery({
     tablero_id: selectedTablero,
     pais: filters.pais,
     equipo: filters.equipo
   });
-
-  // Debug logs removed for production performance
 
   const handleTableroCreado = (tableroId: string, pais: string) => {
     setSelectedPaisTablero(pais);
@@ -55,26 +45,14 @@ const CurvaGauss = () => {
 
   useEffect(() => {
     const isFullyLoaded = !authLoading && !accessLoading;
-    
     if (isFullyLoaded && !hasAccess) {
       navigate('/acceso-denegado');
     }
   }, [hasAccess, accessLoading, authLoading, navigate]);
 
-  // Frontend filters for remaining criteria (backend already filtered by pais, tablero, equipo)
-  const filteredCalibraciones = useMemo(() => {
-    return calibraciones.filter(cal => {
-      if (filters.familia_cargo !== 'all' && cal.familia_cargo !== filters.familia_cargo) return false;
-      if (filters.competencia !== 'all' && cal.competencia !== filters.competencia) return false;
-      if (filters.seniority !== 'all' && cal.seniority !== filters.seniority) return false;
-      if (filters.posicion !== 'all' && cal.posicion !== filters.posicion) return false;
-      return true;
-    });
-  }, [calibraciones, filters]);
-
   const empleadosConPromedio = useMemo(() => {
-    return calcularPromediosPorPersona(filteredCalibraciones);
-  }, [filteredCalibraciones]);
+    return calcularPromediosPorPersona(calibraciones);
+  }, [calibraciones]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -189,18 +167,7 @@ const CurvaGauss = () => {
           <GaussChart empleados={empleadosConPromedio} media={media} desviacion={desviacion} />
         </div>
 
-        <Tabs defaultValue="empleados" className="w-full">
-          <TabsList>
-            <TabsTrigger value="empleados">Vista por Empleados</TabsTrigger>
-            <TabsTrigger value="competencias">Vista por Competencias</TabsTrigger>
-          </TabsList>
-          <TabsContent value="empleados" className="mt-4">
-            <GaussEmpleadosTableOptimized empleados={empleadosConPromedio} />
-          </TabsContent>
-          <TabsContent value="competencias" className="mt-4">
-            <GaussCalibracionTableOptimized calibraciones={filteredCalibraciones} />
-          </TabsContent>
-        </Tabs>
+        <GaussEmpleadosTableOptimized empleados={empleadosConPromedio} />
       </main>
     </div>
   );
