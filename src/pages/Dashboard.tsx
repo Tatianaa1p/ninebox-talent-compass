@@ -472,11 +472,15 @@ const Dashboard = () => {
     setDeletingEquipo(true);
     try {
       const equipoIdEliminado = selectedEquipo;
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from('equipos')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('id', equipoIdEliminado);
       if (error) throw error;
+      if (count === 0) {
+        toast({ title: 'No tenés permisos para eliminar este equipo', variant: 'destructive' });
+        return;
+      }
 
       // Remover el equipo eliminado del cache directamente
       queryClient.setQueryData(
