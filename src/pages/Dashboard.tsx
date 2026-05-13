@@ -471,15 +471,27 @@ const Dashboard = () => {
     if (!selectedEquipo) return;
     setDeletingEquipo(true);
     try {
+      const equipoIdEliminado = selectedEquipo;
       const { error } = await supabase
         .from('equipos')
         .delete()
-        .eq('id', selectedEquipo);
+        .eq('id', equipoIdEliminado);
       if (error) throw error;
+
+      // Remover el equipo eliminado del cache directamente
+      queryClient.setQueryData(
+        ['equipos', selectedEmpresa],
+        (old: any[]) => (old || []).filter((e) => e.id !== equipoIdEliminado)
+      );
+
       setShowDeleteEquipoDialog(false);
       setSelectedEquipo('');
       setSelectedTablero('');
-      await queryClient.invalidateQueries({ queryKey: ['equipos', selectedEmpresa] });
+
+      // Invalidar y forzar refetch inmediato
+      queryClient.invalidateQueries({ queryKey: ['equipos', selectedEmpresa] });
+      await queryClient.refetchQueries({ queryKey: ['equipos', selectedEmpresa] });
+
       toast({ title: 'Equipo eliminado correctamente' });
     } catch (error) {
       console.error('Error al eliminar equipo:', error);
