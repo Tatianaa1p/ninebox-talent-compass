@@ -26,6 +26,12 @@ const GaussEmpleadosTableOptimized = ({ empleados }: GaussEmpleadosTableProps) =
     [empleados]
   );
 
+  const tableroIds = useMemo(
+    () => Array.from(new Set(empleados.map(e => e.tablero_id).filter(Boolean) as string[])),
+    [empleados]
+  );
+  const { data: cuadranteMap } = useCuadranteNineboxMap(tableroIds);
+
   const totalPages = Math.ceil(sortedEmpleados.length / ITEMS_PER_PAGE);
   const startIndex = currentPage * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
