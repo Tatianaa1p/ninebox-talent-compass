@@ -20,8 +20,6 @@ import { TalentAnalysisResult, type AnalisisData } from '@/components/TalentAnal
 import { calcularUmbrales, getPosicionPorPercentil } from '@/utils/gaussPercentiles';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { calcularUmbrales, getPosicionPorPercentil } from '@/utils/gaussPercentiles';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
