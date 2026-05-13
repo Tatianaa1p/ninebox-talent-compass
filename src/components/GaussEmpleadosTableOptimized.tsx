@@ -82,12 +82,14 @@ const GaussEmpleadosTableOptimized = ({ empleados }: GaussEmpleadosTableProps) =
                 <TableHead>Equipo</TableHead>
                 <TableHead>Puntuación Desempeño</TableHead>
                 <TableHead>Posición en Curva</TableHead>
+                <TableHead>Cuadrante Nine Box</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentEmpleados.map((empleado, index) => {
                 const globalIndex = startIndex + index;
                 const { label, color } = getCurvePosition(empleado.puntuacion_desempeno);
+                const cuadrante = cuadranteMap?.get(cuadranteKey(empleado.tablero_id, empleado.nombre_completo));
                 
                 return (
                   <TableRow key={`${empleado.empleado_email}_${empleado.tablero_id}`}>
