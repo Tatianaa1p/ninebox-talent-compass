@@ -441,7 +441,53 @@ const Dashboard = () => {
     navigate('/auth');
   };
 
-  const getUserDisplayName = () => {
+  const handleCrearEquipo = async () => {
+    if (!nuevoEquipoNombre.trim() || !selectedEmpresa) return;
+    setCreandoEquipo(true);
+    try {
+      const { data, error } = await supabase
+        .from('equipos')
+        .insert({
+          nombre: nuevoEquipoNombre.trim(),
+          empresa_id: selectedEmpresa,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      setShowCrearEquipoDialog(false);
+      setNuevoEquipoNombre('');
+      await queryClient.invalidateQueries({ queryKey: ['equipos', selectedEmpresa] });
+      setSelectedEquipo(data.id);
+      toast({ title: `Equipo "${data.nombre}" creado correctamente` });
+    } catch (error) {
+      console.error('Error al crear equipo:', error);
+      toast({ title: 'Error al crear el equipo', variant: 'destructive' });
+    } finally {
+      setCreandoEquipo(false);
+    }
+  };
+
+  const handleDeleteEquipo = async () => {
+    if (!selectedEquipo) return;
+    setDeletingEquipo(true);
+    try {
+      const { error } = await supabase
+        .from('equipos')
+        .delete()
+        .eq('id', selectedEquipo);
+      if (error) throw error;
+      setShowDeleteEquipoDialog(false);
+      setSelectedEquipo('');
+      setSelectedTablero('');
+      await queryClient.invalidateQueries({ queryKey: ['equipos', selectedEmpresa] });
+      toast({ title: 'Equipo eliminado correctamente' });
+    } catch (error) {
+      console.error('Error al eliminar equipo:', error);
+      toast({ title: 'Error al eliminar el equipo', variant: 'destructive' });
+    } finally {
+      setDeletingEquipo(false);
+    }
+  };
     if (user?.email) {
       const name = user.email.split('@')[0];
       return name.split('.').map(part => 
