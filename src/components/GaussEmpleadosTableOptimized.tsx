@@ -105,6 +105,15 @@ const GaussEmpleadosTableOptimized = ({ empleados }: GaussEmpleadosTableProps) =
                     <TableCell>
                       <Badge className={color}>{label}</Badge>
                     </TableCell>
+                    <TableCell>
+                      {cuadrante ? (
+                        <span className={`text-xs px-2 py-1 rounded-full border font-medium ${CUADRANTE_COLORS[cuadrante] || 'bg-gray-100 text-gray-700'}`}>
+                          {cuadrante}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">Sin datos</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 );
               })}
