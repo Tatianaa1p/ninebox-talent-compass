@@ -22,26 +22,18 @@ const CurvaGauss = () => {
   const { hasAccess, isLoading: accessLoading, role, paisesAcceso } = useGaussAccess();
   
   const [filters, setFilters] = useState({
-    familia_cargo: 'all',
-    competencia: 'all',
     pais: 'all',
     equipo: 'all',
-    seniority: 'all',
-    posicion: 'all',
   });
 
   const [selectedPaisTablero, setSelectedPaisTablero] = useState('all');
   const [selectedTablero, setSelectedTablero] = useState('all');
 
-  // Apply backend filtering for better performance
-  // RLS policies automatically filter by user's paisesAcceso
   const { data: calibraciones = [], isLoading } = useCalibracionGaussQuery({
     tablero_id: selectedTablero,
     pais: filters.pais,
     equipo: filters.equipo
   });
-
-  // Debug logs removed for production performance
 
   const handleTableroCreado = (tableroId: string, pais: string) => {
     setSelectedPaisTablero(pais);
@@ -53,26 +45,14 @@ const CurvaGauss = () => {
 
   useEffect(() => {
     const isFullyLoaded = !authLoading && !accessLoading;
-    
     if (isFullyLoaded && !hasAccess) {
       navigate('/acceso-denegado');
     }
   }, [hasAccess, accessLoading, authLoading, navigate]);
 
-  // Frontend filters for remaining criteria (backend already filtered by pais, tablero, equipo)
-  const filteredCalibraciones = useMemo(() => {
-    return calibraciones.filter(cal => {
-      if (filters.familia_cargo !== 'all' && cal.familia_cargo !== filters.familia_cargo) return false;
-      if (filters.competencia !== 'all' && cal.competencia !== filters.competencia) return false;
-      if (filters.seniority !== 'all' && cal.seniority !== filters.seniority) return false;
-      if (filters.posicion !== 'all' && cal.posicion !== filters.posicion) return false;
-      return true;
-    });
-  }, [calibraciones, filters]);
-
   const empleadosConPromedio = useMemo(() => {
-    return calcularPromediosPorPersona(filteredCalibraciones);
-  }, [filteredCalibraciones]);
+    return calcularPromediosPorPersona(calibraciones);
+  }, [calibraciones]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
