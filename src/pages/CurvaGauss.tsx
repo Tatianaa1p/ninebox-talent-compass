@@ -270,6 +270,45 @@ const CurvaGauss = () => {
               <GaussChart scores={scores} umbrales={umbrales} />
             </div>
 
+            <Card className="p-6 space-y-4">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <h3 className="text-lg font-semibold">Análisis de distribución con IA</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Diagnóstico de la curva de desempeño y recomendaciones para RRHH
+                  </p>
+                </div>
+                <Button
+                  onClick={handleAnalizarGauss}
+                  disabled={analizando || empleados.length < 10}
+                  variant={analisisGauss ? 'outline' : 'default'}
+                >
+                  {analizando ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Analizando...</>
+                  ) : analisisGauss ? (
+                    <><RefreshCw className="mr-2 h-4 w-4" />Regenerar análisis</>
+                  ) : (
+                    <><Sparkles className="mr-2 h-4 w-4" />Analizar distribución con IA</>
+                  )}
+                </Button>
+              </div>
+
+              {empleados.length === 0 && (
+                <p className="text-sm text-muted-foreground">Seleccioná una empresa para habilitar el análisis.</p>
+              )}
+              {empleados.length > 0 && empleados.length < 10 && (
+                <p className="text-sm text-muted-foreground">Se necesitan más datos para el análisis (mínimo 10 empleados).</p>
+              )}
+              {analizando && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Analizando la distribución del desempeño...
+                </div>
+              )}
+              {analisisGauss && !analizando && <TalentAnalysisResult data={analisisGauss} />}
+            </Card>
+
+
             <GaussEmpleadosTableOptimized
               empleados={empleados}
               umbralBajo={umbrales.umbralBajo}
