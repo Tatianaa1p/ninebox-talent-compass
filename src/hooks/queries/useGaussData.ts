@@ -28,9 +28,9 @@ const QUADRANT_NAMES: Record<string, string> = {
 const getPotentialLevel = (s: number) => (s > 2.5 ? 'Alto' : s > 1.5 ? 'Medio' : 'Bajo');
 const getPerformanceLevel = (s: number) => (s >= 4 ? 'Alto' : s >= 3 ? 'Medio' : 'Bajo');
 
-export const useGaussData = (empresaId: string | null) => {
+export const useGaussData = (empresaId: string | null, periodo?: number) => {
   return useQuery({
-    queryKey: ['gauss_data', empresaId],
+    queryKey: ['gauss_data', empresaId, periodo ?? 'all'],
     enabled: !!empresaId,
     staleTime: 2 * 60 * 1000,
     queryFn: async (): Promise<EmpleadoGauss[]> => {
@@ -41,11 +41,13 @@ export const useGaussData = (empresaId: string | null) => {
         .maybeSingle();
       const empresaNombre = empresa?.nombre || '';
 
-      const { data: tableros, error: tErr } = await supabase
+      let tablerosQuery = supabase
         .from('tableros')
         .select('id, nombre, equipo_id, created_at')
         .eq('empresa_id', empresaId!)
         .order('created_at', { ascending: false });
+      if (periodo) tablerosQuery = tablerosQuery.eq('periodo', periodo);
+      const { data: tableros, error: tErr } = await tablerosQuery;
       if (tErr) throw tErr;
 
       const tableroIds = (tableros || []).map((t) => t.id);
