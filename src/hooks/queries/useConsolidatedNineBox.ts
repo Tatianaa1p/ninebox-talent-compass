@@ -46,12 +46,13 @@ const EMPTY_CUADRANTES = (): Record<string, EmpleadoConsolidado[]> => ({
 });
 
 export const useConsolidatedNineBox = (
-  empresaId: string | null
+  empresaId: string | null,
+  periodo?: number
 ) => {
   const { overrides } = useOverrides();
 
   const query = useQuery({
-    queryKey: ['consolidated-ninebox', empresaId],
+    queryKey: ['consolidated-ninebox', empresaId, periodo ?? 'all'],
     enabled: !!empresaId,
     staleTime: 2 * 60 * 1000,
     queryFn: async (): Promise<{
@@ -59,11 +60,13 @@ export const useConsolidatedNineBox = (
       equipos: Record<string, string>;
       empleados: Array<{ id: string; nombre: string; performance: number | null; potencial: number | null; tablero_id: string | null }>;
     }> => {
-      const { data: tableros, error: tErr } = await supabase
+      let tablerosQuery = supabase
         .from('tableros')
         .select('id, nombre, equipo_id, created_at')
         .eq('empresa_id', empresaId!)
         .order('created_at', { ascending: false });
+      if (periodo) tablerosQuery = tablerosQuery.eq('periodo', periodo);
+      const { data: tableros, error: tErr } = await tablerosQuery;
       if (tErr) throw tErr;
 
       const tableroIds = (tableros || []).map((t) => t.id);

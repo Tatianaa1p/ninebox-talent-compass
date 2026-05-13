@@ -24,6 +24,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useEmpresasQuery } from '@/hooks/queries/useEmpresasQuery';
 import { useEquiposQuery } from '@/hooks/queries/useEquiposQuery';
 import { useTablerosQuery } from '@/hooks/queries/useTablerosQuery';
+import { usePeriodosQuery } from '@/hooks/queries/usePeriodosQuery';
+import { PeriodoSelector } from '@/components/PeriodoSelector';
 import { useQueryClient } from '@tanstack/react-query';
 import { TalentAnalysisResult, type AnalisisData } from '@/components/TalentAnalysisResult';
 
@@ -77,6 +79,7 @@ const Dashboard = () => {
   const [tableros, setTableros] = useState<Tablero[]>([]);
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [selectedEmpresa, setSelectedEmpresa] = useState<string>('');
+  const [selectedPeriodo, setSelectedPeriodo] = useState<number>(new Date().getFullYear());
   const [selectedEquipo, setSelectedEquipo] = useState<string>('');
   const [selectedTablero, setSelectedTablero] = useState<string>('');
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -90,7 +93,15 @@ const Dashboard = () => {
   // Use cached queries
   const { data: empresasFromQuery, isLoading: isLoadingEmpresas } = useEmpresasQuery(!permissionsLoading && !!user);
   const { data: equiposFromQuery } = useEquiposQuery(selectedEmpresa);
-  const { data: tablerosFromQuery } = useTablerosQuery(selectedEquipo);
+  const { data: periodosDisponibles = [] } = usePeriodosQuery(selectedEmpresa);
+  const { data: tablerosFromQuery } = useTablerosQuery(selectedEquipo, selectedPeriodo);
+
+  // Auto-ajustar al período más reciente disponible cuando cambia la empresa
+  useEffect(() => {
+    if (periodosDisponibles.length > 0 && !periodosDisponibles.includes(selectedPeriodo)) {
+      setSelectedPeriodo(periodosDisponibles[0]);
+    }
+  }, [periodosDisponibles, selectedPeriodo]);
 
   // Load empresas from cache
   useEffect(() => {
@@ -505,7 +516,15 @@ const Dashboard = () => {
 
       <div className="container mx-auto px-4 py-6 space-y-6">
         <Card className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <PeriodoSelector
+              value={selectedPeriodo}
+              onChange={(p) => {
+                setSelectedPeriodo(p);
+                setSelectedTablero('');
+              }}
+              periodos={periodosDisponibles.length > 0 ? periodosDisponibles : [selectedPeriodo]}
+            />
             <div>
               <label className="text-sm font-medium mb-2 block">Empresa</label>
               <Select value={selectedEmpresa} onValueChange={setSelectedEmpresa}>
@@ -745,9 +764,11 @@ const Dashboard = () => {
         onOpenChange={setShowCreateBoardDialog}
         equipoId={selectedEquipo}
         empresaId={selectedEmpresa}
+        defaultPeriodo={selectedPeriodo}
         onCreated={async (tableroId) => {
-          // Invalidate and refetch tableros
+          // Invalidate and refetch tableros + periodos
           await queryClient.invalidateQueries({ queryKey: ['tableros', selectedEquipo] });
+          await queryClient.invalidateQueries({ queryKey: ['periodos'] });
           setSelectedTablero(tableroId);
           setShowCreateBoardDialog(false);
         }}

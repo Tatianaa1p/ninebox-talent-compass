@@ -41,6 +41,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { useEmpresasQuery } from '@/hooks/queries/useEmpresasQuery';
 import { useConsolidatedNineBox } from '@/hooks/queries/useConsolidatedNineBox';
+import { usePeriodosQuery } from '@/hooks/queries/usePeriodosQuery';
+import { PeriodoSelector } from '@/components/PeriodoSelector';
 import { DownloadNineBoxImageButton } from '@/components/DownloadNineBoxImageButton';
 
 const QUADRANT_LAYOUT: Array<{
@@ -71,6 +73,7 @@ const ConsolidatedNineBox = () => {
   const { permissions, loading: permissionsLoading, hasAccess } = useUserPermissions();
 
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>('');
+  const [selectedPeriodo, setSelectedPeriodo] = useState<number>(new Date().getFullYear());
   const [analisis, setAnalisis] = useState<AnalisisData | null>(null);
   const [analizando, setAnalizando] = useState(false);
   const { toast } = useToast();
@@ -103,8 +106,16 @@ const ConsolidatedNineBox = () => {
     return unique.filter((e) => hasAccess(e.nombre));
   }, [empresasData, permissions, hasAccess]);
 
+  const { data: periodosDisponibles = [] } = usePeriodosQuery(selectedEmpresaId);
+
+  useEffect(() => {
+    if (periodosDisponibles.length > 0 && !periodosDisponibles.includes(selectedPeriodo)) {
+      setSelectedPeriodo(periodosDisponibles[0]);
+    }
+  }, [periodosDisponibles, selectedPeriodo]);
+
   const { empleadosPorCuadrante, totalEmpleados, tablerosFuente, loading } =
-    useConsolidatedNineBox(selectedEmpresaId || null);
+    useConsolidatedNineBox(selectedEmpresaId || null, selectedPeriodo);
 
   const countIn = (keys: string[]) =>
     keys.reduce((acc, k) => acc + (empleadosPorCuadrante[k]?.length || 0), 0);
@@ -258,24 +269,31 @@ const ConsolidatedNineBox = () => {
 
       <div className="container mx-auto px-4 py-6 space-y-6">
         <Card className="p-6">
-          <div>
-            <label className="text-sm font-medium mb-2 block">País</label>
-            <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    filteredEmpresas.length === 0 ? 'Sin países disponibles' : 'Seleccionar país'
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredEmpresas.map((e) => (
-                  <SelectItem key={e.id} value={e.id}>
-                    {e.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <PeriodoSelector
+              value={selectedPeriodo}
+              onChange={setSelectedPeriodo}
+              periodos={periodosDisponibles.length > 0 ? periodosDisponibles : [selectedPeriodo]}
+            />
+            <div>
+              <label className="text-sm font-medium mb-2 block">País</label>
+              <Select value={selectedEmpresaId} onValueChange={setSelectedEmpresaId}>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      filteredEmpresas.length === 0 ? 'Sin países disponibles' : 'Seleccionar país'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredEmpresas.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </Card>
 
