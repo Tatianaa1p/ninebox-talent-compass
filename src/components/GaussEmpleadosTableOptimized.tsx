@@ -75,7 +75,7 @@ const GaussEmpleadosTableOptimized = ({ empleados, umbralBajo, umbralAlto }: Gau
             <TableBody>
               {currentEmpleados.map((empleado, index) => {
                 const globalIndex = startIndex + index;
-                const { label, color } = getCurvePosition(empleado.performance);
+                const { label, badgeClass } = getPosicionPorPercentil(empleado.performance, umbralBajo, umbralAlto);
                 const cuadrante = empleado.cuadrante;
                 return (
                   <TableRow key={empleado.id}>
@@ -87,7 +87,7 @@ const GaussEmpleadosTableOptimized = ({ empleados, umbralBajo, umbralAlto }: Gau
                       <span className="text-lg font-bold">{empleado.performance.toFixed(2)}</span>
                     </TableCell>
                     <TableCell>
-                      <Badge className={color}>{label}</Badge>
+                      <Badge variant="outline" className={badgeClass}>{label}</Badge>
                     </TableCell>
                     <TableCell>
                       {cuadrante && cuadrante !== 'Sin datos' ? (
