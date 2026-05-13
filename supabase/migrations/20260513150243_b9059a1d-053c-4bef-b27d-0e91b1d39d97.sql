@@ -1,0 +1,1 @@
+UPDATE auth.users SET banned_until = '2099-12-31 23:59:59+00' WHERE email = 'francisca.gutierrez@seidor.com';
