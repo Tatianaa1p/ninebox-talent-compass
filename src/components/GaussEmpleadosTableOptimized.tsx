@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmpleadoPromedio } from '@/utils/gaussCalculations';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useCuadranteNineboxMap, CUADRANTE_COLORS, cuadranteKey } from '@/hooks/queries/useCuadranteNineboxMap';
 
 interface GaussEmpleadosTableProps {
   empleados: EmpleadoPromedio[];
