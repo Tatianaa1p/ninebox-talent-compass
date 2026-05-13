@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogOut, Plus, AlertCircle, Grid3x3, Sparkles, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Dialog as ConfirmDialog, DialogFooter } from '@/components/ui/dialog';
+
 import {
   AlertDialog,
   AlertDialogAction,
