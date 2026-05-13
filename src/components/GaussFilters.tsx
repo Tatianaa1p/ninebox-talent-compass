@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { CalibracionGauss, COMPETENCIAS } from '@/types/gauss';
+import { CalibracionGauss } from '@/types/gauss';
 
 interface GaussFiltersProps {
   calibraciones: CalibracionGauss[];
