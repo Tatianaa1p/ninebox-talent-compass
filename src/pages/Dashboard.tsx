@@ -5,13 +5,25 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Plus, AlertCircle, Grid3x3, Sparkles } from 'lucide-react';
+import { LogOut, Plus, AlertCircle, Grid3x3, Sparkles, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { InteractiveNineBoxGrid } from '@/components/InteractiveNineBoxGrid';
 import { StatisticsPanel } from '@/components/StatisticsPanel';
 import { CreateBoardDialog } from '@/components/CreateBoardDialog';
 import { FileUploader } from '@/components/FileUploader';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { CreateEmpresaDialog } from '@/components/CreateEmpresaDialog';
 import { CreateEquipoDialog } from '@/components/CreateEquipoDialog';
 import { CalibrationExportButton } from '@/components/CalibrationExportButton';
@@ -87,6 +99,11 @@ const Dashboard = () => {
   const [showCreateBoardDialog, setShowCreateBoardDialog] = useState(false);
   const [showCreateEmpresaDialog, setShowCreateEmpresaDialog] = useState(false);
   const [showCreateEquipoDialog, setShowCreateEquipoDialog] = useState(false);
+  const [showCrearEquipoDialog, setShowCrearEquipoDialog] = useState(false);
+  const [nuevoEquipoNombre, setNuevoEquipoNombre] = useState('');
+  const [creandoEquipo, setCreandoEquipo] = useState(false);
+  const [showDeleteEquipoDialog, setShowDeleteEquipoDialog] = useState(false);
+  const [deletingEquipo, setDeletingEquipo] = useState(false);
   const [analisisTalento, setAnalisisTalento] = useState<AnalisisData | null>(null);
   const [analizando, setAnalizando] = useState(false);
 
@@ -424,6 +441,54 @@ const Dashboard = () => {
     navigate('/auth');
   };
 
+  const handleCrearEquipo = async () => {
+    if (!nuevoEquipoNombre.trim() || !selectedEmpresa) return;
+    setCreandoEquipo(true);
+    try {
+      const { data, error } = await supabase
+        .from('equipos')
+        .insert({
+          nombre: nuevoEquipoNombre.trim(),
+          empresa_id: selectedEmpresa,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      setShowCrearEquipoDialog(false);
+      setNuevoEquipoNombre('');
+      await queryClient.invalidateQueries({ queryKey: ['equipos', selectedEmpresa] });
+      setSelectedEquipo(data.id);
+      toast({ title: `Equipo "${data.nombre}" creado correctamente` });
+    } catch (error) {
+      console.error('Error al crear equipo:', error);
+      toast({ title: 'Error al crear el equipo', variant: 'destructive' });
+    } finally {
+      setCreandoEquipo(false);
+    }
+  };
+
+  const handleDeleteEquipo = async () => {
+    if (!selectedEquipo) return;
+    setDeletingEquipo(true);
+    try {
+      const { error } = await supabase
+        .from('equipos')
+        .delete()
+        .eq('id', selectedEquipo);
+      if (error) throw error;
+      setShowDeleteEquipoDialog(false);
+      setSelectedEquipo('');
+      setSelectedTablero('');
+      await queryClient.invalidateQueries({ queryKey: ['equipos', selectedEmpresa] });
+      toast({ title: 'Equipo eliminado correctamente' });
+    } catch (error) {
+      console.error('Error al eliminar equipo:', error);
+      toast({ title: 'Error al eliminar el equipo', variant: 'destructive' });
+    } finally {
+      setDeletingEquipo(false);
+    }
+  };
+
   const getUserDisplayName = () => {
     if (user?.email) {
       const name = user.email.split('@')[0];
@@ -639,6 +704,22 @@ const Dashboard = () => {
                 <Plus className="mr-2 h-4 w-4" />
                 Crear Tablero
               </Button>
+              {selectedEmpresa && (permissions?.role === 'manager' || permissions?.role === 'hrbp' || permissions?.role === 'admin') && (
+                <Button variant="outline" onClick={() => setShowCrearEquipoDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Equipo
+                </Button>
+              )}
+              {selectedEquipo && (permissions?.role === 'manager' || permissions?.role === 'hrbp' || permissions?.role === 'admin') && (
+                <Button
+                  variant="outline"
+                  className="text-destructive border-destructive hover:bg-destructive hover:text-white"
+                  onClick={() => setShowDeleteEquipoDialog(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Eliminar Equipo
+                </Button>
+              )}
               <Button
                 onClick={() => setShowFileUploadDialog(true)}
                 disabled={!selectedTablero || !canCalibrateTableros()}
@@ -794,6 +875,64 @@ const Dashboard = () => {
           setShowCreateEquipoDialog(false);
         }}
       />
+
+      <Dialog open={showCrearEquipoDialog} onOpenChange={setShowCrearEquipoDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Crear nuevo equipo</DialogTitle>
+            <DialogDescription>
+              El equipo se creará dentro de{' '}
+              <strong>{empresas.find(e => e.id === selectedEmpresa)?.nombre}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Nombre del equipo</label>
+              <Input
+                value={nuevoEquipoNombre}
+                onChange={(e) => setNuevoEquipoNombre(e.target.value)}
+                placeholder="Ej: Capital Humano, IT, Finanzas..."
+                onKeyDown={(e) => e.key === 'Enter' && handleCrearEquipo()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCrearEquipoDialog(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCrearEquipo}
+              disabled={!nuevoEquipoNombre.trim() || creandoEquipo}
+            >
+              {creandoEquipo ? 'Creando...' : 'Crear equipo'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showDeleteEquipoDialog} onOpenChange={setShowDeleteEquipoDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este equipo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente el equipo
+              <strong> "{equipos.find(e => e.id === selectedEquipo)?.nombre}"</strong>
+              {' '}y <strong>todos sus tableros, empleados y calibraciones</strong>.
+              No se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={handleDeleteEquipo}
+              disabled={deletingEquipo}
+            >
+              {deletingEquipo ? 'Eliminando...' : 'Sí, eliminar todo'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

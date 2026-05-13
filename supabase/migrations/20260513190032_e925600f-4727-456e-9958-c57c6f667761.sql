@@ -1,0 +1,2 @@
+ALTER TABLE public.tableros DROP CONSTRAINT IF EXISTS tableros_equipo_id_fkey;
+ALTER TABLE public.tableros ADD CONSTRAINT tableros_equipo_id_fkey FOREIGN KEY (equipo_id) REFERENCES public.equipos(id) ON DELETE CASCADE;
