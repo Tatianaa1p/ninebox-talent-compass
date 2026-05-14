@@ -213,6 +213,22 @@ export const useUpdateAccionEstado = (tableroId: string) => {
   });
 };
 
+export const useUpdateAccionDescripcion = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, descripcion }: { id: string; descripcion: string; tableroId: string }) => {
+      const { error } = await supabase
+        .from('talent_acciones' as any)
+        .update({ descripcion })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['talent_plans', vars.tableroId] });
+    },
+  });
+};
+
 export const useDeleteAccion = (tableroId: string) => {
   const qc = useQueryClient();
   return useMutation({
