@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Circle, Clock, CheckCircle2, Trash2, Plus } from 'lucide-react';
+import { Circle, Clock, CheckCircle2, Trash2, Plus, Pencil, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   TalentAccion,
@@ -11,6 +11,7 @@ import {
 import {
   useAddAccion,
   useUpdateAccionEstado,
+  useUpdateAccionDescripcion,
   useDeleteAccion,
 } from '@/hooks/queries/useTalentPlans';
 
@@ -39,9 +40,20 @@ export const AccionesSection = ({ tableroId, empleadoId, tipo, acciones }: Props
   const [fecha, setFecha] = useState('');
   const [resp, setResp] = useState('');
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+
   const addM = useAddAccion(tableroId);
   const updM = useUpdateAccionEstado(tableroId);
+  const updDescM = useUpdateAccionDescripcion();
   const delM = useDeleteAccion(tableroId);
+
+  const saveEdit = (id: string) => {
+    if (!editingText.trim()) return;
+    updDescM.mutate({ id, descripcion: editingText.trim(), tableroId });
+    setEditingId(null);
+    setEditingText('');
+  };
 
   const handleAdd = async () => {
     if (!desc.trim()) return;
@@ -82,22 +94,56 @@ export const AccionesSection = ({ tableroId, empleadoId, tipo, acciones }: Props
               <StateIcon estado={a.estado} />
             </button>
             <div className="flex-1 min-w-0">
-              <p className={cn('text-sm truncate', a.estado === 'completado' && 'line-through text-muted-foreground')}>
-                {a.descripcion}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {a.responsable && <span>{a.responsable}</span>}
-                {a.responsable && a.fecha_limite && <span> · </span>}
-                {a.fecha_limite && <span>{new Date(a.fecha_limite).toLocaleDateString('es-AR')}</span>}
-              </p>
+              {editingId === a.id ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    value={editingText}
+                    onChange={(e) => setEditingText(e.target.value)}
+                    autoFocus
+                    className="text-sm h-7 flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveEdit(a.id);
+                      if (e.key === 'Escape') { setEditingId(null); setEditingText(''); }
+                    }}
+                  />
+                  <button onClick={() => saveEdit(a.id)} aria-label="Guardar" className="text-success hover:opacity-80">
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => { setEditingId(null); setEditingText(''); }} aria-label="Cancelar" className="text-muted-foreground hover:text-foreground">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <p className={cn('text-sm truncate', a.estado === 'completado' && 'line-through text-muted-foreground')}>
+                    {a.descripcion}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {a.responsable && <span>{a.responsable}</span>}
+                    {a.responsable && a.fecha_limite && <span> · </span>}
+                    {a.fecha_limite && <span>{new Date(a.fecha_limite).toLocaleDateString('es-AR')}</span>}
+                  </p>
+                </>
+              )}
             </div>
-            <button
-              onClick={() => delM.mutate(a.id)}
-              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition"
-              aria-label="Eliminar"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            {editingId !== a.id && (
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                <button
+                  onClick={() => { setEditingId(a.id); setEditingText(a.descripcion); }}
+                  className="text-muted-foreground hover:text-primary"
+                  aria-label="Editar"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => delM.mutate(a.id)}
+                  className="text-muted-foreground hover:text-destructive"
+                  aria-label="Eliminar"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </li>
         ))}
       </ul>
