@@ -367,6 +367,29 @@ const ConsolidatedNineBox = () => {
                     <DownloadNineBoxImageButton
                       tableroNombre={empresaNombre}
                       empresaNombre={empresaNombre}
+                      periodo={selectedPeriodo}
+                      employees={(() => {
+                        const nombresCuadrante: Record<string, string> = {
+                          'Alto-Alto': 'Talento Estratégico',
+                          'Alto-Medio': 'Desarrollar',
+                          'Alto-Bajo': 'Enigma',
+                          'Medio-Alto': 'Consistente',
+                          'Medio-Medio': 'Clave',
+                          'Medio-Bajo': 'Dilema',
+                          'Bajo-Alto': 'Confiable',
+                          'Bajo-Medio': 'Estancamiento',
+                          'Bajo-Bajo': 'Riesgo',
+                        };
+                        return Object.entries(empleadosPorCuadrante).flatMap(([key, emps]) =>
+                          (emps as any[]).map((emp: any) => ({
+                            name: emp.nombre,
+                            quadrant: nombresCuadrante[key] || key,
+                            performance: emp.performanceScore ?? emp.performance ?? 0,
+                            potencial: emp.potentialScore ?? emp.potencial ?? 0,
+                          }))
+                        );
+                      })()}
+                      analisisIA={analisis}
                     />
                   </div>
                 </div>
