@@ -27,7 +27,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { CreateEmpresaDialog } from '@/components/CreateEmpresaDialog';
 import { CreateEquipoDialog } from '@/components/CreateEquipoDialog';
 import { CalibrationExportButton } from '@/components/CalibrationExportButton';
-import { DownloadReportButton } from '@/components/DownloadReportButton';
+
 import { DownloadNineBoxImageButton } from '@/components/DownloadNineBoxImageButton';
 import { Employee } from '@/types/employee';
 import { useAuth } from '@/contexts/AuthContext';
@@ -767,11 +767,6 @@ const Dashboard = () => {
                 </div>
                 <div className="flex gap-2" data-no-capture>
                   <CalibrationExportButton tableroId={selectedTablero} />
-                  <DownloadReportButton
-                    tableroId={selectedTablero}
-                    empresaId={selectedEmpresa}
-                    empresaNombre={empresas.find(e => e.id === selectedEmpresa)?.nombre || ''}
-                  />
                   <DownloadNineBoxImageButton
                     tableroNombre={tableros.find(t => t.id === selectedTablero)?.nombre || ''}
                     empresaNombre={empresas.find(e => e.id === selectedEmpresa)?.nombre || ''}
