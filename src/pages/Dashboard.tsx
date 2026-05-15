@@ -767,11 +767,6 @@ const Dashboard = () => {
                 </div>
                 <div className="flex gap-2" data-no-capture>
                   <CalibrationExportButton tableroId={selectedTablero} />
-                  <DownloadReportButton
-                    tableroId={selectedTablero}
-                    empresaId={selectedEmpresa}
-                    empresaNombre={empresas.find(e => e.id === selectedEmpresa)?.nombre || ''}
-                  />
                   <DownloadNineBoxImageButton
                     tableroNombre={tableros.find(t => t.id === selectedTablero)?.nombre || ''}
                     empresaNombre={empresas.find(e => e.id === selectedEmpresa)?.nombre || ''}
