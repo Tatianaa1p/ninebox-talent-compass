@@ -235,15 +235,8 @@ export const DownloadNineBoxImageButton = ({
 
         personas.forEach((p) => {
           addPageIfNeeded(6);
-          pdf.setFontSize(8); pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(8); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(0, 0, 0);
           pdf.text(p.name, margin + 3, y);
-          pdf.setTextColor(120, 120, 120);
-          pdf.text(
-            `Puntuación Desempeño: ${p.performance?.toFixed(1)}   Puntuación Potencial: ${p.potencial?.toFixed(1)}`,
-            margin + 70,
-            y
-          );
-          pdf.setTextColor(0, 0, 0);
           pdf.setDrawColor(220, 220, 220);
           pdf.line(margin, y + 1.5, margin + contentWidth, y + 1.5);
           y += 5.5;
