@@ -238,7 +238,8 @@ export const DownloadNineBoxImageButton = ({
         personas.forEach((p) => {
           addPageIfNeeded(6);
           pdf.setFontSize(8); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(0, 0, 0);
-          pdf.text(p.name, margin + 3, y);
+          const displayName = p.equipoNombre ? `${p.name}  (${p.equipoNombre})` : p.name;
+          pdf.text(displayName, margin + 3, y);
           pdf.setDrawColor(220, 220, 220);
           pdf.line(margin, y + 1.5, margin + contentWidth, y + 1.5);
           y += 5.5;
