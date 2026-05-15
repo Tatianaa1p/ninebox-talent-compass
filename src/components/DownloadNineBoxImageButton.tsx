@@ -15,6 +15,7 @@ interface EmployeePdf {
   quadrant: string;
   performance: number;
   potencial: number;
+  equipoNombre?: string;
 }
 
 interface Props {
