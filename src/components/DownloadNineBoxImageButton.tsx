@@ -131,21 +131,22 @@ export const DownloadNineBoxImageButton = ({
         ['Riesgo', 'Estancamiento', 'Confiable'],
       ];
       const COLORS: Record<string, number[]> = {
-        'Talento Estratégico': [0, 168, 107],
-        'Desarrollar':         [126, 200, 164],
-        'Consistente':         [144, 238, 144],
-        'Enigma':              [255, 215, 0],
-        'Clave':               [255, 224, 102],
-        'Confiable':           [255, 200, 80],
-        'Dilema':              [255, 107, 107],
-        'Estancamiento':       [255, 140, 140],
-        'Riesgo':              [220, 53, 53],
+        // VERDE PASTEL
+        'Talento Estratégico': [180, 230, 200],
+        'Desarrollar':         [200, 240, 215],
+        'Consistente':         [215, 245, 225],
+        // AMARILLO PASTEL
+        'Enigma':              [255, 243, 180],
+        'Clave':               [255, 245, 195],
+        'Confiable':           [255, 240, 170],
+        // ROJO PASTEL
+        'Dilema':              [255, 195, 195],
+        'Estancamiento':       [255, 210, 210],
+        'Riesgo':              [255, 180, 180],
       };
 
-      const getTextColor = (cuadrante: string): number[] => {
-        const oscuros = ['Talento Estratégico', 'Riesgo'];
-        return oscuros.includes(cuadrante) ? [255, 255, 255] : [50, 50, 50];
-      };
+      // Todos con texto oscuro ya que son todos pasteles claros
+      const getTextColor = (_cuadrante: string): number[] => [50, 50, 50];
 
       const cellW = contentWidth / 3;
       const cellH = 28;
