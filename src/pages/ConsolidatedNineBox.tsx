@@ -367,6 +367,16 @@ const ConsolidatedNineBox = () => {
                     <DownloadNineBoxImageButton
                       tableroNombre={empresaNombre}
                       empresaNombre={empresaNombre}
+                      periodo={selectedPeriodo}
+                      employees={Object.entries(empleadosPorCuadrante).flatMap(([cuadrante, emps]) =>
+                        (emps as any[]).map((emp: any) => ({
+                          name: emp.nombre,
+                          quadrant: cuadrante,
+                          performance: emp.performanceScore ?? emp.performance ?? 0,
+                          potencial: emp.potentialScore ?? emp.potencial ?? 0,
+                        }))
+                      )}
+                      analisisIA={analisis}
                     />
                   </div>
                 </div>
