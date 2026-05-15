@@ -190,9 +190,9 @@ export const DownloadNineBoxImageButton = ({
         y += 12;
 
         pdf.setFontSize(9); pdf.setFont('helvetica', 'bold');
-        pdf.text(`Estado: ${analisisIA.estado_general?.toUpperCase() || ''}`, margin, y); y += 5;
+        pdf.text(`Estado: ${analisis.estado_general?.toUpperCase() || ''}`, margin, y); y += 5;
         pdf.setFont('helvetica', 'normal');
-        const resumenLines = pdf.splitTextToSize(analisisIA.resumen || '', contentWidth);
+        const resumenLines = pdf.splitTextToSize(analisis.resumen || '', contentWidth);
         pdf.text(resumenLines, margin, y); y += resumenLines.length * 4 + 4;
 
         ['fortalezas', 'alertas', 'recomendaciones'].forEach((seccion) => {
@@ -201,7 +201,7 @@ export const DownloadNineBoxImageButton = ({
           pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9);
           pdf.text(labels[seccion], margin, y); y += 4;
           pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8);
-          (analisisIA[seccion] || []).forEach((item: string, i: number) => {
+          (analisis[seccion] || []).forEach((item: string, i: number) => {
             addPageIfNeeded(6);
             const prefix = seccion === 'recomendaciones' ? `${i + 1}. ` : '• ';
             const lines = pdf.splitTextToSize(`${prefix}${item}`, contentWidth);
