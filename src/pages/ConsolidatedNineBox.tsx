@@ -386,6 +386,7 @@ const ConsolidatedNineBox = () => {
                             quadrant: nombresCuadrante[key] || key,
                             performance: emp.performanceScore ?? emp.performance ?? 0,
                             potencial: emp.potentialScore ?? emp.potencial ?? 0,
+                            equipoNombre: emp.equipoNombre ?? emp.tableroNombre ?? '',
                           }))
                         );
                       })()}
