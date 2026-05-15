@@ -131,11 +131,20 @@ export const DownloadNineBoxImageButton = ({
         ['Riesgo', 'Estancamiento', 'Confiable'],
       ];
       const COLORS: Record<string, number[]> = {
-        'Talento Estratégico': [212, 237, 218], 'Desarrollar': [232, 245, 233],
-        'Enigma': [255, 249, 196], 'Consistente': [232, 245, 233],
-        'Clave': [255, 249, 196], 'Dilema': [255, 224, 178],
-        'Confiable': [227, 242, 253], 'Estancamiento': [255, 224, 178],
-        'Riesgo': [255, 205, 210],
+        'Talento Estratégico': [0, 168, 107],
+        'Desarrollar':         [126, 200, 164],
+        'Consistente':         [144, 238, 144],
+        'Enigma':              [255, 215, 0],
+        'Clave':               [255, 224, 102],
+        'Confiable':           [255, 200, 80],
+        'Dilema':              [255, 107, 107],
+        'Estancamiento':       [255, 140, 140],
+        'Riesgo':              [220, 53, 53],
+      };
+
+      const getTextColor = (cuadrante: string): number[] => {
+        const oscuros = ['Talento Estratégico', 'Riesgo'];
+        return oscuros.includes(cuadrante) ? [255, 255, 255] : [50, 50, 50];
       };
 
       const cellW = contentWidth / 3;
@@ -148,10 +157,13 @@ export const DownloadNineBoxImageButton = ({
           const color = COLORS[cuadrante] || [245, 245, 245];
           pdf.setFillColor(color[0], color[1], color[2]);
           pdf.rect(x, y, cellW - 1, cellH, 'F');
-          pdf.setFontSize(8); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(50, 50, 50);
+          const textColor = getTextColor(cuadrante);
+          pdf.setFontSize(8); pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(textColor[0], textColor[1], textColor[2]);
           pdf.text(cuadrante, x + 3, y + 6);
           const personas = employees.filter(e => e.quadrant === cuadrante);
-          pdf.setFontSize(7); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(80, 80, 80);
+          pdf.setFontSize(7); pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(textColor[0], textColor[1], textColor[2]);
           pdf.text(`${personas.length} persona${personas.length !== 1 ? 's' : ''}`, x + 3, y + 11);
           personas.slice(0, 3).forEach((p, pi) => {
             pdf.text(`· ${p.name}`, x + 3, y + 16 + pi * 4);
@@ -165,7 +177,9 @@ export const DownloadNineBoxImageButton = ({
       });
 
       // ── ANÁLISIS DE IA ───────────────────────────────────────
-      if (analisisIA) {
+      const analisis = typeof analisisIA === 'string' ? JSON.parse(analisisIA) : analisisIA;
+
+      if (analisis && analisis.resumen) {
         addPageIfNeeded(20);
         y += 6;
         pdf.setFillColor(22, 33, 62);
@@ -176,9 +190,9 @@ export const DownloadNineBoxImageButton = ({
         y += 12;
 
         pdf.setFontSize(9); pdf.setFont('helvetica', 'bold');
-        pdf.text(`Estado: ${analisisIA.estado_general?.toUpperCase() || ''}`, margin, y); y += 5;
+        pdf.text(`Estado: ${analisis.estado_general?.toUpperCase() || ''}`, margin, y); y += 5;
         pdf.setFont('helvetica', 'normal');
-        const resumenLines = pdf.splitTextToSize(analisisIA.resumen || '', contentWidth);
+        const resumenLines = pdf.splitTextToSize(analisis.resumen || '', contentWidth);
         pdf.text(resumenLines, margin, y); y += resumenLines.length * 4 + 4;
 
         ['fortalezas', 'alertas', 'recomendaciones'].forEach((seccion) => {
@@ -187,7 +201,7 @@ export const DownloadNineBoxImageButton = ({
           pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9);
           pdf.text(labels[seccion], margin, y); y += 4;
           pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8);
-          (analisisIA[seccion] || []).forEach((item: string, i: number) => {
+          (analisis[seccion] || []).forEach((item: string, i: number) => {
             addPageIfNeeded(6);
             const prefix = seccion === 'recomendaciones' ? `${i + 1}. ` : '• ';
             const lines = pdf.splitTextToSize(`${prefix}${item}`, contentWidth);
@@ -221,15 +235,8 @@ export const DownloadNineBoxImageButton = ({
 
         personas.forEach((p) => {
           addPageIfNeeded(6);
-          pdf.setFontSize(8); pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(8); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(0, 0, 0);
           pdf.text(p.name, margin + 3, y);
-          pdf.setTextColor(120, 120, 120);
-          pdf.text(
-            `Puntuación Desempeño: ${p.performance?.toFixed(1)}   Puntuación Potencial: ${p.potencial?.toFixed(1)}`,
-            margin + 70,
-            y
-          );
-          pdf.setTextColor(0, 0, 0);
           pdf.setDrawColor(220, 220, 220);
           pdf.line(margin, y + 1.5, margin + contentWidth, y + 1.5);
           y += 5.5;
