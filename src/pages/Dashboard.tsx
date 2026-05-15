@@ -770,6 +770,27 @@ const Dashboard = () => {
                   <DownloadNineBoxImageButton
                     tableroNombre={tableros.find(t => t.id === selectedTablero)?.nombre || ''}
                     empresaNombre={empresas.find(e => e.id === selectedEmpresa)?.nombre || ''}
+                    periodo={selectedPeriodo}
+                    employees={employees.map((e) => {
+                      const nombresCuadrante: Record<string, string> = {
+                        'Alto-Alto': 'Talento Estratégico',
+                        'Alto-Medio': 'Desarrollar',
+                        'Alto-Bajo': 'Enigma',
+                        'Medio-Alto': 'Consistente',
+                        'Medio-Medio': 'Clave',
+                        'Medio-Bajo': 'Dilema',
+                        'Bajo-Alto': 'Confiable',
+                        'Bajo-Medio': 'Estancamiento',
+                        'Bajo-Bajo': 'Riesgo',
+                      };
+                      return {
+                        name: e.name,
+                        quadrant: nombresCuadrante[`${e.potential}-${e.performance}`] || '',
+                        performance: e.performanceScore ?? 0,
+                        potencial: e.potentialScore ?? 0,
+                      };
+                    })}
+                    analisisIA={analisisTalento}
                   />
                 </div>
               </div>

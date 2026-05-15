@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { Download } from 'lucide-react';
@@ -9,12 +10,30 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+interface EmployeePdf {
+  name: string;
+  quadrant: string;
+  performance: number;
+  potencial: number;
+}
+
 interface Props {
   tableroNombre: string;
   empresaNombre: string;
+  periodo?: number;
+  employees?: EmployeePdf[];
+  analisisIA?: any;
 }
 
-export const DownloadNineBoxImageButton = ({ tableroNombre, empresaNombre }: Props) => {
+export const DownloadNineBoxImageButton = ({
+  tableroNombre,
+  empresaNombre,
+  periodo,
+  employees = [],
+  analisisIA,
+}: Props) => {
+  const [loading, setLoading] = useState(false);
+
   const captureElement = async (): Promise<string> => {
     const element = document.getElementById('ninebox-capture-area');
     if (!element) throw new Error('No se encontró el área de captura');
@@ -55,29 +74,196 @@ export const DownloadNineBoxImageButton = ({ tableroNombre, empresaNombre }: Pro
   };
 
   const downloadPdf = async () => {
+    setLoading(true);
     try {
-      const dataUrl = await captureElement();
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise((resolve) => (img.onload = resolve));
-      const pdf = new jsPDF({
-        orientation: img.width > img.height ? 'landscape' : 'portrait',
-        unit: 'px',
-        format: [img.width, img.height],
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const margin = 15;
+      const pageWidth = 210;
+      const contentWidth = pageWidth - margin * 2;
+      let y = margin;
+
+      const addPageIfNeeded = (spaceNeeded: number) => {
+        if (y + spaceNeeded > 280) { pdf.addPage(); y = margin; }
+      };
+
+      // ── HEADER ──────────────────────────────────────────────
+      pdf.setFillColor(22, 33, 62);
+      pdf.rect(0, 0, 210, 28, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16); pdf.setFont('helvetica', 'bold');
+      pdf.text(`Nine Box Grid — ${empresaNombre}`, margin, 12);
+      pdf.setFontSize(10); pdf.setFont('helvetica', 'normal');
+      pdf.text(
+        `Tablero: ${tableroNombre}  ·  Período: ${periodo || 2026}  ·  Generado: ${new Date().toLocaleDateString('es-AR')}`,
+        margin,
+        21
+      );
+      pdf.setTextColor(0, 0, 0);
+      y = 38;
+
+      // ── KPI CARDS ───────────────────────────────────────────
+      const kpis = [
+        { label: 'Total evaluados', value: String(employees.length), color: [22, 33, 62] },
+        { label: 'Talento Estratégico', value: String(employees.filter(e => e.quadrant === 'Talento Estratégico').length), color: [26, 115, 64] },
+        { label: 'En riesgo', value: String(employees.filter(e => ['Riesgo','Dilema','Estancamiento'].includes(e.quadrant)).length), color: [198, 40, 40] },
+      ];
+      const cardW = (contentWidth - 8) / 3;
+      kpis.forEach((kpi, i) => {
+        const x = margin + i * (cardW + 4);
+        pdf.setFillColor(245, 245, 245);
+        pdf.roundedRect(x, y, cardW, 18, 2, 2, 'F');
+        pdf.setFontSize(8); pdf.setTextColor(100, 100, 100); pdf.setFont('helvetica', 'normal');
+        pdf.text(kpi.label, x + 4, y + 6);
+        pdf.setFontSize(16); pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(kpi.color[0], kpi.color[1], kpi.color[2]);
+        pdf.text(kpi.value, x + 4, y + 14);
       });
-      pdf.addImage(dataUrl, 'PNG', 0, 0, img.width, img.height);
-      pdf.save(`${baseName}.pdf`);
+      pdf.setTextColor(0, 0, 0);
+      y += 26;
+
+      // ── NINE BOX GRID (tabla 3x3) ───────────────────────────
+      pdf.setFontSize(11); pdf.setFont('helvetica', 'bold');
+      pdf.text('Distribución Nine Box', margin, y); y += 6;
+
+      const CUADRANTES_ORDER = [
+        ['Enigma', 'Desarrollar', 'Talento Estratégico'],
+        ['Dilema', 'Clave', 'Consistente'],
+        ['Riesgo', 'Estancamiento', 'Confiable'],
+      ];
+      const COLORS: Record<string, number[]> = {
+        'Talento Estratégico': [212, 237, 218], 'Desarrollar': [232, 245, 233],
+        'Enigma': [255, 249, 196], 'Consistente': [232, 245, 233],
+        'Clave': [255, 249, 196], 'Dilema': [255, 224, 178],
+        'Confiable': [227, 242, 253], 'Estancamiento': [255, 224, 178],
+        'Riesgo': [255, 205, 210],
+      };
+
+      const cellW = contentWidth / 3;
+      const cellH = 28;
+
+      CUADRANTES_ORDER.forEach((row) => {
+        addPageIfNeeded(cellH + 2);
+        row.forEach((cuadrante, col) => {
+          const x = margin + col * cellW;
+          const color = COLORS[cuadrante] || [245, 245, 245];
+          pdf.setFillColor(color[0], color[1], color[2]);
+          pdf.rect(x, y, cellW - 1, cellH, 'F');
+          pdf.setFontSize(8); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(50, 50, 50);
+          pdf.text(cuadrante, x + 3, y + 6);
+          const personas = employees.filter(e => e.quadrant === cuadrante);
+          pdf.setFontSize(7); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(80, 80, 80);
+          pdf.text(`${personas.length} persona${personas.length !== 1 ? 's' : ''}`, x + 3, y + 11);
+          personas.slice(0, 3).forEach((p, pi) => {
+            pdf.text(`· ${p.name}`, x + 3, y + 16 + pi * 4);
+          });
+          if (personas.length > 3) {
+            pdf.text(`+${personas.length - 3} más (ver detalle abajo)`, x + 3, y + 28);
+          }
+        });
+        y += cellH + 2;
+        pdf.setTextColor(0, 0, 0);
+      });
+
+      // ── ANÁLISIS DE IA ───────────────────────────────────────
+      if (analisisIA) {
+        addPageIfNeeded(20);
+        y += 6;
+        pdf.setFillColor(22, 33, 62);
+        pdf.rect(margin, y, contentWidth, 8, 'F');
+        pdf.setTextColor(255, 255, 255); pdf.setFontSize(11); pdf.setFont('helvetica', 'bold');
+        pdf.text('Análisis de talento con IA', margin + 3, y + 5.5);
+        pdf.setTextColor(0, 0, 0);
+        y += 12;
+
+        pdf.setFontSize(9); pdf.setFont('helvetica', 'bold');
+        pdf.text(`Estado: ${analisisIA.estado_general?.toUpperCase() || ''}`, margin, y); y += 5;
+        pdf.setFont('helvetica', 'normal');
+        const resumenLines = pdf.splitTextToSize(analisisIA.resumen || '', contentWidth);
+        pdf.text(resumenLines, margin, y); y += resumenLines.length * 4 + 4;
+
+        ['fortalezas', 'alertas', 'recomendaciones'].forEach((seccion) => {
+          const labels: Record<string, string> = { fortalezas: 'Fortalezas', alertas: 'Alertas', recomendaciones: 'Recomendaciones' };
+          addPageIfNeeded(20);
+          pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9);
+          pdf.text(labels[seccion], margin, y); y += 4;
+          pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8);
+          (analisisIA[seccion] || []).forEach((item: string, i: number) => {
+            addPageIfNeeded(6);
+            const prefix = seccion === 'recomendaciones' ? `${i + 1}. ` : '• ';
+            const lines = pdf.splitTextToSize(`${prefix}${item}`, contentWidth);
+            pdf.text(lines, margin + 2, y); y += lines.length * 4;
+          });
+          y += 2;
+        });
+      }
+
+      // ── LISTA COMPLETA POR CUADRANTE ─────────────────────────
+      addPageIfNeeded(20);
+      y += 6;
+      pdf.setFillColor(22, 33, 62);
+      pdf.rect(margin, y, contentWidth, 8, 'F');
+      pdf.setTextColor(255, 255, 255); pdf.setFontSize(11); pdf.setFont('helvetica', 'bold');
+      pdf.text('Detalle completo por cuadrante', margin + 3, y + 5.5);
+      pdf.setTextColor(0, 0, 0);
+      y += 12;
+
+      CUADRANTES_ORDER.flat().forEach((cuadrante) => {
+        const personas = employees.filter(e => e.quadrant === cuadrante);
+        if (personas.length === 0) return;
+        addPageIfNeeded(14);
+        const color = COLORS[cuadrante] || [245, 245, 245];
+        pdf.setFillColor(color[0], color[1], color[2]);
+        pdf.rect(margin, y, contentWidth, 7, 'F');
+        pdf.setFontSize(9); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(50, 50, 50);
+        pdf.text(`${cuadrante} · ${personas.length} persona${personas.length !== 1 ? 's' : ''}`, margin + 3, y + 4.5);
+        pdf.setTextColor(0, 0, 0);
+        y += 9;
+
+        personas.forEach((p) => {
+          addPageIfNeeded(6);
+          pdf.setFontSize(8); pdf.setFont('helvetica', 'normal');
+          pdf.text(p.name, margin + 3, y);
+          pdf.setTextColor(120, 120, 120);
+          pdf.text(
+            `Puntuación Desempeño: ${p.performance?.toFixed(1)}   Puntuación Potencial: ${p.potencial?.toFixed(1)}`,
+            margin + 70,
+            y
+          );
+          pdf.setTextColor(0, 0, 0);
+          pdf.setDrawColor(220, 220, 220);
+          pdf.line(margin, y + 1.5, margin + contentWidth, y + 1.5);
+          y += 5.5;
+        });
+        y += 4;
+      });
+
+      // ── FOOTER en cada página ────────────────────────────────
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8); pdf.setTextColor(150, 150, 150);
+        pdf.text('Nine Box Grid — Gestión Talento Seidor', margin, 290);
+        pdf.text(`Página ${i} de ${totalPages}`, pageWidth - margin - 20, 290);
+      }
+
+      pdf.save(
+        `ninebox-${empresaNombre}-${tableroNombre}-${periodo || 2026}.pdf`
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+      );
     } catch (e) {
       console.error('Error al generar PDF:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" disabled={loading}>
           <Download className="mr-2 h-4 w-4" />
-          Descargar imagen
+          {loading ? 'Generando...' : 'Descargar imagen'}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
